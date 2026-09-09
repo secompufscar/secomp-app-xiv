@@ -22,12 +22,12 @@ module.exports = {
         blue: {
           100: "#C5CCF7",
           200: "#A9B4F4",
-          500: "#4153DF",
-          700: "#3141A3",
-          900: "#1C212C",
+          500: "#1400FF",
+          700: "#5300DF",
+          900: "#0B0B0F",
         },
 
-        green: "#4CEDB9",
+        green: "#00FF66",
 
         // Feedback
         warning: "#F1C21B",
@@ -39,7 +39,7 @@ module.exports = {
 
         // Text input, elements bg
         border: "#536080",
-        background: "#212735",
+        background: "#0B0B0F",
         iconbg: "#29303F",
       },
       fontFamily: {
