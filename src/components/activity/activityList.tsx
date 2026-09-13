@@ -91,10 +91,10 @@ export default function ActivityList({ selectedCategory, onPressActivity }: Acti
       return allActivities;
     }
 
-    let targetName;
+    let targetName: string[];
     const selNorm = normalize(selectedCategory);
 
-    if (selNorm === "Outros") {
+    if (selNorm === normalize("Outros")) {
       targetName = ["Workshop", "Gamenight", "Sociocultural", "Credenciamento", "Coffee", "Outros"];
     } else {
       targetName = [selNorm];

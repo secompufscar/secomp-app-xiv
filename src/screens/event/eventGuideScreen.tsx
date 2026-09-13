@@ -66,14 +66,14 @@ export default function EventGuide() {
 
           <View className="w-full h-[220px] sm:h-[300px] md:h-[360px] lg:h-[400px] xl:h-[440px] 2xl:h-[480px] rounded-lg mb-2 overflow-hidden">
             <Image
-              source={require("../../../assets/event-guide/palestra-magalu.png")}
+              source={require("../../../assets/event-guide/2025/palestra-machine-learning.jpg")}
               style={{ width: "100%", height: "100%" }}
               resizeMode="cover"
             />
           </View>
 
           <Text className="text-[#7D88A2] text-sm font-inter leading-relaxed">
-            Palestra da Magalu Cloud
+            Machine Learning com David Luiz
           </Text>
         </View>
 
@@ -97,14 +97,14 @@ export default function EventGuide() {
 
           <View className="w-full h-[220px] sm:h-[300px] md:h-[360px] lg:h-[400px] xl:h-[440px] 2xl:h-[480px] rounded-lg mb-2 overflow-hidden">
             <Image
-              source={require("../../../assets/event-guide/minicurso-git.png")}
+              source={require("../../../assets/event-guide/2025/minicurso_node-na-veia.jpg")}
               style={{ width: "100%", height: "100%" }}
               resizeMode="cover"
             />
           </View>
 
           <Text className="text-[#7D88A2] text-sm font-inter leading-relaxed mb-6">
-            Minicurso – Controle de versão com git
+            Minicurso – Node na Veia
           </Text>
 
           <Text className="text-default text-base font-inter leading-relaxed">
@@ -132,14 +132,14 @@ export default function EventGuide() {
 
           <View className="w-full h-[220px] sm:h-[300px] md:h-[360px] lg:h-[400px] xl:h-[440px] 2xl:h-[480px] rounded-lg mb-2 overflow-hidden">
             <Image
-              source={require("../../../assets/event-guide/hackathon-tractian.png")}
+              source={require("../../../assets/event-guide/2025/hackaton-magalu.jpg")}
               style={{ width: "100%", height: "100%" }}
               resizeMode="cover"
             />
           </View>
 
           <Text className="text-[#7D88A2] text-sm font-inter leading-relaxed">
-            Hackathon da Tractian
+            Hackathon da Magalu
           </Text>
         </View>
 
@@ -158,14 +158,14 @@ export default function EventGuide() {
 
           <View className="w-full h-[220px] sm:h-[300px] md:h-[360px] lg:h-[400px] xl:h-[440px] 2xl:h-[480px] rounded-lg mb-2 overflow-hidden">
             <Image
-              source={require("../../../assets/event-guide/magalu-estande.jpg")}
+              source={require("../../../assets/event-guide/2025/estande-visagio.jpg")}
               style={{ width: "100%", height: "100%" }}
               resizeMode="cover"
             />
           </View>
 
           <Text className="text-[#7D88A2] text-sm font-inter leading-relaxed">
-            Estande da Magalu Cloud
+            Estande da Visagio
           </Text>
         </View>
 
