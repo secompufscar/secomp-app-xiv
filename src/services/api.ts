@@ -2,7 +2,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { callGlobalSignOut } from "../utils/authHelper";
 
-const api = axios.create({ baseURL: "https://api.secompufscar.com.br/api/v1", });
+const api = axios.create({ baseURL: "https://secomp-server-xiv-production.up.railway.app/api/v1", });
 
 // Interceptor de Requisição: Adiciona o token em todas as chamadas
 api.interceptors.request.use(
