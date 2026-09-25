@@ -1,6 +1,7 @@
 import { Linking, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { AppVersionPolicy } from "../../services/appVersion";
+import { openRequiredUpdate } from "../../services/inAppUpdate";
 
 export default function UpdateRequiredScreen({ policy }: { policy: AppVersionPolicy }) {
   return (
@@ -12,7 +13,7 @@ export default function UpdateRequiredScreen({ policy }: { policy: AppVersionPol
         <Text className="text-blue-200 font-inter text-sm mb-6">Versão disponível: {policy.latestVersion}</Text>
         <Pressable
           accessibilityRole="button"
-          onPress={() => Linking.openURL(policy.updateUrl)}
+          onPress={() => openRequiredUpdate(policy.updateUrl)}
           className="w-full h-14 items-center justify-center rounded-lg bg-blue-500 active:opacity-80"
         >
           <Text className="text-white text-base font-poppinsMedium">Atualizar aplicativo</Text>
