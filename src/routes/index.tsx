@@ -4,7 +4,7 @@ import StackRoutes from "./stack.routes";
 import AuthRoutes from "./auth.routes";
 
 const linking = {
-  prefixes: ["https://app.secompufscar.com.br", "secompapp://"],
+  prefixes: ["https://secomp-app-xiv.vercel.app", "secompapp://"],  
   config: {
     screens: {
       SetNewPassword: {
