@@ -29,7 +29,7 @@ Tecnologias utilizadas no frontend do aplicativo: React Native, Expo, TypeScript
 Clone o repositório
 
 ```
-git clone https://github.com/secompufscar/secomp-app-xiii.git
+git clone https://github.com/secompufscar/secomp-app-xiv.git
 ```
 
 <br>
@@ -37,7 +37,7 @@ git clone https://github.com/secompufscar/secomp-app-xiii.git
 Acesse a pasta clonada
 
 ```
-cd ./secomp-app-xiii
+cd ./secomp-app-xiv
 ```
 
 <br>
