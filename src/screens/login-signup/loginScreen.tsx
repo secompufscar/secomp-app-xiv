@@ -1,4 +1,4 @@
-import { View, Text, Pressable } from "react-native";
+import { Platform, View, Text, Pressable } from "react-native";
 import { useCallback, useState } from "react";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,6 +12,7 @@ import Button from "../../components/button/button";
 import AppLayout from "../../components/app/appLayout";
 import BackButton from "../../components/button/backButton";
 import validator from "validator";
+import { registerForPushNotifications, setupNotificationListeners } from "../../services/notifications";
 
 export default function Login() {
   const navigation = useNavigation<AuthTypes>();
@@ -76,8 +77,16 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const { user, token } = await login({ email, senha }, navigation);
+      const { user, token } = await login({ email, senha });
       await signIn(user, token);
+      if (Platform.OS === "android" || Platform.OS === "ios") {
+        try {
+          await registerForPushNotifications();
+          setupNotificationListeners(navigation);
+        } catch (notificationError) {
+          console.error("Erro ao configurar notificações:", notificationError);
+        }
+      }
     } catch (error) {
       const err = error as any;
       const errorMessage = err.response?.data?.message || "Falha ao processar o login.";

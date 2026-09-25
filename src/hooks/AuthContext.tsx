@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from "react";
 import { setGlobalSignOut } from "../utils/authHelper";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../services/api";
+import { getAuthToken, removeAuthToken, setAuthToken } from "../services/secureStorage";
 
 interface AuthContextData {
   user: User | null;
@@ -17,15 +17,13 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-const TOKEN_STORAGE_KEY = "userToken";
-
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   const signIn = useCallback(async (data: User, token: string) => {
     try {
-      await AsyncStorage.setItem(TOKEN_STORAGE_KEY, token);
+      await setAuthToken(token);
       setUser(data);
     } catch (error) {
       console.error("Erro no signIn:", error);
@@ -34,7 +32,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signOut = useCallback(async () => {
     try {
-      await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
+      await removeAuthToken();
       setUser(null);
     } catch (error) {
       console.error("Erro ao fazer sign out:", error);
@@ -49,11 +47,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setGlobalSignOut(signOut);
   }, [signOut]);
 
-  // Recuperar usuário do AsyncStorage (login automático)
+  // Recupera a sessão do armazenamento seguro (e migra o token legado uma vez).
   useEffect(() => {
     const loadUserFromStorage = async () => {
       try {      
-        const storedToken = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+        const storedToken = await getAuthToken();
 
         if (storedToken) {
           const response = await api.get("/users/me");

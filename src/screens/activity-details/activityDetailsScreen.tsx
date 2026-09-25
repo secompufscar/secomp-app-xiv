@@ -6,8 +6,9 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { faLocationDot, faCalendarDay, faUser, faUserClock, faUserCircle } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../../hooks/AuthContext";
-import { userSubscription , subscribeToActivity, unsubscribeToActivity, getParticipantsByActivity } from "../../services/userAtActivities";
+import { userSubscription, subscribeToActivity, unsubscribeToActivity, getActivityEnrollmentSummary } from "../../services/userAtActivities";
 import { getImagesByActivityId } from "../../services/activityImage";
+import { getCategories } from "../../services/categories";
 import { colors } from "../../styles/colors";
 import { format, parseISO, addHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -16,17 +17,6 @@ import BackButton from "../../components/button/backButton";
 import Button from "../../components/button/button";
 import InfoRow from "../../components/info/infoRow";
 import ErrorOverlay from "../../components/overlay/errorOverlay";
-
-const categoryIdToName: { [key: string]: string } = {
-  "1": "Minicurso",
-  "2": "Palestra",
-  "3": "Competição",
-  "4": "Gamenight",
-  "5": "Sociocultural",
-  "6": "Credenciamento",
-  "7": "Coffee",
-  default: "Secomp",
-};
 
 export default function ActivityDetails() {
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
@@ -37,6 +27,7 @@ export default function ActivityDetails() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
   const [isUserOnWaitlist, setIsUserOnWaitlist] = useState(false);
+  const [category, setCategory] = useState<Category | undefined>(activity.categoria);
 
   // Vagas da atividade
   const [subscribedCount, setSubscribedCount] = useState(0);
@@ -55,31 +46,29 @@ export default function ActivityDetails() {
   const [errorMessage, setErrorMessage] = useState("Erro");
   const [errorModalVisible, setErrorModalVisible] = useState(false);
 
-  // Verifica a relação de inscritos e lista de espera
+  const requiresEnrollment = category?.requiresEnrollment ?? false;
+
+  // Obtém apenas os números agregados e a posição do usuário autenticado.
   const fetchParticipantsCounts = async () => {
+    if (!requiresEnrollment) return;
+
     try {
-      const participants = await getParticipantsByActivity(activity.id);
-
-      const inscritos = participants.filter(p => p.inscricaoPrevia === true).length;
-      const listaEspera = participants.filter(p => p.listaEspera === true);
-
-      // Ordena pela data de criação (ordem crescente)
-      const waitlistSorted = listaEspera.sort(
-        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
-
-      // Descobre a posição do usuário (se ele estiver na lista)
-      if (user) {
-        const pos = waitlistSorted.findIndex(p => p.userId === user.id);
-        setWaitlistPosition(pos !== -1 ? pos + 1 : null); // +1 porque índice começa em 0
-      }
-
-      setSubscribedCount(inscritos);
-      setWaitingListCount(listaEspera.length);
+      const summary = await getActivityEnrollmentSummary(activity.id);
+      setSubscribedCount(summary.occupiedCount);
+      setWaitingListCount(summary.waitlistCount);
+      setWaitlistPosition(summary.waitlistPosition);
     } catch (error) {
-      console.error("Erro ao buscar participantes:", error);
+      console.error("Erro ao buscar resumo de inscrições:", error);
     }
   };
+
+  useEffect(() => {
+    if (activity.categoria) return;
+
+    getCategories()
+      .then((categories) => setCategory(categories.find((item) => item.id === activity.categoriaId)))
+      .catch((error) => console.error("Erro ao buscar categoria:", error));
+  }, [activity.categoria, activity.categoriaId]);
 
   // Verifica a inscrição do usuário na atividade
   useEffect(() => {
@@ -107,7 +96,7 @@ export default function ActivityDetails() {
 
     checkSubscription();
     fetchParticipantsCounts();
-  }, [user, activity.id]);
+  }, [user, activity.id, requiresEnrollment]);
 
   // Carrega as imagens da atividade
   useEffect(() => {
@@ -133,9 +122,12 @@ export default function ActivityDetails() {
       if (isSubscribed) {
         await unsubscribeToActivity(user.id, activity.id);
         setIsSubscribed(false);
+        setIsUserOnWaitlist(false);
+        setWaitlistPosition(null);
       } else {
-        await subscribeToActivity(user.id, activity.id);
+        const subscription = await subscribeToActivity(user.id, activity.id);
         setIsSubscribed(true);
+        setIsUserOnWaitlist(subscription.listaEspera);
       }
 
       await fetchParticipantsCounts();
@@ -154,7 +146,7 @@ export default function ActivityDetails() {
 
   const getDate = () => format(addHours(parseISO(activity.data), 3), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   const getTime = () => format(addHours(parseISO(activity.data), 3), "HH:mm'h'", { locale: ptBR });
-  const categoryName = categoryIdToName[activity.categoriaId] || categoryIdToName["default"];
+  const categoryName = category?.nome || "Secomp";
 
   return (
     <SafeAreaView className="flex-1 bg-blue-900">
@@ -223,11 +215,11 @@ export default function ActivityDetails() {
                 subText={getTime()}
               />
 
-              <View className="flex flex-row w-full gap-4">
+              {requiresEnrollment && <View className="flex flex-row w-full gap-4">
                 <InfoRow
                   icon={faUser}
                   mainText="Vagas"
-                  subText={activity.vagas > 0 && activity.vagas < 999 ? `${subscribedCount - waitingListCount} / ${activity.vagas}` : "Ilimitadas"}
+                  subText={activity.vagas > 0 && activity.vagas < 999 ? `${subscribedCount} / ${activity.vagas}` : "Ilimitadas"}
                   className="flex-1"
                 />
 
@@ -237,7 +229,7 @@ export default function ActivityDetails() {
                   subText={`${waitingListCount}`}
                   className="flex-1"
                 />
-              </View>
+              </View>}
             </View>
 
             {/* Detalhes */}
@@ -271,7 +263,7 @@ export default function ActivityDetails() {
             </View>
           </View> 
           
-          { isSubscribed && !["6", "7", "8"].includes(activity.categoriaId) &&
+          {isSubscribed && requiresEnrollment &&
             <View className="w-full mb-6 flex items-start justify-center px-6 max-w-[1000px] mx-auto">
                 {isUserOnWaitlist ? (
                 <Text className="text-blue-500 font-inter px-5 py-3 border border-blue-500 rounded-lg bg-blue-500/10">
@@ -303,7 +295,7 @@ export default function ActivityDetails() {
                   }
                 />
               </View>
-            ) : !["6", "7", "8"].includes(activity.categoriaId) ? ( 
+            ) : (
               subscriptionLoading || isLoading ? (
                 <ActivityIndicator size="large" color={colors.blue[500]} />
               ) : (
@@ -318,7 +310,7 @@ export default function ActivityDetails() {
                       ${isBtnPressed ? "opacity-80" : "opacity-100"}`}
                   >
                     <Text className="text-white text-base font-interMedium">
-                      {activity.categoriaId === "1"
+                      {requiresEnrollment
                         ? isSubscribed
                           ? "Cancelar Inscrição"
                           : "Inscrever-se"
@@ -329,7 +321,7 @@ export default function ActivityDetails() {
                   </View>
                 </Pressable>
               )
-            ) : null}
+            )}
           </View>
         </ScrollView>
       </View>
