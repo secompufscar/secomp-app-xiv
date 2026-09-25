@@ -1,12 +1,13 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from "react";
 import { setGlobalSignOut } from "../utils/authHelper";
 import api from "../services/api";
-import { getAuthToken, removeAuthToken, setAuthToken } from "../services/secureStorage";
+import { getAuthToken, getRefreshToken, removeSessionTokens, setSessionTokens } from "../services/secureStorage";
+import { logout } from "../services/users";
 
 interface AuthContextData {
   user: User | null;
   loading: boolean;
-  signIn: (data: User, token: string) => Promise<void>;
+  signIn: (data: User, token: string, refreshToken: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateUser: (data: User) => Promise<void>; 
 }
@@ -21,9 +22,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const signIn = useCallback(async (data: User, token: string) => {
+  const signIn = useCallback(async (data: User, token: string, refreshToken: string) => {
     try {
-      await setAuthToken(token);
+      await setSessionTokens(token, refreshToken);
       setUser(data);
     } catch (error) {
       console.error("Erro no signIn:", error);
@@ -32,7 +33,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signOut = useCallback(async () => {
     try {
-      await removeAuthToken();
+      const refreshToken = await getRefreshToken();
+      if (refreshToken) {
+        try {
+          await logout(refreshToken);
+        } catch (error) {
+          console.error("Erro ao revogar sessão remota:", error);
+        }
+      }
+      await removeSessionTokens();
       setUser(null);
     } catch (error) {
       console.error("Erro ao fazer sign out:", error);

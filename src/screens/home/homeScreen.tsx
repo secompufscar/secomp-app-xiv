@@ -103,8 +103,8 @@ export default function Home() {
       await createRegistration({ eventId: currentEvent.id });
       setIsUserSubscribed(true);
       return true;
-    } catch {
-      handleError("Não foi possível realizar a inscrição");
+    } catch (error: any) {
+      handleError(error.response?.data?.message || "Não foi possível realizar a inscrição");
       return false;
     } finally {
       setIsSubscribing(false);

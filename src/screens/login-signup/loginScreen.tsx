@@ -77,8 +77,8 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const { user, token } = await login({ email, senha });
-      await signIn(user, token);
+      const { user, token, refreshToken } = await login({ email, senha });
+      await signIn(user, token, refreshToken);
       if (Platform.OS === "android" || Platform.OS === "ios") {
         try {
           await registerForPushNotifications();

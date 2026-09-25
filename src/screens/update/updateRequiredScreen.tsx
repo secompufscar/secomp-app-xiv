@@ -17,6 +17,14 @@ export default function UpdateRequiredScreen({ policy }: { policy: AppVersionPol
         >
           <Text className="text-white text-base font-poppinsMedium">Atualizar aplicativo</Text>
         </Pressable>
+        <View className="flex-row justify-center gap-6 mt-5">
+          <Pressable onPress={() => Linking.openURL("mailto:coordenacao@secompufscar.com.br")}>
+            <Text className="text-blue-200 font-inter">Suporte</Text>
+          </Pressable>
+          <Pressable onPress={() => Linking.openURL("https://app.secompufscar.com.br/politica-privacidade.html")}>
+            <Text className="text-blue-200 font-inter">Privacidade</Text>
+          </Pressable>
+        </View>
       </View>
     </SafeAreaView>
   );

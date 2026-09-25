@@ -1,11 +1,15 @@
 import api from './api'
 
 // Realiza login do usuário e configura notificações push
-export const login = async (data: Login): Promise<{user: User; token: string}> => {
+export const login = async (data: Login): Promise<{user: User; token: string; refreshToken: string}> => {
   const response = await api.post("/users/login", data);
-  const { user, token } = response.data;
+  const { user, token, refreshToken } = response.data;
 
-  return { user, token };
+  return { user, token, refreshToken };
+};
+
+export const logout = async (refreshToken: string) => {
+  await api.post("/users/logout", { refreshToken });
 };
 
 // Realiza cadastro de novo usuário

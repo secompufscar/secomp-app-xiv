@@ -3,9 +3,9 @@
 ## Correções incluídas
 
 - A tela de atividade usa um resumo agregado e não solicita a lista nominal administrativa.
-- A distinção entre inscrição e atividade salva vem de `Category.requiresEnrollment`; IDs de categoria não controlam mais esse fluxo.
+- A distinção entre inscrição e atividade salva vem de `Category.requiresEnrollment`; ícones e agrupamentos usam `Category.slug`, sem IDs mágicos.
 - A confirmação da inscrição no evento só aparece depois de resposta bem sucedida da API.
-- O token de sessão usa Expo SecureStore em Android e iOS. A primeira execução migra o token legado e preserva a sessão; a versão web continua em AsyncStorage.
+- Access e refresh tokens usam Expo SecureStore em Android e iOS. A primeira execução migra o access token legado; novos logins recebem access token curto e refresh token rotativo. A versão web continua em AsyncStorage.
 - Todas as requisições informam plataforma, versão e build. Uma política marcada como `force` mostra uma tela de atualização bloqueante.
 - Expo Updates, runtime por versão, canais de preview e produção e novos números de build foram configurados.
 - O SDK Expo 52 foi alinhado, e `react-native-gesture-handler` e `expo-font` passaram a ser dependências diretas.
@@ -18,6 +18,7 @@ Esta versão depende dos contratos:
 - `GET /api/v1/app/version`;
 - `GET /api/v1/userAtActivities/activity/:activityId/summary`;
 - objeto `categoria` nas respostas de atividades, incluindo `requiresEnrollment`.
+- `POST /api/v1/users/refresh` e `POST /api/v1/users/logout` para rotação e revogação da sessão.
 
 ## Publicação
 
