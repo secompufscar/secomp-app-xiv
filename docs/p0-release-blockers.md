@@ -10,6 +10,7 @@
 - No Android, o botão da tela bloqueante tenta iniciar uma atualização imediata pela Google Play usando Play Core 2.1.0. Quando a instalação não veio da Play Store, não há atualização elegível ou o módulo nativo falha, o aplicativo abre a URL da loja informada pela API.
 - Expo Updates, runtime por versão, canais de preview e produção e novos números de build foram configurados.
 - O SDK Expo 52 foi alinhado, e `react-native-gesture-handler` e `expo-font` passaram a ser dependências diretas.
+- Axios foi atualizado para 1.20.0 e Validator para 13.15.35. Overrides corrigidos são usados para `shell-quote`, `@xmldom/xmldom`, PostCSS e `ws`.
 - A política de privacidade descreve os dados e fornecedores usados pelo projeto e remove conteúdo externo indevido. O `postbuild:web` copia o documento para `dist/politica-privacidade.html`, para que ele seja publicado junto do site.
 
 ## Dependência da API
@@ -33,6 +34,8 @@ Esta versão depende dos contratos:
 
 Clientes antigos não enviam cabeçalhos de versão. Quando a exigência for ativada, eles receberão HTTP 426 e precisarão instalar a versão publicada pela loja. A ativação deve ocorrer somente após a loja disponibilizar essa versão.
 
+Enquanto o aplicativo não estiver disponível na Play Store, a atualização imediata não pode ser exercitada e a exigência de versão deve permanecer desativada. O módulo nativo fica preparado para a publicação futura; fora da Play Store, o botão usa a URL de distribuição fornecida pela API.
+
 ## Validação local
 
 Execute:
@@ -49,5 +52,7 @@ npx expo config --type public
 Confirme que `dist/politica-privacidade.html` existe após o build web. Teste também em dispositivo físico: migração da sessão, login e logout, inscrição no evento, inscrição e fila de atividade, salvar atividade sem inscrição, notificações, leitura de QR e atualização imediata a partir de um track de teste da Play Store.
 
 O projeto Android gerado foi validado até a etapa de prebuild e o autolinking encontrou `PlayInAppUpdateModule`. A compilação Gradle local exige JDK e Android SDK, que não estão instalados nesta máquina; o build EAS de preview deve ser usado como validação nativa antes da publicação.
+
+Depois das correções diretas, `npm audit --omit=dev` ainda informa um crítico e quatro altos agregados ao Expo 52. As causas são `tar` 6 na CLI do Expo e `image-size` 1 no Metro, usados na geração e empacotamento, sem caminho conhecido no aplicativo instalado. Forçar `tar` 7 impediu o prebuild e forçar `image-size` 2 impediu o bundle; ambos foram revertidos. A correção compatível exige migrar o SDK Expo e deve ser executada em uma branch própria, com validação nativa completa.
 
 O Expo Doctor aprovou 16 de 18 verificações nesta máquina. Uma falha foi apenas de detecção: o Doctor não identificou a versão do npm, embora `npm --version` retorne 11.6.2. A pendência do projeto é o inventário do React Native Directory: `@react-native-material/core` e `clsx` aparecem como não mantidos, e outras dependências não possuem metadados no diretório. A substituição dessas bibliotecas deve ser planejada separadamente e validada tela a tela.
