@@ -29,6 +29,7 @@ export default function Home() {
   const [isEventActive, setIsEventActive] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<Events | null>(null);
   const [confirmAction, setConfirmAction] = useState<null | "subscribe" | "unsubscribe">(null);
+  const [isSubscribing, setIsSubscribing] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -93,13 +94,20 @@ export default function Home() {
     }, [user])
   );
 
-  const subscribe = async () => {
+  const subscribe = async (): Promise<boolean> => {
+    if (isSubscribing) return false;
+
+    setIsSubscribing(true);
     try {
       if (!user?.id || !currentEvent?.id) throw new Error("Usuário ou evento inválido");
       await createRegistration({ eventId: currentEvent.id });
       setIsUserSubscribed(true);
-    } catch {
-      handleError("Não foi possível realizar a inscrição");
+      return true;
+    } catch (error: any) {
+      handleError(error.response?.data?.message || "Não foi possível realizar a inscrição");
+      return false;
+    } finally {
+      setIsSubscribing(false);
     }
   };
 
@@ -266,9 +274,11 @@ export default function Home() {
         message={"Você deseja se inscrever neste evento?"}
         onCancel={() => setConfirmAction(null)}
         onConfirm={async () => {
-          navigation.navigate("EventConfirmation", { currentEvent });
-          await subscribe();
+          const subscribed = await subscribe();
           setConfirmAction(null);
+          if (subscribed && currentEvent) {
+            navigation.navigate("EventConfirmation", { event: currentEvent });
+          }
         }}
         confirmText="Confirmar"
         confirmButtonColor={colors.blue[500]}

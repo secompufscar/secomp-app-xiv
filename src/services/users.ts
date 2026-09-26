@@ -1,28 +1,15 @@
 import api from './api'
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { NavigationProp, ParamListBase } from '@react-navigation/native';
-import { registerForPushNotifications, setupNotificationListeners } from './notifications';
-import { Platform } from 'react-native';
 
 // Realiza login do usuário e configura notificações push
-export const login = async (data: Login, navigation: NavigationProp<ParamListBase>): Promise<{user: User; token: string}> => {
+export const login = async (data: Login): Promise<{user: User; token: string; refreshToken: string}> => {
   const response = await api.post("/users/login", data);
-  const { user, token } = response.data;
+  const { user, token, refreshToken } = response.data;
 
-  // Armazenar o token em AsyncStorage
-  await AsyncStorage.setItem('userToken', token);
+  return { user, token, refreshToken };
+};
 
-  // Configuração de push notifications
-  if (Platform.OS === 'android' || Platform.OS === 'ios') {
-    try {
-      await registerForPushNotifications();
-      setupNotificationListeners(navigation);
-    } catch (notifError) {
-      console.error('Erro ao configurar notificações:', notifError);
-    }
-  }
-
-  return { user, token };
+export const logout = async (refreshToken: string) => {
+  await api.post("/users/logout", { refreshToken });
 };
 
 // Realiza cadastro de novo usuário

@@ -7,3 +7,9 @@ interface UserAtActivity {
   listaEspera: boolean;
   createdAt: string;
 };
+
+interface ActivityEnrollmentSummary {
+  occupiedCount: number;
+  waitlistCount: number;
+  waitlistPosition: number | null;
+};

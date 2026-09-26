@@ -6,6 +6,8 @@ interface Activity {
   detalhes: string;
   palestranteNome: string;
   categoriaId: string;
+  eventId?: string;
+  categoria?: Category;
   local: string;
   points: number;
 };
