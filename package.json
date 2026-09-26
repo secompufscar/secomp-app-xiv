@@ -8,7 +8,9 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "build:web": "expo export --platform web",
-    "postbuild:web": "node scripts/copy-web-static.cjs"
+    "postbuild:web": "node scripts/copy-web-static.cjs",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run typecheck && npm run build:web"
   },
   "dependencies": {
     "@cmdnio/react-qr-reader": "^3.0.2",

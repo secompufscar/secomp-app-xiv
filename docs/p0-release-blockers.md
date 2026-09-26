@@ -42,8 +42,7 @@ Execute:
 
 ```powershell
 npm ci
-npx tsc --noEmit
-npm run build:web
+npm run verify
 npx expo-modules-autolinking resolve --platform android
 npx expo prebuild --platform android --no-install
 npx expo config --type public
