@@ -12,6 +12,8 @@ import * as SystemUI from "expo-system-ui";
 import * as SplashScreen from "expo-splash-screen";
 import "./styles/global.css";
 import "@expo/metro-runtime";
+import { AppVersionProvider, useAppVersion } from "./hooks/AppVersionContext";
+import UpdateRequiredScreen from "./screens/update/updateRequiredScreen";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -40,16 +42,21 @@ export default function App() {
   }
 
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <AppVersionProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </AppVersionProvider>
   );
 }
 
 function AppContent() {
   const { loading } = useAuth();
+  const { checkingVersion, requiredUpdate } = useAppVersion();
 
-  if (loading) {
+  if (requiredUpdate) return <UpdateRequiredScreen policy={requiredUpdate} />;
+
+  if (loading || checkingVersion) {
     return ( 
       <View className="flex-1 justify-center items-center bg-blue-900"> 
         <ActivityIndicator size="large" color={colors.blue[500]} /> 

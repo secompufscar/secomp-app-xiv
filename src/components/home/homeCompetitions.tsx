@@ -8,7 +8,6 @@ export default function HomeCompetitions() {
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [pressedItemId, setPressedItemId] = useState<string | null>(null);
-  const categoriaId = "3";
 
   const formatDate = (dateStr: string) => {
     const [datePart] = dateStr.split("T");
@@ -29,7 +28,9 @@ export default function HomeCompetitions() {
     fetchActivities();
   }, []);
 
-  const filteredActivities = activities.filter((activity) => activity.categoriaId === categoriaId);
+  const filteredActivities = activities.filter((activity) =>
+    activity.categoria?.slug === "competicao" || activity.categoria?.slug.startsWith("competicao-"),
+  );
 
   return (
     <View className="w-full flex-1">

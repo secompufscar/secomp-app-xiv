@@ -14,29 +14,23 @@ type ActivityListProps = {
 };
 
 const categoryIconMap: { [key: string]: IconDefinition } = {
-  Minicursos: faLaptopCode,
-  "1": faLaptopCode,
-
-  Palestra: faMicrophone,
-  "2": faMicrophone,
-
-  Competicoes: faTrophy,
-  "3": faTrophy,
-
-  Gamenight: faGamepad,
-  "4": faGamepad,
-
-  Sociocultural: faUsers,
-  "5": faUsers,
-
-  Credenciamento: faIdBadge,
-  "6": faIdBadge,
-
-  Coffee: faMugHot,
-  "7": faMugHot,
-
+  minicurso: faLaptopCode,
+  palestra: faMicrophone,
+  competicao: faTrophy,
+  gamenight: faGamepad,
+  sociocultural: faUsers,
+  credenciamento: faIdBadge,
+  coffee: faMugHot,
   default: faCalendar,
 };
+
+function getCategoryIcon(slug?: string) {
+  if (!slug) return categoryIconMap.default;
+  const categoryType = Object.keys(categoryIconMap).find(
+    key => key !== "default" && (slug === key || slug.startsWith(`${key}-`)),
+  );
+  return categoryIconMap[categoryType ?? "default"];
+}
 
 export default function ActivityList({ selectedDay, onPressActivity }: ActivityListProps) {
   const [allActivities, setAllActivities] = useState<Activity[]>([]);
@@ -140,7 +134,7 @@ export default function ActivityList({ selectedDay, onPressActivity }: ActivityL
   }
 
   const ActivityItem = memo(({ item }: { item: Activity }) => {
-    const activityIcon = categoryIconMap[item.categoriaId] || categoryIconMap["default"];
+    const activityIcon = getCategoryIcon(item.categoria?.slug);
     const rawDate = parseISO(item.data);
     const activityDateTime = addHours(rawDate, 3); 
     const hasOccurred = isPast(activityDateTime);

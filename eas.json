@@ -12,6 +12,7 @@
       }
     },
     "preview": {
+      "channel": "preview",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
@@ -26,6 +27,7 @@
       "developmentClient": true
     },
     "production": {
+      "channel": "production",
       "android": {
         "buildType": "app-bundle"
       },

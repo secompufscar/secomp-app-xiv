@@ -6,6 +6,14 @@ export async function getParticipantsByActivity(activityId: string): Promise<Use
   return response.data
 };
 
+// Retorna somente totais e a posição do usuário autenticado, sem expor participantes.
+export async function getActivityEnrollmentSummary(
+  activityId: string
+): Promise<ActivityEnrollmentSummary> {
+  const response = await api.get(`/userAtActivities/activity/${activityId}/summary`);
+  return response.data;
+};
+
 // Busca um vínculo específico entre usuário e atividade
 export const userSubscription = async (userId: string,activityId: string): Promise<UserAtActivity> => {
   const response = await api.get(`/userAtActivities/user-activity/${userId}/${activityId}`);
@@ -19,12 +27,15 @@ export const getUserSubscribedActivities = async (userId: string): Promise<UserA
 };
 
 // Cria uma nova inscrição para o usuário em uma atividade
-export const subscribeToActivity = async (userId: string, eventId: string) => {
+export const subscribeToActivity = async (
+  userId: string,
+  eventId: string
+): Promise<UserAtActivity> => {
   const response = await api.post("/userAtActivities", {
     userId: userId,
     activityId: eventId,
   });
-  return response;
+  return response.data;
 };
 
 // Deleta uma inscrição de um usuário em uma atividade

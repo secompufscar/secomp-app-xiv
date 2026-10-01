@@ -3,6 +3,7 @@ import * as Device from 'expo-device';
 import api from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
+import { getAuthToken } from './secureStorage';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { Platform } from 'react-native';
 
@@ -92,7 +93,7 @@ export async function registerForPushNotifications() {
   await AsyncStorage.setItem('pushToken', typeof token === 'string' ? token : token.data ?? JSON.stringify(token));
 
   // Obter token de autenticação do usuário
-  const authToken = await AsyncStorage.getItem('userToken');
+  const authToken = await getAuthToken();
 
   if (authToken) {
     try {
