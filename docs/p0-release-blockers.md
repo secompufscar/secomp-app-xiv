@@ -32,7 +32,7 @@ Esta versão depende dos contratos:
 6. Configure as URLs oficiais e a versão mínima na API.
 7. Ative a exigência de versão na API.
 
-Clientes antigos não enviam cabeçalhos de versão. Quando a exigência for ativada, eles receberão HTTP 426 e precisarão instalar a versão publicada pela loja. A ativação deve ocorrer somente após a loja disponibilizar essa versão.
+Quando a exigência for ativada, a API aplica HTTP 426 aos clientes que declaram Android ou iOS e cuja versão exige atualização. Clientes sem declaração de plataforma, navegação web e links de conta preservam as exceções do middleware. A ativação deve ocorrer somente após a loja disponibilizar essa versão. [Contrato atual da API](https://github.com/secompufscar/secomp-server-xiv/blob/main/src/middlewares/appVersionMiddleware.ts).
 
 Enquanto o aplicativo não estiver disponível na Play Store, a atualização imediata não pode ser exercitada e a exigência de versão deve permanecer desativada. O módulo nativo fica preparado para a publicação futura; fora da Play Store, o botão usa a URL de distribuição fornecida pela API.
 
