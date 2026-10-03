@@ -100,7 +100,7 @@ export default function ActivityDetails() {
 
     checkSubscription();
     fetchParticipantsCounts();
-  }, [user, activity.id, requiresEnrollment]);
+  }, [user, activity.id, activity.vagas, requiresEnrollment]);
 
   // Carrega as imagens da atividade
   useEffect(() => {

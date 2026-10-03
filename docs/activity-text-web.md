@@ -6,7 +6,7 @@ Os nomes são obrigatórios e aceitam 255 caracteres, com espaços das extremida
 
 O horário usa HH:mm, mantém a data da atividade e segue a representação existente da API, com horário do evento nos componentes UTC. Se não for alterado, a requisição não envia `data`. O local aceita até 255 caracteres; o link opcional aceita HTTP/HTTPS até 2.048 caracteres. O botão **Ver no mapa** abre o link salvo, ou a busca por UFSCar e local quando não há link.
 
-As vagas aceitam inteiro de 0 a 2147483647. Se não forem alteradas, a requisição não envia `vagas`, preservando inclusive capacidade indefinida. Zero não significa capacidade ilimitada: novas inscrições vão para a espera. A fila é calculada automaticamente na inscrição quando a capacidade está preenchida. Editar a capacidade não promove a fila nem cancela inscrições existentes; a contagem é consultada no servidor ao carregar os detalhes, sem atualização ao vivo.
+As vagas aceitam inteiro de 0 a 2147483647. Se não forem alteradas, a requisição não envia `vagas`, preservando inclusive capacidade indefinida. Zero não significa capacidade ilimitada: novas inscrições vão para a espera. Ao reduzir a capacidade, os últimos inscritos confirmados passam para a fila sem exclusão. Ao aumentar, a fila preenche as vagas em ordem de inscrição, com desempate por ID. O vínculo e a data original da inscrição são preservados, permitindo reverter uma redução aumentando as vagas. Pessoas com presença registrada permanecem confirmadas; reduzir abaixo desse total é recusado. Capacidade e fila são atualizadas na mesma transação. A contagem é consultada ao carregar os detalhes e após o admin editar as vagas, sem atualização ao vivo.
 
 ## Permissões e persistência
 

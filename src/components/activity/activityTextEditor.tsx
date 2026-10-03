@@ -320,7 +320,7 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
               />
             </Input>
             <Text className="text-gray-400 text-xs font-inter mt-2">
-              Com as vagas preenchidas, novas inscrições entram na lista de espera. Alterar a capacidade mantém as inscrições e a fila existentes.
+              Ao reduzir, os últimos inscritos passam para a fila. Ao aumentar, a fila preenche as vagas pela ordem de inscrição. Ninguém é excluído.
             </Text>
             <Text className="text-gray-400 text-sm font-inter mt-3 mb-2">Detalhes da atividade</Text>
             <TextInput
