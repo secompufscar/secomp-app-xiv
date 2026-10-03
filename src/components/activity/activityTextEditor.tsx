@@ -8,6 +8,7 @@ import { getActivityEnrollmentSummary } from "../../services/userAtActivities";
 import { createActivityImage, getImagesByActivityId, updateActivityImageById } from "../../services/activityImage";
 import Button from "../button/button";
 import { Input } from "../input/input";
+import SpeakerPhotoCropper from "./speakerPhotoCropper";
 
 interface Props {
   activity: Activity;
@@ -30,6 +31,7 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
   const [speakerTitle, setSpeakerTitle] = useState<"APRESENTADOR" | "APRESENTADORA">(activity.palestranteTitulo ?? "APRESENTADOR");
   const [savedPhoto, setSavedPhoto] = useState<ActivityImage | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [croppingPhoto, setCroppingPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [loadingPhoto, setLoadingPhoto] = useState(true);
   const [photoError, setPhotoError] = useState(false);
   const [photoLoadAttempt, setPhotoLoadAttempt] = useState(0);
@@ -102,7 +104,7 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
         setError("A foto deve ter no máximo 8 MB.");
         return;
       }
-      setSelectedPhoto(photo);
+      setCroppingPhoto(photo);
       setError("");
     } catch {
       setError("Não foi possível selecionar a foto. Tente novamente.");
@@ -124,8 +126,8 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
       setError("Cada nome deve ter no máximo 255 caracteres.");
       return;
     }
-    if (details.length > 1000) {
-      setError("Os detalhes devem ter no máximo 1000 caracteres.");
+    if (details.length > 1500) {
+      setError("Os detalhes devem ter no máximo 1500 caracteres.");
       return;
     }
     const local = location.trim();
@@ -215,6 +217,20 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
     }
   };
 
+  if (croppingPhoto) {
+    return (
+      <SpeakerPhotoCropper
+        photo={croppingPhoto}
+        onCancel={() => setCroppingPhoto(null)}
+        onConfirm={(photo) => {
+          setSelectedPhoto(photo);
+          setCroppingPhoto(null);
+          setError("");
+        }}
+      />
+    );
+  }
+
   return (
     <Modal
       transparent
@@ -223,12 +239,12 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
         if (!saving.current) onCancel();
       }}
     >
-      <View className="flex-1 items-center justify-center bg-black/60 px-6 py-8">
-        <View className="w-full max-w-lg rounded-lg bg-blue-900 p-6" style={{ maxHeight: "100%" }}>
-          <ScrollView keyboardShouldPersistTaps="handled">
-            <Text accessibilityRole="header" className="text-white text-xl font-poppinsSemiBold mb-5">
-              Editar atividade
-            </Text>
+      <View className="flex-1 items-center justify-center bg-black/60 px-4 py-4 sm:px-6 sm:py-8">
+        <View className="w-full max-w-lg rounded-lg bg-blue-900 p-4 sm:p-6" style={{ maxHeight: "100%" }}>
+          <Text accessibilityRole="header" className="text-white text-xl font-poppinsSemiBold mb-5">
+            Editar atividade
+          </Text>
+          <ScrollView keyboardShouldPersistTaps="handled" style={{ minHeight: 0 }} contentContainerStyle={{ paddingRight: 4 }}>
             <Text className="text-gray-400 text-sm font-inter mb-2">Título da atividade</Text>
             <Input>
               <Input.Field
@@ -241,7 +257,7 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
               />
             </Input>
             <Text className="text-gray-400 text-sm font-inter mt-3 mb-2">Forma de apresentação</Text>
-            <View accessibilityRole="radiogroup" accessibilityLabel="Forma de apresentação" className="flex-row gap-3 mb-4">
+            <View accessibilityRole="radiogroup" accessibilityLabel="Forma de apresentação" className="flex-col xxs:flex-row gap-3 mb-4">
               {(["APRESENTADORA", "APRESENTADOR"] as const).map((title) => (
                 <Pressable
                   key={title}
@@ -384,7 +400,7 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
               value={details}
               onChangeText={setDetails}
               editable={!isSaving}
-              maxLength={1000}
+                maxLength={1500}
               multiline
               numberOfLines={5}
               textAlignVertical="top"
@@ -392,18 +408,19 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
               placeholderTextColor={colors.border}
               className="w-full min-h-[128px] px-5 py-4 text-white text-sm font-inter bg-background border border-border rounded-lg outline-none"
             />
-            <Text className="text-gray-400 text-xs font-inter mt-2">{details.length}/1000 caracteres</Text>
+            <Text className="text-gray-400 text-xs font-inter mt-2">{details.length}/1500 caracteres</Text>
             {!!error && (
               <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" className="text-danger font-inter mt-3">
                 {error}
               </Text>
             )}
-            <View className="flex-row flex-wrap gap-3 mt-6">
+          </ScrollView>
+            <View className="flex-row flex-wrap gap-3 mt-5 pt-4 border-t border-border">
               <Button
                 title="Cancelar"
                 accessibilityRole="button"
                 bgColor="bg-gray-700"
-                className="flex-1 min-w-[120px]"
+                className="flex-1 min-w-[104px]"
                 disabled={isSaving || selectingPhoto}
                 onPress={onCancel}
               />
@@ -411,13 +428,12 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
                 title="Salvar"
                 accessibilityRole="button"
                 accessibilityLabel="Salvar alterações"
-                className="flex-1 min-w-[120px]"
+                className="flex-1 min-w-[104px]"
                 loading={isSaving}
                 disabled={isSaving || selectingPhoto || capacityBlocked}
                 onPress={handleSave}
               />
             </View>
-          </ScrollView>
         </View>
       </View>
     </Modal>
