@@ -17,7 +17,7 @@ import BackButton from "../../components/button/backButton";
 import Button from "../../components/button/button";
 import InfoRow from "../../components/info/infoRow";
 import ErrorOverlay from "../../components/overlay/errorOverlay";
-import ActivityNamesEditor from "../../components/activity/activityNamesEditor";
+import ActivityTextEditor from "../../components/activity/activityTextEditor";
 
 export default function ActivityDetails() {
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
@@ -46,9 +46,9 @@ export default function ActivityDetails() {
   // Overlay de erro
   const [errorMessage, setErrorMessage] = useState("Erro");
   const [errorModalVisible, setErrorModalVisible] = useState(false);
-  const [isEditingNames, setIsEditingNames] = useState(false);
-  const [namesSaved, setNamesSaved] = useState(false);
-  const canEditNames = Platform.OS === "web" && user?.tipo === "ADMIN";
+  const [isEditingText, setIsEditingText] = useState(false);
+  const [textSaved, setTextSaved] = useState(false);
+  const canEditText = Platform.OS === "web" && user?.tipo === "ADMIN";
 
   const requiresEnrollment = category?.requiresEnrollment ?? false;
 
@@ -189,20 +189,20 @@ export default function ActivityDetails() {
             <View className="mb-6">
               <Text className="text-gray-400 font-inter text-base">{categoryName}</Text>
               <Text className="text-white text-xl font-poppinsSemiBold mt-1">{activity.nome}</Text>
-              {canEditNames && (
+              {canEditText && (
                 <View className="mt-4 items-start">
                   <Button
-                    title="Editar título e apresentador"
+                    title="Editar atividade"
                     accessibilityRole="button"
                     bgColor="bg-gray-700"
                     onPress={() => {
-                      setNamesSaved(false);
-                      setIsEditingNames(true);
+                      setTextSaved(false);
+                      setIsEditingText(true);
                     }}
                   />
                 </View>
               )}
-              {canEditNames && namesSaved && (
+              {canEditText && textSaved && (
                 <Text accessibilityLiveRegion="polite" className="text-blue-200 font-inter mt-3">
                   Alterações salvas.
                 </Text>
@@ -348,14 +348,14 @@ export default function ActivityDetails() {
         </ScrollView>
       </View>
 
-      {canEditNames && isEditingNames && (
-        <ActivityNamesEditor
+      {canEditText && isEditingText && (
+        <ActivityTextEditor
           activity={activity}
-          onCancel={() => setIsEditingNames(false)}
+          onCancel={() => setIsEditingText(false)}
           onSaved={(updated) => {
             navigation.setParams({ item: updated });
-            setIsEditingNames(false);
-            setNamesSaved(true);
+            setIsEditingText(false);
+            setTextSaved(true);
           }}
         />
       )}
