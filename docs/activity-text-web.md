@@ -10,6 +10,8 @@ As vagas aceitam inteiro de 0 a 2147483647. Se não forem alteradas, a requisiç
 
 ## Permissões e persistência
 
+Antes de salvar, o formulário consulta `presentCount` do resumo e exibe o mínimo permitido abaixo das vagas. Um valor menor destaca o aviso e desabilita Salvar. Se o total não puder ser conferido, há nova tentativa e somente a alteração de vagas fica bloqueada. A API reconfere o total durante a transação; um conflito atualiza a indicação no formulário.
+
 - O botão e o formulário aparecem somente quando `Platform.OS === "web"` e `user.tipo === "ADMIN"`. A API exige autenticação e papel administrativo nas escritas.
 - `PUT /api/v1/activities/:id` recebe `nome`, `palestranteNome`, `palestranteTitulo`, `detalhes`, `local`, `localLink` e, quando alterados, `data` e `vagas`. A seleção usa `APRESENTADORA` ou `APRESENTADOR`.
 - A foto usa os endpoints existentes `POST /activityImages` e `PUT /activityImages/:id`, com multipart e `typeOfImage=palestrante`. Uma foto cadastrada é substituída pelo mesmo registro.

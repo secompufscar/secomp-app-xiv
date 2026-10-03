@@ -4,6 +4,7 @@ import * as ImagePicker from "expo-image-picker";
 import { colors } from "../../styles/colors";
 import { useAuth } from "../../hooks/AuthContext";
 import { updateActivity } from "../../services/activities";
+import { getActivityEnrollmentSummary } from "../../services/userAtActivities";
 import { createActivityImage, getImagesByActivityId, updateActivityImageById } from "../../services/activityImage";
 import Button from "../button/button";
 import { Input } from "../input/input";
@@ -38,10 +39,33 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
   const [location, setLocation] = useState(activity.local ?? "");
   const [locationLink, setLocationLink] = useState(activity.localLink ?? "");
   const [vacancies, setVacancies] = useState(activity.vagas == null ? "" : String(activity.vagas));
+  const [presentCount, setPresentCount] = useState<number | null>(null);
+  const [loadingPresence, setLoadingPresence] = useState(true);
+  const [presenceAttempt, setPresenceAttempt] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const saving = useRef(false);
   const speakerLabel = speakerTitle === "APRESENTADORA" ? "Apresentadora" : "Apresentador";
+  const vacanciesChanged = vacancies !== (activity.vagas == null ? "" : String(activity.vagas));
+  const belowMinimum = presentCount !== null && /^\d+$/.test(vacancies) && Number(vacancies) < presentCount;
+  const capacityBlocked = vacanciesChanged && (loadingPresence || presentCount === null || belowMinimum);
+
+  useEffect(() => {
+    let active = true;
+    setLoadingPresence(true);
+    setPresentCount(null);
+    getActivityEnrollmentSummary(activity.id)
+      .then((summary) => {
+        if (active && Number.isInteger(summary.presentCount) && summary.presentCount! >= 0) setPresentCount(summary.presentCount!);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setLoadingPresence(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [activity.id, presenceAttempt]);
 
   useEffect(() => {
     let active = true;
@@ -121,10 +145,18 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
     }
     const dateUpdate: { data?: string } = {};
     const capacityUpdate: { vagas?: number } = {};
-    if (vacancies !== (activity.vagas == null ? "" : String(activity.vagas))) {
+    if (vacanciesChanged) {
       const vagas = Number(vacancies);
       if (!/^\d+$/.test(vacancies) || !Number.isSafeInteger(vagas) || vagas > 2147483647) {
         setError("Informe um número inteiro de vagas entre 0 e 2147483647.");
+        return;
+      }
+      if (loadingPresence || presentCount === null) {
+        setError("Confira o total de presenças antes de alterar as vagas.");
+        return;
+      }
+      if (vagas < presentCount) {
+        setError(`Mínimo permitido: ${presentCount} vagas, pois há presença registrada para esse total de participantes.`);
         return;
       }
       capacityUpdate.vagas = vagas;
@@ -176,6 +208,7 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
     } catch (error: any) {
       const message = error.response?.data?.message || error.response?.data?.msg || error.message || "Não foi possível salvar. Tente novamente.";
       setError(photoSaved ? `A foto foi salva, mas os dados da atividade não foram atualizados. ${message}` : message);
+      if (capacityUpdate.vagas !== undefined && error.response?.status === 409) setPresenceAttempt(attempt => attempt + 1);
     } finally {
       saving.current = false;
       setIsSaving(false);
@@ -317,8 +350,31 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
                 maxLength={10}
                 keyboardType="number-pad"
                 placeholder="Não definido"
+                aria-invalid={belowMinimum}
               />
             </Input>
+            {loadingPresence ? (
+              <Text className="text-gray-400 text-xs font-inter mt-2">Conferindo presenças...</Text>
+            ) : presentCount === null ? (
+              <View>
+                <Text accessibilityRole="alert" className="text-danger text-xs font-inter mt-2">
+                  Não foi possível conferir o mínimo de vagas.
+                </Text>
+                <Button
+                  title="Conferir presenças novamente"
+                  accessibilityRole="button"
+                  bgColor="bg-gray-700"
+                  disabled={isSaving}
+                  onPress={() => setPresenceAttempt((attempt) => attempt + 1)}
+                />
+              </View>
+            ) : (
+              <Text accessibilityLiveRegion="polite" className={`${belowMinimum ? "text-danger" : "text-gray-400"} text-xs font-inter mt-2`}>
+                {presentCount === 0
+                  ? "Mínimo permitido: 0 vagas. Nenhuma presença registrada."
+                  : `Mínimo permitido: ${presentCount} ${presentCount === 1 ? "vaga, pois 1 participante já possui" : `vagas, pois ${presentCount} participantes já possuem`} presença registrada.`}
+              </Text>
+            )}
             <Text className="text-gray-400 text-xs font-inter mt-2">
               Ao reduzir, os últimos inscritos passam para a fila. Ao aumentar, a fila preenche as vagas pela ordem de inscrição. Ninguém é excluído.
             </Text>
@@ -357,7 +413,7 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
                 accessibilityLabel="Salvar alterações"
                 className="flex-1 min-w-[120px]"
                 loading={isSaving}
-                disabled={isSaving || selectingPhoto}
+                disabled={isSaving || selectingPhoto || capacityBlocked}
                 onPress={handleSave}
               />
             </View>
