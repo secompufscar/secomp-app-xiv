@@ -100,7 +100,7 @@ export default function ActivityDetails() {
 
     checkSubscription();
     fetchParticipantsCounts();
-  }, [user, activity.id, requiresEnrollment]);
+  }, [user, activity.id, activity.vagas, requiresEnrollment]);
 
   // Carrega as imagens da atividade
   useEffect(() => {
@@ -215,7 +215,7 @@ export default function ActivityDetails() {
                 <Pressable
                   onPress={() =>
                     Linking.openURL(
-                      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("UFSCar " + activity.local)}`
+                      activity.localLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("UFSCar " + activity.local)}`
                     )
                   }
                   onPressIn={() => setIsPressed(true)}
@@ -241,7 +241,7 @@ export default function ActivityDetails() {
                 <InfoRow
                   icon={faUser}
                   mainText="Vagas"
-                  subText={activity.vagas > 0 && activity.vagas < 999 ? `${subscribedCount} / ${activity.vagas}` : "Ilimitadas"}
+                  subText={activity.vagas != null ? `${subscribedCount} / ${activity.vagas}` : "Não definidas"}
                   className="flex-1"
                 />
 
@@ -277,7 +277,7 @@ export default function ActivityDetails() {
 
                 <View className="flex-1 ml-4">
                   <Text className="text-white text-base font-poppinsSemiBold">
-                    Apresentador
+                    {activity.palestranteTitulo === "APRESENTADORA" ? "Apresentadora" : "Apresentador"}
                   </Text>
                   <Text className="text-gray-400 font-inter leading-[1.8]">{activity.palestranteNome}</Text>
                 </View>
@@ -351,6 +351,7 @@ export default function ActivityDetails() {
       {canEditText && isEditingText && (
         <ActivityTextEditor
           activity={activity}
+          onPhotoSaved={(photo) => setPalestranteImageUrl(photo.imageUrl)}
           onCancel={() => setIsEditingText(false)}
           onSaved={(updated) => {
             navigation.setParams({ item: updated });

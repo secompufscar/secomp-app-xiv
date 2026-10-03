@@ -10,6 +10,7 @@ interface UserAtActivity {
 
 interface ActivityEnrollmentSummary {
   occupiedCount: number;
+  presentCount?: number;
   waitlistCount: number;
   waitlistPosition: number | null;
 };
