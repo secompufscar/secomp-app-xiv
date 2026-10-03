@@ -2,6 +2,8 @@
 
 Aplicativo desenvolvido pela equipe de TI da SECOMP UFSCar especialmente para o evento.
 
+Guias: [edição administrativa de atividades na web](docs/activity-text-web.md), [rotas e publicação na Vercel](docs/web-routing.md) e [validação da versão mobile](docs/p0-release-blockers.md). O app web é publicado automaticamente pela Vercel após integração na `main`.
+
 Ele é utilizado pelos participantes para realizar a inscrição no evento e em suas atividades, acompanhar novidades e acessar informações importantes. Para a organização, o aplicativo oferece ferramentas que facilitam o controle do evento, como o gerenciamento de atividades e a leitura de presença dos participantes.
 
 <br>
@@ -63,7 +65,8 @@ npm start
 Para rodar o aplicativo localmente, siga os passos adicionais abaixo:
 
 1. **Configure o backend** conforme as instruções disponíveis no README do repositório correspondente
-2. Ajuste a URL da API no frontend, alterando o arquivo _src/services/api.ts_ para refletir o novo endereço local (_seuip:3000_).
+2. Ajuste `baseURL` em [src/services/api.ts](src/services/api.ts) para o endereço do backend local, incluindo `/api/v1` (exemplo: `http://seuip:3000/api/v1`).
+3. Para a versão web, use `npm run web`. `npm run verify` confere TypeScript e gera a exportação web em `dist`.
 
 <div align="center">
   <br/>

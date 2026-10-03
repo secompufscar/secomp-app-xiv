@@ -31,4 +31,8 @@ Após o merge e deployment, abrir um link real de recuperação com uma conta co
 - Uma chamada de atualização foi interceptada localmente; o token e a senha fictícios chegaram ao endpoint esperado. A resposta de erro simulada apareceu na tela; nenhuma chamada alterou produção.
 - Bundle JavaScript e política de privacidade foram servidos como arquivos reais; nenhum erro de execução capturado no navegador.
 
-O fallback também foi conferido para `/App/Home`, `/Login`, `/PasswordReset` e um caminho fictício, todos entregando o documento do app. O encaminhamento não cria telas novas: o frontend ainda precisa reconhecer a rota e os parâmetros, e as permissões continuam sendo verificadas pela API. Esse teste local valida o formulário e a navegação com fallback, mas não é um deployment da Vercel nem um teste em Safari/iOS. A conferência online continua sendo a etapa posterior ao deployment.
+O fallback também foi conferido para `/App/Home`, `/Login`, `/PasswordReset` e um caminho fictício, todos entregando o documento do app. O encaminhamento não cria telas novas: o frontend ainda precisa reconhecer a rota e os parâmetros, e as permissões continuam sendo verificadas pela API. Esse teste local valida o formulário e a navegação com fallback, mas não é um deployment da Vercel nem um teste em Safari/iOS.
+
+## Resultado da publicação em 03/10/2026
+
+O [PR #9](https://github.com/secompufscar/secomp-app-xiv/pull/9) foi integrado em `6d6cc1c2` e publicado na Vercel. Leituras do domínio público confirmaram 200 e o documento do app na raiz, em `/SetNewPassword?token=diagnostic-invalid-token` e `/App/Home`. As atualizações posteriores, até o app `cdee8cde`, preservam essa configuração. A conclusão da recuperação de senha e o login com a nova senha ainda não foram verificados em produção. [Evidências e limites](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/production-deployment-2026-10-03.md#rotas-web-e-recuperação-de-senha).
