@@ -6,6 +6,7 @@
 - A distinção entre inscrição e atividade salva vem de `Category.requiresEnrollment`; ícones e agrupamentos usam `Category.slug`, sem IDs mágicos.
 - A confirmação da inscrição no evento só aparece depois de resposta bem sucedida da API.
 - Access e refresh tokens usam Expo SecureStore em Android e iOS. A primeira execução migra o access token legado; novos logins recebem access token curto e refresh token rotativo. A versão web continua em AsyncStorage.
+- Falhas temporárias na renovação e na consulta inicial do perfil preservam os dados de acesso. A abertura do app mostra **Tentar novamente** quando a sessão não pode ser recuperada; somente sessão inválida encerra o acesso local. [Comportamento, testes e limites](session-recovery.md).
 - Todas as requisições informam plataforma, versão e build. Uma política marcada como `force` mostra uma tela de atualização bloqueante.
 - No Android, o botão da tela bloqueante tenta iniciar uma atualização imediata pela Google Play usando Play Core 2.1.0. Quando a instalação não veio da Play Store, não há atualização elegível ou o módulo nativo falha, o aplicativo abre a URL da loja informada pela API.
 - Expo Updates, runtime por versão, canais de preview e produção e novos números de build foram configurados.
