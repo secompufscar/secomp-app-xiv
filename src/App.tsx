@@ -14,6 +14,7 @@ import "./styles/global.css";
 import "@expo/metro-runtime";
 import { AppVersionProvider, useAppVersion } from "./hooks/AppVersionContext";
 import UpdateRequiredScreen from "./screens/update/updateRequiredScreen";
+import SessionRecoveryScreen from "./screens/login-signup/sessionRecoveryScreen";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -51,7 +52,7 @@ export default function App() {
 }
 
 function AppContent() {
-  const { loading } = useAuth();
+  const { loading, sessionError, retrySession } = useAuth();
   const { checkingVersion, requiredUpdate } = useAppVersion();
 
   if (requiredUpdate) return <UpdateRequiredScreen policy={requiredUpdate} />;
@@ -63,6 +64,8 @@ function AppContent() {
       </View> 
     );
   }
+
+  if (sessionError) return <SessionRecoveryScreen message={sessionError} onRetry={retrySession} />;
 
   return <Routes />;
 }

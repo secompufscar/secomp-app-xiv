@@ -1,12 +1,15 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode, useCallback, useMemo } from "react";
 import { setGlobalSignOut } from "../utils/authHelper";
 import api from "../services/api";
 import { getAuthToken, getRefreshToken, removeSessionTokens, setSessionTokens } from "../services/secureStorage";
 import { logout } from "../services/users";
+import { isInvalidSessionError } from "../utils/sessionErrors";
 
 interface AuthContextData {
   user: User | null;
   loading: boolean;
+  sessionError: string | null;
+  retrySession: () => Promise<void>;
   signIn: (data: User, token: string, refreshToken: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateUser: (data: User) => Promise<void>; 
@@ -21,11 +24,24 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sessionError, setSessionError] = useState<string | null>(null);
+  const restorePromise = useRef<Promise<void> | null>(null);
+  const sessionGeneration = useRef(0);
+
+  const resetAuthState = useCallback(async () => {
+    sessionGeneration.current++;
+    setUser(null);
+    setSessionError(null);
+    setLoading(false);
+  }, []);
 
   const signIn = useCallback(async (data: User, token: string, refreshToken: string) => {
     try {
+      sessionGeneration.current++;
       await setSessionTokens(token, refreshToken);
       setUser(data);
+      setSessionError(null);
+      setLoading(false);
     } catch (error) {
       console.error("Erro no signIn:", error);
     }
@@ -42,50 +58,72 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       }
       await removeSessionTokens();
-      setUser(null);
+      await resetAuthState();
     } catch (error) {
       console.error("Erro ao fazer sign out:", error);
     }
-  }, []);
+  }, [resetAuthState]);
 
   const updateUser = useCallback(async (data: User) => {
     setUser(data);
   }, []);
 
   useEffect(() => {
-    setGlobalSignOut(signOut);
-  }, [signOut]);
+    // The interceptor already removes invalid tokens; do not revoke remotely here.
+    setGlobalSignOut(resetAuthState);
+  }, [resetAuthState]);
 
   // Recupera a sessão do armazenamento seguro (e migra o token legado uma vez).
-  useEffect(() => {
-    const loadUserFromStorage = async () => {
+  const retrySession = useCallback(() => {
+    if (restorePromise.current) return restorePromise.current;
+    const generation = sessionGeneration.current;
+    setLoading(true);
+    setSessionError(null);
+    const restore = async () => {
       try {      
         const storedToken = await getAuthToken();
-
-        if (storedToken) {
-          const response = await api.get("/users/me");
-          setUser(response.data);
-        } else {
+        const storedRefreshToken = await getRefreshToken();
+        if (generation !== sessionGeneration.current) return;
+        if (storedToken || storedRefreshToken) {
+          const response = await api.get("/users/me", { timeout: 10000 });
+          if (generation === sessionGeneration.current) setUser(response.data);
+        } else if (generation === sessionGeneration.current) {
           setUser(null);
         }
       } catch (error) {
-        setUser(null);
-        await signOut();
+        if (generation !== sessionGeneration.current) return;
+        if (isInvalidSessionError(error)) {
+          try {
+            await removeSessionTokens();
+            await resetAuthState();
+          } catch {
+            setSessionError("Não foi possível concluir a recuperação da sessão. Tente novamente.");
+          }
+        } else {
+          setSessionError("Não foi possível recuperar sua sessão agora. Verifique sua conexão e tente novamente.");
+        }
       } finally {
-        setLoading(false);
+        if (generation === sessionGeneration.current) setLoading(false);
       }
     };
+    const pending = restore().finally(() => {
+      if (restorePromise.current === pending) restorePromise.current = null;
+    });
+    restorePromise.current = pending;
+    return pending;
+  }, [resetAuthState]);
 
-    loadUserFromStorage();
-  }, []);
+  useEffect(() => { void retrySession(); }, [retrySession]);
 
   const contextValue = useMemo(() => ({
     user,
     loading,
+    sessionError,
+    retrySession,
     signIn,
     signOut,
     updateUser,
-  }), [user, loading, signIn, signOut, updateUser]);
+  }), [user, loading, sessionError, retrySession, signIn, signOut, updateUser]);
 
   return (
     <AuthContext.Provider value={contextValue}>

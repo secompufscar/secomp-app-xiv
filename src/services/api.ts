@@ -4,6 +4,7 @@ import Constants from "expo-constants";
 import { Platform } from "react-native";
 import { getAuthToken, getRefreshToken, removeSessionTokens, setSessionTokens } from "./secureStorage";
 import { callGlobalRequireUpdate } from "../utils/updateHelper";
+import { InvalidSessionError, isInvalidSessionError } from "../utils/sessionErrors";
 
 const baseURL = "https://secomp-server-xiv-production.up.railway.app/api/v1";
 const api = axios.create({ baseURL });
@@ -20,7 +21,7 @@ function appHeaders() {
 
 async function renewAccessToken() {
   const refreshToken = await getRefreshToken();
-  if (!refreshToken) throw new Error("Refresh token ausente");
+  if (!refreshToken) throw new InvalidSessionError("Refresh token ausente");
 
   const response = await refreshClient.post("/users/refresh", { refreshToken }, { headers: appHeaders() });
   await setSessionTokens(response.data.token, response.data.refreshToken);
@@ -68,8 +69,16 @@ api.interceptors.response.use(
         const token = await refreshPromise;
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return api(originalRequest);
-      } catch {
+      } catch (refreshError) {
+        if (axios.isAxiosError(refreshError) && refreshError.response?.status === 426
+          && refreshError.response.data?.code === "APP_UPDATE_REQUIRED") {
+          callGlobalRequireUpdate(refreshError.response.data);
+        }
+        // Network failures and 5xx responses do not invalidate the stored session.
+        if (!isInvalidSessionError(refreshError)) return Promise.reject(refreshError);
         await removeSessionTokens();
+        await callGlobalSignOut();
+        return Promise.reject(refreshError);
       }
     }
     if (status === 401) {
