@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { View, Text, FlatList, ActivityIndicator, Pressable } from "react-native";
+import { View, Text, FlatList, ActivityIndicator, Pressable, Platform } from "react-native";
 import { getActivities } from "../../services/activities";
 import { getCategories } from "../../services/categories";
 import { parseISO, addHours, format } from "date-fns";
@@ -98,6 +98,16 @@ export default function ActivityList({ selectedCategory, onPressActivity }: Acti
       targetName = ["Workshop", "LualDAComp", "Sociocultural", "Credenciamento", "Coffee", "Outros"];
     } else {
       targetName = [selNorm];
+    }
+
+    if (Platform.OS === "web") {
+      const normalizedNames = targetName.map(normalize);
+      const categoryIds = new Set(
+        allCategories
+          .filter((c) => normalizedNames.includes(normalize(c.nome)))
+          .map((c) => c.id),
+      );
+      return allActivities.filter((a) => categoryIds.has(a.categoriaId));
     }
 
     const catObj = allCategories.find((c) => targetName.includes(normalize(c.nome)));
