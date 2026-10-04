@@ -1,6 +1,6 @@
 # Edição de atividades na web
 
-Última revisão: 03/10/2026. Funcionalidade publicada no app `cdee8cde` (PR #11), com API `633e8c8` (PR #28). Limite, recorte e mínimo de vagas conferidos no bundle público; fluxos de escrita verificados somente com dados fictícios. [Evidências da publicação](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/production-deployment-2026-10-03.md).
+Última revisão: 04/10/2026. Editor publicado no app `cdee8cde` (PR #11), com API `633e8c8` (PR #28). Limite, recorte e mínimo de vagas conferidos no bundle público; fluxos de escrita verificados somente com dados fictícios. [Evidências da publicação](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/production-deployment-2026-10-03.md).
 
 Administradores podem abrir uma atividade pela lista ou pelo cronograma e clicar em **Editar atividade**. O formulário permite editar título, nome, detalhes, horário, local, link do local e número de vagas, escolher uma única opção **Apresentadora** ou **Apresentador** e selecionar ou substituir a foto. A escolha também altera o rótulo exibido nos detalhes públicos.
 
@@ -16,6 +16,8 @@ As vagas aceitam inteiro de 0 a 2147483647. Se não forem alteradas, a requisiç
 
 ## Permissões e persistência
 
+Na tela de detalhes, admins da versão web veem **Vagas** e **Lista de Espera** em todas as categorias, inclusive atividades sem inscrição obrigatória. A consulta usa somente o resumo agregado autenticado. Para participantes e para a versão mobile, a exibição continua seguindo `requiresEnrollment` da categoria. Essa visibilidade administrativa não muda a ação de salvar/inscrever-se, nem a política de inscrições. Durante o carregamento ou após falha, os totais desconhecidos aparecem como `—`, preservando a capacidade cadastrada; uma falha oferece **Tentar carregar totais novamente**, sem apresentar zero como se fosse um total confirmado.
+
 Antes de salvar, o formulário consulta `presentCount` do resumo e exibe o mínimo permitido abaixo das vagas. Um valor menor destaca o aviso e desabilita Salvar. Se o total não puder ser conferido, há nova tentativa e somente a alteração de vagas fica bloqueada. A API reconfere o total durante a transação; um conflito atualiza a indicação no formulário.
 
 - O botão e o formulário aparecem somente quando `Platform.OS === "web"` e `user.tipo === "ADMIN"`. A API exige autenticação e papel administrativo nas escritas.
@@ -30,3 +32,5 @@ Antes de salvar, o formulário consulta `presentCount` do resumo e exibe o míni
 Publicar primeiro a API com as migrações `20261003180000_activity_speaker_title` (seleção, link e limite anterior) e `20261003194000_activity_description_1500` (limite atual `VARCHAR(1500)`), preservando dados. Depois integrar o PR do app na `main`, aguardar o deploy automático GitHub → Vercel e conferir `https://secomp-app-xiv.vercel.app`.
 
 Validar TypeScript/exportação web, testes de contratos e falhas da API, navegador com dados fictícios e ensaio da migração com backup restaurado em banco isolado. Uploads reais de produção não são necessários para esses testes.
+
+Em 04/10/2026, a exibição administrativa de vagas foi validada com seis testes da tela real, TypeScript e exportação web; a suíte do app passou com 18 testes. No navegador, com API simulada e conta fictícia, foram verificados admin em 320/1280 px, participantes com e sem inscrição obrigatória e erro 503 seguido de nova tentativa. Os totais apareceram conforme o papel, sem transbordamento horizontal ou chamadas reais à API. A verificação não utiliza a sessão de uma conta real e simula a dependência do leitor QR.

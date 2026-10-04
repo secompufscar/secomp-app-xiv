@@ -34,6 +34,7 @@ export default function ActivityDetails() {
   const [subscribedCount, setSubscribedCount] = useState(0);
   const [waitingListCount, setWaitingListCount] = useState(0);
   const [waitlistPosition, setWaitlistPosition] = useState<number | null>(null);
+  const [countsStatus, setCountsStatus] = useState<"loading" | "ready" | "error">("loading");
 
   // Imagens da atividade
   const [palestranteImageUrl, setPalestranteImageUrl] = useState("");
@@ -51,17 +52,21 @@ export default function ActivityDetails() {
   const canEditText = Platform.OS === "web" && user?.tipo === "ADMIN";
 
   const requiresEnrollment = category?.requiresEnrollment ?? false;
+  const showCapacity = requiresEnrollment || canEditText;
 
   // Obtém apenas os números agregados e a posição do usuário autenticado.
   const fetchParticipantsCounts = async () => {
-    if (!requiresEnrollment) return;
+    if (!showCapacity) return;
 
+    setCountsStatus("loading");
     try {
       const summary = await getActivityEnrollmentSummary(activity.id);
       setSubscribedCount(summary.occupiedCount);
       setWaitingListCount(summary.waitlistCount);
       setWaitlistPosition(summary.waitlistPosition);
+      setCountsStatus("ready");
     } catch (error) {
+      setCountsStatus("error");
       console.error("Erro ao buscar resumo de inscrições:", error);
     }
   };
@@ -100,7 +105,7 @@ export default function ActivityDetails() {
 
     checkSubscription();
     fetchParticipantsCounts();
-  }, [user, activity.id, activity.vagas, requiresEnrollment]);
+  }, [user, activity.id, activity.vagas, showCapacity]);
 
   // Carrega as imagens da atividade
   useEffect(() => {
@@ -237,21 +242,32 @@ export default function ActivityDetails() {
                 subText={getTime()}
               />
 
-              {requiresEnrollment && <View className="flex flex-row w-full gap-4">
+              {showCapacity && <View className="flex flex-row w-full gap-4">
                 <InfoRow
                   icon={faUser}
                   mainText="Vagas"
-                  subText={activity.vagas != null ? `${subscribedCount} / ${activity.vagas}` : "Não definidas"}
+                  subText={activity.vagas != null ? `${countsStatus === "ready" ? subscribedCount : "—"} / ${activity.vagas}` : "Não definidas"}
                   className="flex-1"
                 />
 
                 <InfoRow
                   icon={faUserClock}
                   mainText="Lista de Espera"
-                  subText={`${waitingListCount}`}
+                  subText={countsStatus === "ready" ? `${waitingListCount}` : "—"}
                   className="flex-1"
                 />
               </View>}
+              {showCapacity && countsStatus === "loading" && (
+                <Text accessibilityLiveRegion="polite" className="text-gray-400 font-inter text-sm mb-4">Carregando totais de inscrições…</Text>
+              )}
+              {showCapacity && countsStatus === "error" && (
+                <View className="mb-4">
+                  <Text accessibilityRole="alert" className="text-gray-400 font-inter text-sm">Não foi possível carregar os totais de inscrições.</Text>
+                  <Pressable accessibilityRole="button" onPress={() => { void fetchParticipantsCounts(); }} style={{ minHeight: 48, justifyContent: "center" }}>
+                    <Text className="text-blue-200 font-interMedium">Tentar carregar totais novamente</Text>
+                  </Pressable>
+                </View>
+              )}
             </View>
 
             {/* Detalhes */}
