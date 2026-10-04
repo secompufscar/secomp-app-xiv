@@ -5,7 +5,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { ParamListBase, useFocusEffect, useNavigation } from "@react-navigation/native";
 import { BeautifulName } from "beautiful-name";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { faBell, faArrowRightFromBracket, faQrcode, faFlag, faUser, faStar, faTags, faTicket, faCalendarXmark } from "@fortawesome/free-solid-svg-icons";
+import { faBell, faArrowRightFromBracket, faQrcode, faFlag, faUser, faStar, faTags, faTicket, faCalendarXmark, faListOl } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../../hooks/AuthContext";
 import { getProfile } from "../../services/users";
 import { deleteRegistration, getRegistrationByUserIdAndEventId } from "../../services/userEvents";
@@ -144,6 +144,12 @@ export default function AdminProfile() {
             icon={faFlag}
             label="Atividades"
             onPress={() => { navigation.navigate("ActivityAdmin" )}}
+          />
+
+          <ProfileButton
+            icon={faListOl}
+            label="Listas para sorteio"
+            onPress={() => { navigation.navigate("ActivityRaffleLists") }}
           />
 
           <ProfileButton

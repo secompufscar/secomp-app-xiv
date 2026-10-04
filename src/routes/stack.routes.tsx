@@ -13,6 +13,7 @@ import {
   EditProfile,
   ActivityDetails,
   ParticipantsList,
+  ActivityRaffleLists,
   ActivityAdmin,
   ActivityAdminCreate,
   ActivityAdminUpdate,
@@ -45,6 +46,7 @@ type StackNavigation = {
   EditProfile: undefined;
   ActivityDetails: { item: Activity };
   ParticipantsList: { activityId: string; activityName: string; };
+  ActivityRaffleLists: undefined;
   ActivityAdmin: undefined;
   ActivityAdminCreate: undefined;
   ActivityAdminUpdate: { id: string };
@@ -80,6 +82,7 @@ export default function StackRoutes() {
       <Stack.Screen name="EditProfile" component={EditProfile} />
       <Stack.Screen name="ActivityDetails" component={ActivityDetails} />
       <Stack.Screen name="ParticipantsList" component={ParticipantsList} />
+      <Stack.Screen name="ActivityRaffleLists" component={ActivityRaffleLists} />
       <Stack.Screen name="ActivityAdmin" component={ActivityAdmin} />
       <Stack.Screen name="ActivityAdminCreate" component={ActivityAdminCreate} />
       <Stack.Screen name="ActivityAdminUpdate" component={ActivityAdminUpdate} />

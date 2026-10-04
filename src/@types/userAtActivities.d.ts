@@ -6,6 +6,7 @@ interface UserAtActivity {
   inscricaoPrevia: boolean;
   listaEspera: boolean;
   createdAt: string;
+  user?: { id: string; nome: string };
 };
 
 interface ActivityEnrollmentSummary {
