@@ -16,15 +16,15 @@ const ProfileButton = ({ icon, label, onPress, disabled = false, busy = false }:
     <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled, busy }} style={{ opacity: disabled ? 0.5 : 1 }}>
       {({ pressed }) => (
         <View
-          className={`flex-row h-[58px] items-center justify-between rounded-lg p-4 mb-3 transition-all duration-100 ${
+          className={`flex-row min-h-[58px] items-center justify-between rounded-lg p-4 mb-3 transition-all duration-100 ${
             pressed ? "bg-background/60" : "bg-background"
           }`}
         >
-          <View className="flex-row items-center gap-4">
+          <View className="flex-row items-center gap-4 flex-1 mr-3">
             <View className="w-6 flex items-center justify-center">
               <FontAwesomeIcon icon={icon} size={20} color={colors.blue[200]} />
             </View>
-            <Text className="text-white text-base font-inter">{label}</Text>
+            <Text className="text-white text-base font-inter flex-1">{label}</Text>
           </View>
 
           <View className="w-6 flex items-center justify-center">

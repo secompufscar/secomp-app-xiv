@@ -30,7 +30,8 @@ export default function AdminProfile() {
 
   const [confirmAction, setConfirmAction] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
-  const [credentialingLoading, setCredentialingLoading] = useState(false);
+  const [credentialingDestination, setCredentialingDestination] = useState<"QRCode" | "ParticipantsList" | null>(null);
+  const credentialingLoading = credentialingDestination !== null;
   const [credentialingError, setCredentialingError] = useState<string | null>(null);
   const credentialingGeneration = useRef(0);
   const credentialingInFlight = useRef(false);
@@ -84,7 +85,7 @@ export default function AdminProfile() {
         isActive = false;
         credentialingGeneration.current++;
         credentialingInFlight.current = false;
-        setCredentialingLoading(false);
+        setCredentialingDestination(null);
         setCredentialingError(null);
         setConfirmAction(false);
         setErrorModalVisible(false);
@@ -92,15 +93,18 @@ export default function AdminProfile() {
     }, [updateUser])
   );
 
-  const openCredentialing = async () => {
+  const openCredentialing = async (destination: "QRCode" | "ParticipantsList") => {
     if (!canUseAdminTools || credentialingInFlight.current) return;
     const generation = ++credentialingGeneration.current;
     credentialingInFlight.current = true;
-    setCredentialingLoading(true);
+    setCredentialingDestination(destination);
     setCredentialingError(null);
     try {
       const activity = await getCurrentCredentialingActivity();
-      if (generation === credentialingGeneration.current) navigation.navigate("QRCode", { id: activity.id });
+      if (generation === credentialingGeneration.current) {
+        if (destination === "QRCode") navigation.navigate("QRCode", { id: activity.id });
+        else navigation.navigate("ParticipantsList", { activityId: activity.id, activityName: activity.nome });
+      }
     } catch (error) {
       if (generation === credentialingGeneration.current) {
         setCredentialingError(error instanceof CredentialingError ? error.message : "Não foi possível carregar o credenciamento. Tente novamente.");
@@ -108,7 +112,7 @@ export default function AdminProfile() {
     } finally {
       if (generation === credentialingGeneration.current) {
         credentialingInFlight.current = false;
-        setCredentialingLoading(false);
+        setCredentialingDestination(null);
       }
     }
   };
@@ -160,11 +164,19 @@ export default function AdminProfile() {
         >
           <ProfileButton
             icon={faQrcode}
-            label={credentialingLoading ? "Carregando..." : "Credenciamento"}
+            label={credentialingDestination === "QRCode" ? "Carregando..." : "Credenciamento"}
             disabled={credentialingLoading}
-            busy={credentialingLoading}
-            onPress={openCredentialing}
+            busy={credentialingDestination === "QRCode"}
+            onPress={() => openCredentialing("QRCode")}
           />
+
+          {Platform.OS === "web" && <ProfileButton
+            icon={faUser}
+            label={credentialingDestination === "ParticipantsList" ? "Carregando..." : "Participantes do credenciamento"}
+            disabled={credentialingLoading}
+            busy={credentialingDestination === "ParticipantsList"}
+            onPress={() => openCredentialing("ParticipantsList")}
+          />}
 
           <ProfileButton
             icon={faBell}

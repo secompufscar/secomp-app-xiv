@@ -85,8 +85,14 @@ function screen(resolveCredentialing, canUseAdminTools = true) {
   function nodes(tree) { if (!tree || typeof tree !== 'object') return []; if (Array.isArray(tree)) return tree.flatMap(nodes); return [tree, ...nodes(tree.props?.children)]; }
   function render() { cursor = 0; return nodes(implementation.default()); }
   render();
-  return { navigation, button: () => render().find(node => node.type === 'Menu' && (/credenciamento/i.test(node.props.label) || node.props.busy)), errors: () => render().filter(node => node.type === 'Error'), leave: () => cleanup[0]() };
+  return { navigation, button: (label = 'Credenciamento') => render().find(node => node.type === 'Menu' && (node.props.label === label || node.props.busy)), errors: () => render().filter(node => node.type === 'Error'), leave: () => cleanup[0]() };
 }
+
+test('atalho da lista usa o credenciamento atual e passa ID/nome para Participantes', async () => {
+  const view = screen(async () => current);
+  await view.button('Participantes do credenciamento').props.onPress();
+  assert.equal(JSON.stringify(view.navigation), JSON.stringify([['ParticipantsList', { activityId: current.id, activityName: current.nome }]]));
+});
 
 test('clique duplicado é bloqueado enquanto resolve e navega com o ID recebido', async () => {
   let release, calls = 0;
