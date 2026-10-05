@@ -56,6 +56,7 @@ function screen({ category = 'credenciamento', platform = 'web', admin = true, r
     '../../services/credentialing': credentialing,
     '../../hooks/AuthContext': { useAuth: () => ({ canUseAdminTools: admin }) },
     '../../components/overlay/credentialingRemovalDialog': { __esModule: true, ...dialog, default: props => jsx('Dialog', props) },
+    '../../components/overlay/userAttendanceDialog': { __esModule: true, default: props => jsx('HistoryDialog', props) },
     '../../services/users': { getUserDetails: () => { throw new Error('Already has name'); } },
     '../../styles/colors': { colors: { blue: { 500: '#000' } } },
     '../../components/button/backButton': () => null, '@expo/vector-icons/FontAwesome6': () => null,
@@ -67,8 +68,27 @@ function screen({ category = 'credenciamento', platform = 'web', admin = true, r
     render, writes, get queries() { return queries; }, leave: () => cleanups[0](),
     buttons: () => render().filter(node => /^Excluir .+ do credenciamento$/.test(node.props?.accessibilityLabel || '')),
     dialog: () => render().find(node => node.type === 'Dialog'),
+    historyButtons: () => render().filter(node => /^Ver atividades com presença de /.test(node.props?.accessibilityLabel || '')),
+    history: () => render().find(node => node.type === 'HistoryDialog'),
   };
 }
+
+test('admin web consulta a pessoa selecionada em qualquer categoria, fecha e troca sem alterar inscrições', async () => {
+  for (const category of ['credenciamento', 'palestra']) {
+    const view = screen({ category }); await settle();
+    assert.equal(view.historyButtons().length, 2);
+    view.historyButtons()[0].props.onPress(); assert.equal(view.history().props.userId, 'person-a');
+    view.history().props.onClose(); assert.equal(view.history(), undefined);
+    view.historyButtons()[1].props.onPress(); assert.equal(view.history().props.userId, 'person-b');
+    view.leave(); assert.equal(view.history(), undefined); assert.equal(view.writes.length, 0);
+  }
+});
+
+test('consulta de presenças não aparece no mobile nem sem ferramentas administrativas', async () => {
+  for (const scenario of [{ platform: 'android' }, { admin: false }]) {
+    const view = screen(scenario); await settle(); assert.equal(view.historyButtons().length, 0); assert.equal(view.history(), undefined);
+  }
+});
 
 test('exclusão precisa do nome completo, usa somente o par usuário/atividade e recarrega totais', async () => {
   const view = screen(); await settle();
