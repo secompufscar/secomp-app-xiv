@@ -2,7 +2,7 @@
 
 Aplicativo desenvolvido pela equipe de TI da SECOMP UFSCar especialmente para o evento.
 
-Guias: [edição administrativa de atividades na web](docs/activity-text-web.md), [visão do participante para admins](docs/participant-view-web.md), [rotas e publicação na Vercel](docs/web-routing.md), [recuperação de sessão em falhas temporárias](docs/session-recovery.md) e [validação da versão mobile](docs/p0-release-blockers.md). O app web é publicado automaticamente pela Vercel após integração na `main`.
+Guias: [edição administrativa de atividades na web](docs/activity-text-web.md), [visão do participante para admins](docs/participant-view-web.md), [credenciamento e presença](docs/credentialing.md), [rotas e publicação na Vercel](docs/web-routing.md), [recuperação de sessão em falhas temporárias](docs/session-recovery.md) e [validação da versão mobile](docs/p0-release-blockers.md). O app web é publicado automaticamente pela Vercel após integração na `main`.
 
 Ele é utilizado pelos participantes para realizar a inscrição no evento e em suas atividades, acompanhar novidades e acessar informações importantes. Para a organização, o aplicativo oferece ferramentas que facilitam o controle do evento, como o gerenciamento de atividades e a leitura de presença dos participantes.
 

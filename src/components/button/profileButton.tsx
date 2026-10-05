@@ -7,11 +7,13 @@ type MenuButtonProps = {
   icon: IconDefinition;
   label: string;
   onPress: (event: GestureResponderEvent) => void; 
+  disabled?: boolean;
+  busy?: boolean;
 };
 
-const ProfileButton = ({ icon, label, onPress }: MenuButtonProps) => {
+const ProfileButton = ({ icon, label, onPress, disabled = false, busy = false }: MenuButtonProps) => {
   return (
-    <Pressable onPress={onPress}>
+    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled, busy }} style={{ opacity: disabled ? 0.5 : 1 }}>
       {({ pressed }) => (
         <View
           className={`flex-row h-[58px] items-center justify-between rounded-lg p-4 mb-3 transition-all duration-100 ${
