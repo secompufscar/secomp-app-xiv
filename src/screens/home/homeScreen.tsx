@@ -21,7 +21,7 @@ import ErrorOverlay from "../../components/overlay/errorOverlay";
 
 export default function Home() {
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
-  const { user }: any = useAuth();
+  const { user, isParticipantView }: any = useAuth();
   const [eventStatusMessage, setEventStatusMessage] = useState("Carregando informações do evento...");
   const [errorMessage, setErrorMessage] = useState("Erro");
   const [errorModalVisible, setErrorModalVisible] = useState(false);
@@ -95,6 +95,7 @@ export default function Home() {
   );
 
   const subscribe = async (): Promise<boolean> => {
+    if (isParticipantView) return false;
     if (isSubscribing) return false;
 
     setIsSubscribing(true);
@@ -199,7 +200,8 @@ export default function Home() {
           <HomeEventSubscription
             isEventActive={isEventActive}
             isUserSubscribed={isUserSubscribed}
-            onSubscribeRequest={() => setConfirmAction("subscribe")}
+            disabled={isParticipantView}
+            onSubscribeRequest={() => { if (!isParticipantView) setConfirmAction("subscribe"); }}
           />
         }
 

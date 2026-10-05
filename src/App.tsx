@@ -1,6 +1,6 @@
 import "react-native-reanimated";
 import { useEffect } from "react";
-import { View, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, Platform } from "react-native";
 import { AuthProvider, useAuth } from "./hooks/AuthContext";
 import { useFonts } from "expo-font";
 import { Inter_400Regular, Inter_500Medium } from "@expo-google-fonts/inter";
@@ -15,6 +15,7 @@ import "@expo/metro-runtime";
 import { AppVersionProvider, useAppVersion } from "./hooks/AppVersionContext";
 import UpdateRequiredScreen from "./screens/update/updateRequiredScreen";
 import SessionRecoveryScreen from "./screens/login-signup/sessionRecoveryScreen";
+import ParticipantViewToggle from "./components/app/participantViewToggle";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -66,6 +67,14 @@ function AppContent() {
   }
 
   if (sessionError) return <SessionRecoveryScreen message={sessionError} onRetry={retrySession} />;
+  if (Platform.OS !== "web") return <Routes />;
 
-  return <Routes />;
+  return (
+    <View style={{ flex: 1 }}>
+      <ParticipantViewToggle />
+      <View style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+        <Routes />
+      </View>
+    </View>
+  );
 }

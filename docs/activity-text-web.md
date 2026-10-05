@@ -20,7 +20,7 @@ Na tela de detalhes, admins da versão web veem **Vagas** e **Lista de Espera** 
 
 Antes de salvar, o formulário consulta `presentCount` do resumo e exibe o mínimo permitido abaixo das vagas. Um valor menor destaca o aviso e desabilita Salvar. Se o total não puder ser conferido, há nova tentativa e somente a alteração de vagas fica bloqueada. A API reconfere o total durante a transação; um conflito atualiza a indicação no formulário.
 
-- O botão e o formulário aparecem somente quando `Platform.OS === "web"` e `user.tipo === "ADMIN"`. A API exige autenticação e papel administrativo nas escritas.
+- O botão e o formulário aparecem somente quando `Platform.OS === "web"`, `user.tipo === "ADMIN"` e a [visão do participante](participant-view-web.md) está desativada. Na prévia, os totais seguem `requiresEnrollment` e as ações de inscrição ficam desativadas. A API exige autenticação e papel administrativo nas escritas.
 - `PUT /api/v1/activities/:id` recebe `nome`, `palestranteNome`, `palestranteTitulo`, `detalhes`, `local`, `localLink` e, quando alterados, `data` e `vagas`. A seleção usa `APRESENTADORA` ou `APRESENTADOR`.
 - A foto usa os endpoints existentes `POST /activityImages` e `PUT /activityImages/:id`, com multipart e `typeOfImage=palestrante`. Uma foto cadastrada é substituída pelo mesmo registro.
 - Categoria, pontos, edição e inscrições não são enviados pelo formulário.

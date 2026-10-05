@@ -6,8 +6,8 @@ const vm = require('node:vm');
 const ts = require('typescript');
 
 // Render the real screen with controlled hooks and API responses, without network.
-function screen({ role = 'ADMIN', platform = 'web', enrollment = false, capacity = 50, missingCategory = false, summary } = {}) {
-  const slots = [], effects = [], calls = [];
+function screen({ role = 'ADMIN', platform = 'web', enrollment = false, capacity = 50, missingCategory = false, summary, participantView = false } = {}) {
+  const slots = [], effects = [], calls = [], writes = [];
   let cursor = 0;
   const category = { id: 'category-test', nome: 'Teste', slug: 'teste', requiresEnrollment: enrollment };
   const activity = { id: 'activity-test', nome: 'Atividade fictícia', data: '2026-10-04T12:00:00Z', vagas: capacity, categoriaId: category.id, categoria: missingCategory ? undefined : category };
@@ -24,10 +24,10 @@ function screen({ role = 'ADMIN', platform = 'web', enrollment = false, capacity
     'react-native-safe-area-context': { SafeAreaView: 'View' },
     '@react-navigation/native': { useRoute: () => ({ params: { item: activity } }), useNavigation: () => ({ navigate() {}, setParams() {} }) },
     '@fortawesome/react-native-fontawesome': { FontAwesomeIcon: noop }, '@fortawesome/free-solid-svg-icons': {},
-    '../../hooks/AuthContext': { useAuth: () => ({ user }) },
+    '../../hooks/AuthContext': { useAuth: () => ({ user, canUseAdminTools: role === 'ADMIN' && !participantView, isParticipantView: participantView }) },
     '../../services/userAtActivities': {
       getActivityEnrollmentSummary: async id => { calls.push(id); return summary ? summary() : { occupiedCount: 20, waitlistCount: 2, waitlistPosition: null }; },
-      userSubscription: async () => ({ inscricaoPrevia: false, listaEspera: false }), subscribeToActivity: noop, unsubscribeToActivity: noop,
+      userSubscription: async () => ({ inscricaoPrevia: false, listaEspera: false }), subscribeToActivity: () => writes.push('subscribe'), unsubscribeToActivity: () => writes.push('unsubscribe'),
     },
     '../../services/activityImage': { getImagesByActivityId: async () => [] },
     '../../services/categories': { getCategories: async () => { throw new Error('Simulated category outage'); } },
@@ -44,7 +44,7 @@ function screen({ role = 'ADMIN', platform = 'web', enrollment = false, capacity
   const module = { exports: {} };
   vm.runInNewContext(code, { exports: module.exports, module, console: { error() {} }, require(name) { assert.ok(name in dependencies, `Unmocked dependency: ${name}`); return dependencies[name]; } });
   function render() { cursor = 0; const tree = module.exports.default(); effects.splice(0).forEach(effect => effect()); return tree; }
-  render(); return { render, calls, activity };
+  render(); return { render, calls, activity, writes };
 }
 function nodes(tree) {
   if (!tree || typeof tree !== 'object') return [];
@@ -91,5 +91,21 @@ test('capacidade zero e indefinida permanecem visíveis ao admin web', async () 
     const view = screen({ capacity, summary: () => ({ occupiedCount: 0, waitlistCount: 2, waitlistPosition: null }) }); await settle();
     assert.ok(texts(view.render()).includes(capacity === 0 ? '0 / 0' : 'Não definidas'));
     assert.ok(texts(view.render()).includes('Lista de Espera'));
+  }
+});
+
+test('prévia de ADMIN segue exibição do participante e bloqueia escrita mesmo por chamada direta', async () => {
+  for (const enrollment of [false, true]) {
+    const view = screen({ participantView: true, enrollment }); await settle();
+    const tree = view.render();
+    assert.equal(texts(tree).includes('Vagas'), enrollment);
+    assert.equal(texts(tree).includes('Editar atividade'), false);
+    assert.equal(texts(tree).includes('Ler Presença'), false);
+    assert.equal(texts(tree).includes('Participantes'), false);
+    const action = nodes(tree).find(node => node.type === 'Pressable' && node.props.accessibilityState?.disabled);
+    assert.ok(action);
+    await action.props.onPress();
+    assert.deepEqual(view.writes, []);
+    assert.ok(texts(tree).includes(enrollment ? 'Inscrever-se' : 'Salvar atividade'));
   }
 });

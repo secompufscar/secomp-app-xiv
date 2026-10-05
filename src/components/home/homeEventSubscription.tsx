@@ -5,17 +5,19 @@ export default function HomeEventSubscription({
   isEventActive,
   isUserSubscribed,
   onSubscribeRequest,
+  disabled = false,
 }: {
   isEventActive: boolean;
   isUserSubscribed: boolean;
   onSubscribeRequest: () => void;
+  disabled?: boolean;
 }) {
   const [isBtnPressed, setIsBtnPressed] = useState(false);
 
   let titleText = "";
   let subtitleText = "";
   let buttonText = "";
-  let buttonDisabled = false;
+  let buttonDisabled = disabled;
   let onPressHandler: () => void = () => {};
 
   // Estilo
@@ -51,6 +53,9 @@ export default function HomeEventSubscription({
           onPressIn={() => setIsBtnPressed(true)}
           onPressOut={() => setIsBtnPressed(false)}
           disabled={buttonDisabled}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: buttonDisabled }}
+          style={{ opacity: buttonDisabled ? 0.5 : 1 }}
           className={`rounded-[6px] py-[12px] px-7 items-center mt-4 mb-1 ${buttonColor} ${
             isBtnPressed ? "opacity-80" : "opacity-100"
           }`}

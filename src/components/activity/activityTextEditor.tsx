@@ -25,7 +25,7 @@ function activityTime(data: string) {
 }
 
 export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhotoSaved }: Props) {
-  const { user } = useAuth();
+  const { canUseAdminTools } = useAuth();
   const [name, setName] = useState(activity.nome);
   const [speakerName, setSpeakerName] = useState(activity.palestranteNome);
   const [speakerTitle, setSpeakerTitle] = useState<"APRESENTADOR" | "APRESENTADORA">(activity.palestranteTitulo ?? "APRESENTADOR");
@@ -114,7 +114,7 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
   };
 
   const handleSave = async () => {
-    if (saving.current || selectingPhoto || user?.tipo !== "ADMIN") return;
+    if (saving.current || selectingPhoto || !canUseAdminTools) return;
 
     const nome = name.trim();
     const palestranteNome = speakerName.trim();
