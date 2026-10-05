@@ -8,6 +8,7 @@ import { getCategories } from "../../services/categories";
 import { isCredentialingCategory } from "../../services/credentialing";
 import { useAuth } from "../../hooks/AuthContext";
 import CredentialingRemovalDialog, { matchesParticipantName } from "../../components/overlay/credentialingRemovalDialog";
+import UserAttendanceDialog from "../../components/overlay/userAttendanceDialog";
 import { getUserDetails } from "../../services/users";
 import { colors } from "../../styles/colors";
 import BackButton from "../../components/button/backButton";
@@ -39,6 +40,8 @@ export default function ParticipantsList() {
   const { canUseAdminTools } = useAuth();
   const [isCredentialing, setIsCredentialing] = useState(false);
   const canRemove = Platform.OS === "web" && canUseAdminTools && isCredentialing;
+  const canInspect = Platform.OS === "web" && canUseAdminTools;
+  const [historySelected, setHistorySelected] = useState<ParticipantDetails | null>(null);
   const [selected, setSelected] = useState<ParticipantDetails | null>(null);
   const [typedName, setTypedName] = useState("");
   const [removing, setRemoving] = useState(false);
@@ -104,6 +107,7 @@ export default function ParticipantsList() {
         setTypedName("");
         setRemovalError(null);
         setSuccess(null);
+        setHistorySelected(null);
       };
     }, [fetchData]),
   );
@@ -151,6 +155,17 @@ export default function ParticipantsList() {
           </View>
         </View>
       </View>
+      {canInspect && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Ver atividades com presença de ${item.userName}`}
+          disabled={removing}
+          onPress={() => { if (!removing && canInspect) setHistorySelected(item); }}
+          style={{ minHeight: 48, justifyContent: "center", alignItems: "center", padding: 12, marginTop: 12, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}
+        >
+          <Text style={{ color: colors.white, fontFamily: "Inter_500Medium", fontSize: 14, textAlign: "center" }}>Ver atividades com presença</Text>
+        </Pressable>
+      )}
       {canRemove && (
         <Pressable
           accessibilityRole="button"
@@ -274,6 +289,14 @@ export default function ParticipantsList() {
           showsVerticalScrollIndicator={false}
         />
       </View>
+      {canInspect && historySelected && (
+        <UserAttendanceDialog
+          key={historySelected.userId}
+          userId={historySelected.userId}
+          name={historySelected.userName}
+          onClose={() => setHistorySelected(null)}
+        />
+      )}
       {canRemove && selected && (
         <CredentialingRemovalDialog
           name={selected.userName}
