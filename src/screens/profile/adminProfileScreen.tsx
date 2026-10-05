@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { View, Text, Pressable, StatusBar, Platform, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -10,6 +10,7 @@ import { useAuth } from "../../hooks/AuthContext";
 import { getProfile } from "../../services/users";
 import { deleteRegistration, getRegistrationByUserIdAndEventId } from "../../services/userEvents";
 import { getCurrentEvent } from "../../services/events";
+import { CredentialingError, getCurrentCredentialingActivity } from "../../services/credentialing";
 import { colors } from "../../styles/colors";
 import BackButton from "../../components/button/backButton";
 import EditButton from "../../components/button/editButton";
@@ -19,16 +20,20 @@ import ErrorOverlay from "../../components/overlay/errorOverlay";
 
 export default function AdminProfile() {
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
-  const { signOut, user: userFromContext, updateUser}: any = useAuth();
+  const { signOut, user: userFromContext, updateUser, canUseAdminTools } = useAuth();
 
   const [user, setUser] = useState(userFromContext);
-  const nomeCompleto = new BeautifulName(user.nome || "").beautifulName;
+  const nomeCompleto = new BeautifulName(user?.nome || "").beautifulName;
 
   const [isUserSubscribed, setIsUserSubscribed] = useState(false);
   const [registrationId, setRegistrationId] = useState<string | null>(null);
 
   const [confirmAction, setConfirmAction] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [credentialingLoading, setCredentialingLoading] = useState(false);
+  const [credentialingError, setCredentialingError] = useState<string | null>(null);
+  const credentialingGeneration = useRef(0);
+  const credentialingInFlight = useRef(false);
 
   if (!user) {
     return (
@@ -77,11 +82,36 @@ export default function AdminProfile() {
 
       return () => {
         isActive = false;
+        credentialingGeneration.current++;
+        credentialingInFlight.current = false;
+        setCredentialingLoading(false);
+        setCredentialingError(null);
         setConfirmAction(false);
         setErrorModalVisible(false);
       };
     }, [updateUser])
   );
+
+  const openCredentialing = async () => {
+    if (!canUseAdminTools || credentialingInFlight.current) return;
+    const generation = ++credentialingGeneration.current;
+    credentialingInFlight.current = true;
+    setCredentialingLoading(true);
+    setCredentialingError(null);
+    try {
+      const activity = await getCurrentCredentialingActivity();
+      if (generation === credentialingGeneration.current) navigation.navigate("QRCode", { id: activity.id });
+    } catch (error) {
+      if (generation === credentialingGeneration.current) {
+        setCredentialingError(error instanceof CredentialingError ? error.message : "Não foi possível carregar o credenciamento. Tente novamente.");
+      }
+    } finally {
+      if (generation === credentialingGeneration.current) {
+        credentialingInFlight.current = false;
+        setCredentialingLoading(false);
+      }
+    }
+  };
 
   const unsubscribe = async () => {
     try {
@@ -130,8 +160,10 @@ export default function AdminProfile() {
         >
           <ProfileButton
             icon={faQrcode}
-            label="Credenciamento"
-            onPress={() => { navigation.navigate("QRCode", { id: "a1487b34-5494-4f62-83a7-074503dd87b5" }) }}
+            label={credentialingLoading ? "Carregando..." : "Credenciamento"}
+            disabled={credentialingLoading}
+            busy={credentialingLoading}
+            onPress={openCredentialing}
           />
 
           <ProfileButton
@@ -227,6 +259,14 @@ export default function AdminProfile() {
         }}
         confirmText="Confirmar"
         confirmButtonColor="#ff3247ff"
+      />
+
+      <ErrorOverlay
+        visible={credentialingError !== null}
+        title="Credenciamento indisponível"
+        message={credentialingError ?? ""}
+        onConfirm={() => setCredentialingError(null)}
+        confirmText="OK"
       />
 
       <ErrorOverlay
