@@ -4,12 +4,17 @@ import api from "../services/api";
 import { getAuthToken, getRefreshToken, removeSessionTokens, setSessionTokens } from "../services/secureStorage";
 import { logout } from "../services/users";
 import { isInvalidSessionError } from "../utils/sessionErrors";
+import { Platform } from "react-native";
 
 interface AuthContextData {
   user: User | null;
   loading: boolean;
   sessionError: string | null;
   retrySession: () => Promise<void>;
+  canPreviewParticipant: boolean;
+  isParticipantView: boolean;
+  canUseAdminTools: boolean;
+  setParticipantView: (enabled: boolean) => void;
   signIn: (data: User, token: string, refreshToken: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateUser: (data: User) => Promise<void>; 
@@ -25,12 +30,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const [participantViewRequested, setParticipantViewRequested] = useState(false);
   const restorePromise = useRef<Promise<void> | null>(null);
   const sessionGeneration = useRef(0);
+  const canPreviewParticipant = Platform.OS === "web" && user?.tipo === "ADMIN";
+  const isParticipantView = canPreviewParticipant && participantViewRequested;
+  const canUseAdminTools = user?.tipo === "ADMIN" && !isParticipantView;
+  const setParticipantView = useCallback((enabled: boolean) => {
+    setParticipantViewRequested(canPreviewParticipant && enabled);
+  }, [canPreviewParticipant]);
+
+  useEffect(() => { setParticipantViewRequested(false); }, [user?.id, user?.tipo]);
 
   const resetAuthState = useCallback(async () => {
     sessionGeneration.current++;
     setUser(null);
+    setParticipantViewRequested(false);
     setSessionError(null);
     setLoading(false);
   }, []);
@@ -40,6 +55,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       sessionGeneration.current++;
       await setSessionTokens(token, refreshToken);
       setUser(data);
+      setParticipantViewRequested(false);
       setSessionError(null);
       setLoading(false);
     } catch (error) {
@@ -120,10 +136,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     loading,
     sessionError,
     retrySession,
+    canPreviewParticipant,
+    isParticipantView,
+    canUseAdminTools,
+    setParticipantView,
     signIn,
     signOut,
     updateUser,
-  }), [user, loading, sessionError, retrySession, signIn, signOut, updateUser]);
+  }), [user, loading, sessionError, retrySession, canPreviewParticipant, isParticipantView, canUseAdminTools, setParticipantView, signIn, signOut, updateUser]);
 
   return (
     <AuthContext.Provider value={contextValue}>

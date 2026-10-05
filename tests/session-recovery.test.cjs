@@ -135,7 +135,7 @@ test('401 simultâneos compartilham uma única renovação e persistência', asy
   assert.equal(store.state.removed, 0);
 });
 
-function provider(store, getProfile) {
+function provider(store, getProfile, platform = 'web') {
   const slots = [], effects = [];
   let index = 0;
   const same = (a, b) => a && a.length === b.length && a.every((v, n) => Object.is(v, b[n]));
@@ -156,12 +156,13 @@ function provider(store, getProfile) {
     'react/jsx-runtime': { jsx: (_type, props) => ({ props }) },
     '../utils/authHelper': { setGlobalSignOut: fn => { expire = fn; } },
     '../services/api': { get: getProfile }, '../services/secureStorage': store.methods,
+    'react-native': { Platform: { OS: platform } },
     '../services/users': { logout: async () => { store.state.remoteLogout++; } },
     '../utils/sessionErrors': sessionErrors,
   });
   function context() { index = 0; return AuthProvider({ children: null }).props.value; }
   context(); effects.splice(0).forEach(fn => fn());
-  return { context, expire: () => expire() };
+  return { context, expire: () => expire(), flushEffects: () => effects.splice(0).forEach(fn => fn()) };
 }
 
 test('perfil 503 no início preserva sessão; botão de nova tentativa restaura o usuário', async () => {
@@ -252,4 +253,62 @@ test('resposta de perfil atrasada não restaura usuário depois de encerrar a se
   await pending;
   assert.equal(h.context().user, null);
   assert.equal(h.context().loading, false);
+});
+
+test('prévia web preserva ADMIN e tokens, e atualização do perfil não sai da prévia', async () => {
+  const store = storage();
+  const admin = { id: 'admin-test', tipo: 'ADMIN' };
+  const h = provider(store, async () => ({ data: admin }));
+  await h.context().retrySession(); h.context(); h.flushEffects();
+  h.context().setParticipantView(true);
+  assert.equal(h.context().isParticipantView, true);
+  assert.equal(h.context().canUseAdminTools, false);
+  assert.equal(h.context().user, admin);
+  await h.context().updateUser({ ...admin, nome: 'Mesmo admin' });
+  h.context(); h.flushEffects();
+  assert.equal(h.context().isParticipantView, true);
+  assert.equal(h.context().user.tipo, 'ADMIN');
+  h.context().setParticipantView(false);
+  assert.equal(h.context().canUseAdminTools, true);
+  assert.equal(store.state.saved, 0); assert.equal(store.state.removed, 0);
+  assert.equal(store.state.access, 'old-access'); assert.equal(store.state.refresh, 'old-refresh');
+});
+
+test('participante e admin nativo não conseguem ativar prévia administrativa web', async () => {
+  for (const [tipo, platform] of [['USER', 'web'], ['ADMIN', 'android'], ['ADMIN', 'ios']]) {
+    const h = provider(storage(), async () => ({ data: { id: 'user-test', tipo } }), platform);
+    await h.context().retrySession(); h.context(); h.flushEffects();
+    h.context().setParticipantView(true);
+    assert.equal(h.context().canPreviewParticipant, false);
+    assert.equal(h.context().isParticipantView, false);
+    assert.equal(h.context().canUseAdminTools, tipo === 'ADMIN');
+  }
+});
+
+test('logout, expiração e novo login não conservam a prévia', async () => {
+  const h = provider(storage(), async () => ({ data: { id: 'admin-test', tipo: 'ADMIN' } }));
+  await h.context().retrySession(); h.context(); h.flushEffects();
+  h.context().setParticipantView(true);
+  await h.context().signOut();
+  assert.equal(h.context().isParticipantView, false);
+  await h.context().signIn({ id: 'admin-test', tipo: 'ADMIN' }, 'new-access', 'new-refresh');
+  h.context(); h.flushEffects();
+  assert.equal(h.context().isParticipantView, false);
+  h.context().setParticipantView(true);
+  await h.expire();
+  assert.equal(h.context().isParticipantView, false);
+  assert.equal(h.context().user, null);
+});
+
+test('troca de identidade ou perda do papel administrativo limpa a prévia', async () => {
+  const h = provider(storage(), async () => ({ data: { id: 'admin-test', tipo: 'ADMIN' } }));
+  await h.context().retrySession(); h.context(); h.flushEffects();
+  h.context().setParticipantView(true);
+  await h.context().updateUser({ id: 'other-admin', tipo: 'ADMIN' });
+  h.context(); h.flushEffects(); assert.equal(h.context().isParticipantView, false);
+  h.context().setParticipantView(true);
+  await h.context().updateUser({ id: 'other-admin', tipo: 'USER' });
+  h.context(); h.flushEffects(); assert.equal(h.context().isParticipantView, false);
+  await h.context().updateUser({ id: 'other-admin', tipo: 'ADMIN' });
+  h.context(); h.flushEffects(); assert.equal(h.context().isParticipantView, false);
 });

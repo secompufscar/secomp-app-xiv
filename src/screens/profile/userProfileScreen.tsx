@@ -19,7 +19,7 @@ import ConfirmationOverlay from "../../components/overlay/confirmationOverlay";
 
 export default function UserProfile() {
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
-  const { signOut, user: userFromContext, updateUser }: any = useAuth();
+  const { signOut, user: userFromContext, updateUser, isParticipantView }: any = useAuth();
 
   const [user, setUser] = useState(userFromContext);
   const [isUserSubscribed, setIsUserSubscribed] = useState(false);
@@ -91,6 +91,7 @@ export default function UserProfile() {
   );
 
   const unsubscribe = async () => {
+    if (isParticipantView) return;
     try {
       if (!registrationId) return;
       await deleteRegistration(registrationId);
@@ -117,7 +118,7 @@ export default function UserProfile() {
 
           <Text className="text-white text-xl font-poppinsSemiBold text-center mt-6">Perfil</Text>
 
-          <EditButton />
+          <EditButton disabled={isParticipantView} />
         </View>
     
         <View className="items-center mb-8">
@@ -201,7 +202,7 @@ export default function UserProfile() {
             <View className="w-full flex flex-col gap-4 mb-24">
               <Text className="text-sm text-[#F8F8F8] font-poppinsMedium">Inscrição no evento</Text>
 
-              <Pressable onPress={() => {setConfirmAction(true)}}>
+              <Pressable disabled={isParticipantView} accessibilityState={{ disabled: isParticipantView }} style={{ opacity: isParticipantView ? 0.5 : 1 }} onPress={() => { if (!isParticipantView) setConfirmAction(true); }}>
                 {({ pressed }) => (
                   <View
                     className={`flex-row h-[58px] items-center justify-between rounded-lg p-4 border border-danger/50 transition-all duration-100 ${

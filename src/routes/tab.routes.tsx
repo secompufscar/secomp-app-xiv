@@ -8,8 +8,7 @@ import { useAuth } from "../hooks/AuthContext";
 const Tab = createBottomTabNavigator();
 
 export default function TabRoutes() {
-  const { user } = useAuth();
-  const role = user?.tipo;
+  const { canUseAdminTools } = useAuth();
 
   return (
     <Tab.Navigator
@@ -97,7 +96,7 @@ export default function TabRoutes() {
         }}
       />
 
-      {role === "ADMIN" ? (
+      {canUseAdminTools ? (
         // Admin
         <Tab.Screen
           name="AdminPerfil"

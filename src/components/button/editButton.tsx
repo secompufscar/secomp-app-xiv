@@ -5,13 +5,18 @@ import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
 import { colors } from "../../styles/colors";
 
-export default function EditButton() {
+export default function EditButton({ disabled = false }: { disabled?: boolean }) {
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
 
   return (
     <Pressable
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel="Editar perfil"
+      accessibilityState={{ disabled }}
+      style={{ opacity: disabled ? 0.5 : 1 }}
       className="w-[32px] h-[32px] mt-10 mb-10"
-      onPress={() => navigation.navigate("EditProfile")}
+      onPress={() => { if (!disabled) navigation.navigate("EditProfile"); }}
     >
       {({ pressed }) => (
         <View

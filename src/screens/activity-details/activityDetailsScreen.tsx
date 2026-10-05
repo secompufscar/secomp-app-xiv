@@ -23,7 +23,7 @@ export default function ActivityDetails() {
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const route = useRoute();
   const { item: activity } = route.params as { item: Activity };
-  const { user } = useAuth();
+  const { user, isParticipantView, canUseAdminTools } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
@@ -49,7 +49,7 @@ export default function ActivityDetails() {
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [isEditingText, setIsEditingText] = useState(false);
   const [textSaved, setTextSaved] = useState(false);
-  const canEditText = Platform.OS === "web" && user?.tipo === "ADMIN";
+  const canEditText = Platform.OS === "web" && canUseAdminTools;
 
   const requiresEnrollment = category?.requiresEnrollment ?? false;
   const showCapacity = requiresEnrollment || canEditText;
@@ -82,7 +82,7 @@ export default function ActivityDetails() {
   // Verifica a inscrição do usuário na atividade
   useEffect(() => {
     const checkSubscription = async () => {
-      if (!user || user.tipo === "ADMIN") {
+      if (!user || canUseAdminTools) {
         setSubscriptionLoading(false);
         return;
       }
@@ -105,7 +105,7 @@ export default function ActivityDetails() {
 
     checkSubscription();
     fetchParticipantsCounts();
-  }, [user, activity.id, activity.vagas, showCapacity]);
+  }, [user, activity.id, activity.vagas, showCapacity, canUseAdminTools]);
 
   // Carrega as imagens da atividade
   useEffect(() => {
@@ -125,7 +125,7 @@ export default function ActivityDetails() {
   }, [activity.id]);
 
   const handleSubscription = async () => {
-    if (!user) return;
+    if (!user || isParticipantView) return;
     setIsLoading(true);
     try {
       if (isSubscribed) {
@@ -318,7 +318,7 @@ export default function ActivityDetails() {
 
           {/* Botão final */}
           <View className="w-full px-6 max-w-[1000px] mx-auto">
-            {user?.tipo === "ADMIN" ? (
+            {canUseAdminTools ? (
               <View className="flex flex-row gap-4">
                 <Button title="Ler Presença" onPress={handleScanPresence} className="flex-1" />
                 <Button
@@ -339,6 +339,10 @@ export default function ActivityDetails() {
               ) : (
                 <Pressable
                   onPress={handleSubscription}
+                  disabled={isParticipantView}
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: isParticipantView }}
+                  style={{ opacity: isParticipantView ? 0.5 : 1 }}
                   onPressIn={() => setIsBtnPressed(true)}
                   onPressOut={() => setIsBtnPressed(false)}
                 >

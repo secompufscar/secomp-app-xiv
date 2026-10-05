@@ -1,4 +1,5 @@
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, useNavigationContainerRef } from "@react-navigation/native";
+import { useEffect, useRef } from "react";
 import { useAuth } from "../hooks/AuthContext";
 import StackRoutes from "./stack.routes";
 import AuthRoutes from "./auth.routes";
@@ -18,10 +19,20 @@ const linking = {
 };
 
 export default function Routes() {
-  const { user } = useAuth();
+  const { user, isParticipantView } = useAuth();
+  const navigationRef = useNavigationContainerRef();
+  const previousView = useRef(isParticipantView);
+
+  useEffect(() => {
+    if (previousView.current === isParticipantView) return;
+    previousView.current = isParticipantView;
+    if (user && navigationRef.isReady()) {
+      navigationRef.resetRoot({ index: 0, routes: [{ name: "App" }] });
+    }
+  }, [isParticipantView, user, navigationRef]);
 
   return (
-    <NavigationContainer linking={linking}>
+    <NavigationContainer ref={navigationRef} linking={linking}>
       {user ? <StackRoutes /> : <AuthRoutes />}
     </NavigationContainer>
   );
