@@ -25,6 +25,7 @@ export async function getUserAttendedActivities(userId: string): Promise<Attende
 export function formatActivityDate(date: string | null): string {
   if (!date || !Number.isFinite(Date.parse(date))) return "Horário não informado";
   return new Intl.DateTimeFormat("pt-BR", {
-    timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short",
+    // Scheduled activities use their UTC components as the event's wall clock.
+    timeZone: "UTC", dateStyle: "short", timeStyle: "short",
   }).format(new Date(date));
 }

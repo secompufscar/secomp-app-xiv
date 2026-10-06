@@ -29,9 +29,9 @@ test('falha na consulta ou dados incompletos/de outra pessoa não viram históri
   assert.equal((await service(async () => [row('saved', false, null)]).getUserAttendedActivities('person-a')).length, 0);
 });
 
-test('horário identifica a data da atividade em São Paulo, sem quebrar para data ausente/inválida', () => {
+test('horário acompanha os componentes usados no cronograma, sem quebrar para data ausente/inválida', () => {
   const s = service(async () => []);
-  assert.match(s.formatActivityDate('2026-10-05T09:30:00Z'), /05\/10\/2026.*06:30/);
+  assert.match(s.formatActivityDate('2026-10-05T09:30:00Z'), /05\/10\/2026.*09:30/);
   for (const date of [null, '', 'invalid']) assert.equal(s.formatActivityDate(date), 'Horário não informado');
 });
 

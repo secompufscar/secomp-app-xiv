@@ -1,5 +1,6 @@
 import { NativeStackNavigationProp, createNativeStackNavigator } from "@react-navigation/native-stack";
 import TabRoutes from "./tab.routes";
+import { Platform } from "react-native";
 import { useAuth } from "../hooks/AuthContext";
 
 import {
@@ -14,6 +15,7 @@ import {
   EditProfile,
   ActivityDetails,
   ParticipantsList,
+  ParticipantDirectory,
   ActivityRaffleLists,
   ActivityAdmin,
   ActivityAdminCreate,
@@ -47,6 +49,7 @@ type StackNavigation = {
   EditProfile: undefined;
   ActivityDetails: { item: Activity };
   ParticipantsList: { activityId: string; activityName: string; };
+  ParticipantDirectory: undefined;
   ActivityRaffleLists: undefined;
   ActivityAdmin: undefined;
   ActivityAdminCreate: undefined;
@@ -87,6 +90,7 @@ export default function StackRoutes() {
         <Stack.Group>
           <Stack.Screen name="QRCode" component={QRCode} />
           <Stack.Screen name="ParticipantsList" component={ParticipantsList} />
+          {Platform.OS === "web" && <Stack.Screen name="ParticipantDirectory" component={ParticipantDirectory} />}
           <Stack.Screen name="ActivityRaffleLists" component={ActivityRaffleLists} />
           <Stack.Screen name="ActivityAdmin" component={ActivityAdmin} />
           <Stack.Screen name="ActivityAdminCreate" component={ActivityAdminCreate} />

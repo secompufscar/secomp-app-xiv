@@ -2,6 +2,8 @@
 
 Admins podem abrir **Participantes** nos detalhes de qualquer atividade ou **Admin → Participantes do credenciamento**. Em cada pessoa, **Ver atividades com presença** abre uma consulta com nome da atividade, horário em São Paulo e local. A lista inclui todas as edições, da mais recente à mais antiga; o horário exibido é o da atividade, não o instante do check-in.
 
+O histórico também pode ser aberto por **Admin → Todos os participantes**, inclusive para contas sem credenciamento. [Busca, selos e data de credenciamento](participant-directory-web.md). O horário das atividades preserva os componentes de data usados pelo cronograma, sem aplicar outra conversão de fuso.
+
 A consulta usa o `GET /userAtActivities/all-activities/:userId` existente, que permite acesso à própria conta ou a admins. Somente vínculos com `presente === true` entram na lista. Inscrições e lista de espera sem presença não contam como participação. Não há alteração de presença, pontos, inscrições ou conta, nem nova publicação da API.
 
 O botão e a consulta estão disponíveis apenas na web com ferramentas administrativas ativas, ficando ocultos na visão do participante e no mobile. O diálogo pode ser fechado durante o carregamento, tem rolagem em telas pequenas e mantém **Fechar** acessível. Falha da consulta mostra erro e nova tentativa, sem apresentar um histórico vazio como resultado confirmado. Respostas após fechar ou trocar de pessoa são descartadas. A consulta é atualizada a cada abertura; não há atualização ao vivo.
