@@ -1,5 +1,7 @@
 # APP da SECOMP UFSCar
 
+[Todos os participantes: busca, status e data de credenciamento](docs/participant-directory-web.md).
+
 Aplicativo desenvolvido pela equipe de TI da SECOMP UFSCar especialmente para o evento.
 
 Guias: [edição administrativa de atividades na web](docs/activity-text-web.md), [visão do participante para admins](docs/participant-view-web.md), [credenciamento e presença](docs/credentialing.md), [presenças de um usuário](docs/user-attendance-web.md), [rotas e publicação na Vercel](docs/web-routing.md), [recuperação de sessão em falhas temporárias](docs/session-recovery.md) e [validação da versão mobile](docs/p0-release-blockers.md). O app web é publicado automaticamente pela Vercel após integração na `main`.

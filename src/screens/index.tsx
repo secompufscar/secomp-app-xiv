@@ -31,6 +31,7 @@ import MyEvents from "./activities/userActivitiesScreen";
 import Credential from "./credential/credentialScreen";
 import QRCode from "./credential/qrCodeReaderScreen";
 import ParticipantsList from './participants/participantsListScreen';
+import ParticipantDirectory from './participants/participantDirectoryScreen';
 import ActivityRaffleLists from './participants/activityRaffleListsScreen';
 import AdminNotificationScreen from "./notification/adminNotificationsScreen"
 import AdminNotificationSend from "./notification/adminNotificationSend"
@@ -69,6 +70,7 @@ export {
   Credential,
   QRCode,
   ParticipantsList,
+  ParticipantDirectory,
   ActivityRaffleLists,
   AdminNotificationScreen,
   AdminNotificationSend,

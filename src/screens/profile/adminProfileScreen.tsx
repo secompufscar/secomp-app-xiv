@@ -170,6 +170,12 @@ export default function AdminProfile() {
             onPress={() => openCredentialing("QRCode")}
           />
 
+          {Platform.OS === "web" && canUseAdminTools && <ProfileButton
+            icon={faUser}
+            label="Todos os participantes"
+            onPress={() => { if (canUseAdminTools) navigation.navigate("ParticipantDirectory"); }}
+          />}
+
           {Platform.OS === "web" && <ProfileButton
             icon={faUser}
             label={credentialingDestination === "ParticipantsList" ? "Carregando..." : "Participantes do credenciamento"}

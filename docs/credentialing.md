@@ -12,6 +12,8 @@ A visão do participante não oferece o menu administrativo nem o leitor. O QR e
 
 Cada pessoa na lista também tem **Ver atividades com presença**, para admins da web consultarem todas as atividades em que houve presença registrada. Consulte o [guia de presenças por usuário](user-attendance-web.md) para os critérios e estados dessa consulta.
 
+Para consultar também quem ainda não foi credenciado, use **Admin → Todos os participantes**, com busca por nome/e-mail, selos de status e data do credenciamento. [Guia da lista geral](participant-directory-web.md).
+
 Admins da web podem abrir **Admin → Participantes do credenciamento**, ou **Cronograma → atividade de credenciamento → Participantes**. A lista usa o credenciamento selecionado; a opção **Excluir do credenciamento** não aparece para outras categorias, no mobile ou na visão do participante.
 
 A confirmação mostra o nome da pessoa e exige digitá-lo completo, com a mesma caixa e acentos. Espaços nas extremidades são ignorados. Cancelar descarta o texto; escolher outra pessoa exige uma nova confirmação. Durante o envio, não é possível repetir a exclusão ou fechar a confirmação.
