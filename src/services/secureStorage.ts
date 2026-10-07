@@ -59,6 +59,11 @@ export function removeRefreshToken() {
 }
 
 export async function setSessionTokens(token: string, refreshToken: string) {
+  // Validate both before writing: localStorage would stringify undefined as a token.
+  if (![token, refreshToken].every(value => typeof value === "string" && value.trim()
+    && value !== "undefined" && value !== "null")) {
+    throw new Error("Resposta de autenticação incompleta");
+  }
   await Promise.all([setAuthToken(token), setRefreshToken(refreshToken)]);
 }
 

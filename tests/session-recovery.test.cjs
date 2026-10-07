@@ -7,17 +7,31 @@ const ts = require('typescript');
 const axios = require('axios');
 const root = path.resolve(__dirname, '..');
 
-function load(file, dependencies) {
+function load(file, dependencies, globals = {}) {
   const source = fs.readFileSync(path.join(root, file), 'utf8');
   const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const module = { exports: {} };
-  vm.runInNewContext(code, { exports: module.exports, module, console, require(name) {
+  vm.runInNewContext(code, { ...globals, exports: module.exports, module, console, require(name) {
     assert.ok(name in dependencies, `Unmocked dependency: ${name}`);
     return dependencies[name];
   } }, { filename: file });
   return module.exports;
 }
 const sessionErrors = load('src/utils/sessionErrors.ts', {});
+
+test('resposta de login incompleta não grava nem substitui credenciais no navegador', async () => {
+  const writes = [];
+  const secureStorage = load('src/services/secureStorage.ts', {
+    '@react-native-async-storage/async-storage': { setItem: async (key, value) => writes.push([key, value]) },
+    'expo-secure-store': {}, 'react-native': { Platform: { OS: 'web' } },
+  });
+  for (const pair of [['access', undefined], ['access', null], ['access', 'undefined'], ['', 'refresh'], [undefined, 'refresh']]) {
+    await assert.rejects(secureStorage.setSessionTokens(...pair));
+    assert.equal(writes.length, 0);
+  }
+  await secureStorage.setSessionTokens('valid-access', 'valid-refresh');
+  assert.equal(writes.length, 2);
+});
 function storage(access = 'old-access', refresh = 'old-refresh') {
   const state = { access, refresh, removed: 0, saved: 0, remoteLogout: 0, expired: 0 };
   return { state, methods: {
@@ -30,7 +44,7 @@ const response = (config, status, data) => ({ config, status, statusText: String
 function rejectStatus(config, status) {
   throw new axios.AxiosError(`HTTP ${status}`, 'ERR_BAD_RESPONSE', config, undefined, response(config, status, {}));
 }
-function client(store, refreshHandler) {
+function client(store, refreshHandler, options = {}) {
   const calls = [];
   const updates = [];
   const api = load('src/services/api.ts', {
@@ -39,6 +53,7 @@ function client(store, refreshHandler) {
       instance.defaults.adapter = async request => {
         calls.push({ url: request.url, auth: request.headers.Authorization });
         if (request.url === '/users/refresh') return refreshHandler(request);
+        if (options.requestHandler) return options.requestHandler(request);
         if (request.headers.Authorization !== 'Bearer new-access') rejectStatus(request, 401);
         return response(request, 200, { id: 'synthetic-user' });
       };
@@ -49,7 +64,7 @@ function client(store, refreshHandler) {
     'react-native': { Platform: { OS: 'web' } }, './secureStorage': store.methods,
     '../utils/updateHelper': { callGlobalRequireUpdate: value => updates.push(value) },
     '../utils/sessionErrors': sessionErrors,
-  }).default;
+  }, options.globals).default;
   return { api, calls, updates };
 }
 
@@ -135,6 +150,109 @@ test('401 simultâneos compartilham uma única renovação e persistência', asy
   assert.equal(store.state.removed, 0);
 });
 
+test('validação de refresh inválido encerra sessão; outros 400 preservam credenciais', async () => {
+  for (const invalidRefresh of [true, false]) {
+    const store = storage();
+    const { api } = client(store, config => {
+      throw new axios.AxiosError('HTTP 400', 'ERR_BAD_REQUEST', config, undefined,
+        response(config, 400, invalidRefresh
+          ? { errorCode: 'VALIDATION_ERROR', errors: [{ path: ['refreshToken'] }] }
+          : { errorCode: 'INVALID_JSON' }));
+    });
+    await assert.rejects(api.get('/users/me'));
+    assert.equal(store.state.removed, invalidRefresh ? 1 : 0);
+    assert.equal(store.state.expired, invalidRefresh ? 1 : 0);
+  }
+});
+
+test('401 atrasado reutiliza o access token que já foi renovado', async () => {
+  const store = storage();
+  let delayed;
+  const { api, calls } = client(store, config => response(config, 200, { token: 'new-access', refreshToken: 'new-refresh' }), {
+    requestHandler: async config => {
+      if (config.url === '/delayed' && config.headers.Authorization === 'Bearer old-access') {
+        await new Promise(resolve => { delayed = resolve; });
+      }
+      if (config.headers.Authorization !== 'Bearer new-access') rejectStatus(config, 401);
+      return response(config, 200, {});
+    },
+  });
+  const late = api.get('/delayed');
+  await new Promise(resolve => setImmediate(resolve));
+  await api.get('/users/me');
+  delayed(); await late;
+  assert.equal(calls.filter(c => c.url === '/users/refresh').length, 1);
+  assert.equal(store.state.removed, 0);
+});
+
+test('duas abas compartilham a renovação pelo bloqueio do navegador', async () => {
+  const store = storage();
+  let queue = Promise.resolve();
+  const globals = { navigator: { locks: { request: (_name, callback) => {
+    const pending = queue.then(callback); queue = pending.catch(() => {}); return pending;
+  } } } };
+  let rotations = 0;
+  const refresh = async config => {
+    rotations++;
+    await new Promise(resolve => setImmediate(resolve));
+    if (JSON.parse(config.data).refreshToken !== 'old-refresh') rejectStatus(config, 401);
+    return response(config, 200, { token: 'new-access', refreshToken: 'new-refresh' });
+  };
+  const tab1 = client(store, refresh, { globals }), tab2 = client(store, refresh, { globals });
+  await Promise.all([tab1.api.get('/users/me'), tab2.api.get('/users/me')]);
+  assert.equal(rotations, 1); assert.equal(store.state.saved, 1); assert.equal(store.state.removed, 0);
+});
+
+test('401 no login ou recuperação de senha não remove sessão existente', async () => {
+  for (const url of ['/users/login', '/users/updatePassword/invalid']) {
+    const store = storage();
+    const { api, calls } = client(store, config => rejectStatus(config, 401));
+    await assert.rejects(api.post(url, {}));
+    assert.equal(calls.filter(c => c.url === '/users/refresh').length, 0);
+    assert.equal(store.state.removed, 0); assert.equal(store.state.expired, 0);
+  }
+});
+
+test('resposta de refresh atrasada não sobrescreve login nem restaura logout', async () => {
+  for (const newLogin of [true, false]) {
+    const store = storage();
+    let release;
+    const { api } = client(store, config => new Promise(resolve => { release = () => resolve(response(config, 200, { token: 'new-access', refreshToken: 'new-refresh' })); }), {
+      requestHandler: config => {
+        if (config.headers.Authorization === 'Bearer replacement-access') return response(config, 200, {});
+        rejectStatus(config, 401);
+      },
+    });
+    const pending = api.get('/users/me');
+    await new Promise(resolve => setImmediate(resolve));
+    if (newLogin) await store.methods.setSessionTokens('replacement-access', 'replacement-refresh');
+    else await store.methods.removeSessionTokens();
+    release();
+    if (newLogin) await pending; else await assert.rejects(pending);
+    assert.equal(store.state.access, newLogin ? 'replacement-access' : null);
+    assert.equal(store.state.refresh, newLogin ? 'replacement-refresh' : null);
+    assert.equal(store.state.saved, newLogin ? 1 : 0);
+  }
+});
+
+test('401 atrasado do refresh anterior não apaga um login novo', async () => {
+  const store = storage();
+  let release;
+  const { api } = client(store, config => new Promise((_resolve, reject) => {
+    release = () => { try { rejectStatus(config, 401); } catch (error) { reject(error); } };
+  }), { requestHandler: config => {
+    if (config.headers.Authorization !== 'Bearer replacement-access') rejectStatus(config, 401);
+    return response(config, 200, {});
+  } });
+  const pending = api.get('/users/me');
+  await new Promise(resolve => setImmediate(resolve));
+  await store.methods.setSessionTokens('replacement-access', 'replacement-refresh');
+  release(); await pending;
+  assert.equal(store.state.access, 'replacement-access');
+  assert.equal(store.state.refresh, 'replacement-refresh');
+  assert.equal(store.state.removed, 0); assert.equal(store.state.expired, 0);
+});
+
 function provider(store, getProfile, platform = 'web') {
   const slots = [], effects = [];
   let index = 0;
@@ -188,6 +306,16 @@ test('perfil 503 no início preserva sessão; botão de nova tentativa restaura 
   assert.equal(h.context().sessionError, null);
   assert.equal(calls, 2);
   assert.equal(store.state.removed, 0);
+});
+
+test('falha ao gravar login chega à tela de login sem autenticar usuário', async () => {
+  const store = storage(null, null);
+  store.methods.setSessionTokens = async () => { throw new Error('Storage unavailable'); };
+  const h = provider(store, async () => ({ data: {} }));
+  await h.context().retrySession();
+  await assert.rejects(h.context().signIn({ id: 'synthetic-user' }, 'access', 'refresh'));
+  assert.equal(h.context().user, null);
+  assert.equal(store.state.saved, 0);
 });
 
 test('perfil com timeout/rede preserva sessão; 401 limpa localmente sem revogar no servidor', async () => {
