@@ -1,6 +1,6 @@
 # Edição de atividades na web
 
-Última revisão: 04/10/2026. Editor publicado no app `cdee8cde` (PR #11), com API `633e8c8` (PR #28). Limite, recorte e mínimo de vagas conferidos no bundle público; fluxos de escrita verificados somente com dados fictícios. [Evidências da publicação](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/production-deployment-2026-10-03.md).
+Última revisão documental: 07/10/2026. Editor publicado originalmente no app `cdee8cde` (PR #11), com API `633e8c8` (PR #28); a exibição administrativa de vagas foi validada em 04/10. Limite, recorte e mínimo de vagas conferidos no bundle daquela publicação; fluxos de escrita verificados somente com dados fictícios. [Evidências da publicação inicial](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/production-deployment-2026-10-03.md). A [rodada de 06/10](participant-directory-web.md#validação-e-publicação) valida a nova lista de participantes e não repete os testes de escrita do editor.
 
 Administradores podem abrir uma atividade pela lista ou pelo cronograma e clicar em **Editar atividade**. O formulário permite editar título, nome, detalhes, horário, local, link do local e número de vagas, escolher uma única opção **Apresentadora** ou **Apresentador** e selecionar ou substituir a foto. A escolha também altera o rótulo exibido nos detalhes públicos.
 

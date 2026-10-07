@@ -1,5 +1,7 @@
 # Bloqueadores P0 da versão 1.1.0
 
+Este guia reúne a preparação da versão nativa e resultados locais registrados até a revisão de 04/10/2026 (`8e389bb0`). As contagens de audit/Doctor e a disponibilidade de ferramentas abaixo são snapshots daquela rodada, não novas medições. A publicação web de 06/10 está documentada na [lista de participantes](participant-directory-web.md); ela não confirma distribuição nas lojas nem validação em dispositivo físico.
+
 ## Correções incluídas
 
 - A tela de atividade usa um resumo agregado e não solicita a lista nominal administrativa.
