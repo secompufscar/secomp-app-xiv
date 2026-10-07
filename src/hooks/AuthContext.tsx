@@ -60,6 +60,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setLoading(false);
     } catch (error) {
       console.error("Erro no signIn:", error);
+      throw error;
     }
   }, []);
 
