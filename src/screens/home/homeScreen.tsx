@@ -15,6 +15,7 @@ import AppLayout from "../../components/app/appLayout";
 import HomeEventSubscription from "../../components/home/homeEventSubscription";
 import HomeCompetitions from "../../components/home/homeCompetitions";
 import HomeSocials from "../../components/home/homeSocials";
+import HomeCertificate from "../../components/home/homeCertificate";
 import IconButton from "../../components/button/iconButton";
 import ConfirmationOverlay from "../../components/overlay/confirmationOverlay";
 import ErrorOverlay from "../../components/overlay/errorOverlay";
@@ -217,6 +218,8 @@ export default function Home() {
             onPress={() => navigation.navigate("MyEvents")}
           />
         </View>
+
+        <HomeCertificate />
 
         {/* Guia do evento */}
         <View className="w-full mb-8 gap-4">
