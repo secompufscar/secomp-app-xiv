@@ -1,3 +1,4 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { View, Text, StatusBar, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SubscribedActivityList } from "../../components/activity/subscribedActivityList";
@@ -21,6 +22,20 @@ export default function MyEvents() {
     navigation.navigate("ActivityDetails", { item } as ScheduleDetailsParams);
   };
 
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      <BackButton />
+
+      {/* Cabeçalho */}
+      <View className="mb-6">
+        <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Minhas Atividades</Text>
+        <Text className="text-gray-400 font-inter">Todas as suas inscrições e atividades salvas</Text>
+      </View>
+
+      {/* Lista de Inscrições */}
+    </>
+  );
   return (
     <SafeAreaView className="bg-blue-900 flex-1 items-center">
       <StatusBar
@@ -29,19 +44,10 @@ export default function MyEvents() {
         translucent={Platform.OS === "android"}
       />
       <View className="flex-1 w-full px-6 max-w-[1000px] mx-auto">
-        <BackButton />
-
-        {/* Cabeçalho */}
-        <View className="mb-6">
-          <Text className="text-white text-2xl font-poppinsSemiBold mb-2">
-            Minhas Atividades
-          </Text>
-          <Text className="text-gray-400 font-inter">Todas as suas inscrições e atividades salvas</Text>
-        </View>
-
-        {/* Lista de Inscrições */}
+        {Platform.OS !== "web" && pageHeader}
         <View className="flex-1 w-full">
-          <SubscribedActivityList onPressActivity={handlePressActivity} />
+          <SubscribedActivityList
+              header={Platform.OS === "web" ? pageHeader : undefined} onPressActivity={handlePressActivity} />
         </View>
       </View>
     </SafeAreaView>

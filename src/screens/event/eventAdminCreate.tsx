@@ -1,3 +1,4 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { useState } from "react";
 import { View, Text, Pressable, StatusBar, Platform, ActivityIndicator, ScrollView } from "react-native";
 import { ParamListBase, useNavigation } from "@react-navigation/native";
@@ -19,7 +20,7 @@ import "react-datepicker/dist/react-datepicker.css";
 
 export default function EventAdminCreate() {
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
-  
+
   const [year, setYear] = useState<string>("");
   const [startDate, setStartDate] = useState(() => new Date());
   const [endDate, setEndDate] = useState(() => {
@@ -45,13 +46,13 @@ export default function EventAdminCreate() {
     setShowStartDatePicker(false);
     if (selectedDate) {
       setStartDate(selectedDate);
-      
+
       if (selectedDate > endDate) {
         setEndDate(selectedDate);
       }
     }
   };
-  
+
   // Função para lidar com a mudança da data de fim
   const onChangeEndDateMobile = (event: DateTimePickerEvent, selectedDate?: Date) => {
     setShowEndDatePicker(false);
@@ -64,7 +65,7 @@ export default function EventAdminCreate() {
   const handleCreateEvent = async () => {
     if (!year.trim()) {
       setWarningMessage("Por favor, preencha o ano da edição")
-      setWarningModalVisible(true);       
+      setWarningModalVisible(true);
       return;
     }
 
@@ -73,30 +74,30 @@ export default function EventAdminCreate() {
 
     if (isNaN(parsedYear) || parsedYear < currentYear || parsedYear >= 2100) {
       setWarningMessage(`O ano deve ser um número válido, entre ${currentYear} e 2100.`)
-      setWarningModalVisible(true); 
+      setWarningModalVisible(true);
       return;
     }
 
     setIsLoading(true);
 
-    try { 
+    try {
       // Encontrar o evento atualmente ativo
       const activeEvent = await getCurrentEvent();
 
       // Se um evento ativo for encontrado, desativá-lo
       if (activeEvent && activeEvent.id) {
         const updatePayload: UpdateEvent = {
-          ...activeEvent, 
+          ...activeEvent,
           isCurrent: false,
         };
 
         await updateEvent(activeEvent.id, updatePayload);
       }
-      
+
       // Preparar e criar o novo evento
       const eventData: Events = {
         year: parsedYear,
-        startDate: startDate.toISOString(), 
+        startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         isCurrent: isCurrent,
       };
@@ -107,10 +108,28 @@ export default function EventAdminCreate() {
       setErrorMessage("Não foi possível criar este evento")
       setErrorModalVisible(true);
     } finally {
-      setIsLoading(false);  
+      setIsLoading(false);
     }
   };
 
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      <BackButton />
+
+      {/* Cabeçalho */}
+      <View className="mb-8">
+        <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Criar novo evento</Text>
+        <Text className="text-blue-200 font-inter">Inicie uma nova edição da Secomp!</Text>
+      </View>
+
+      <View className="w-full rounded-lg border-[1.5px] border-warning bg-warning/10 p-6 mb-8">
+        <Text className="text-sm text-warning font-inter leading-relaxed">
+          Ao criar um novo evento, este se torna o ativo, desativando automaticamente o anterior.
+        </Text>
+      </View>
+    </>
+  );
   return (
     <SafeAreaView className="bg-blue-900 flex-1 items-center">
       <View className="flex-1 w-full">
@@ -121,23 +140,10 @@ export default function EventAdminCreate() {
         />
 
         <View className="w-full flex-1 px-6 max-w-[1000px] mx-auto">
-          <BackButton/>
-
-          {/* Cabeçalho */}
-          <View className="mb-8">
-            <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Criar novo evento</Text>
-            <Text className="text-blue-200 font-inter">
-              Inicie uma nova edição da Secomp!
-            </Text>
-          </View>
-
-          <View className="w-full rounded-lg border-[1.5px] border-warning bg-warning/10 p-6 mb-8">
-            <Text className="text-sm text-warning font-inter leading-relaxed">
-              Ao criar um novo evento, este se torna o ativo, desativando automaticamente o anterior.
-            </Text>
-          </View>
+          {Platform.OS !== "web" && pageHeader}
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+            {Platform.OS === "web" && pageHeader}
             <View className="flex-col flex-1 w-full gap-4 text-center justify-start">
               {/* Ano da edição */}
               <View className="w-full">
@@ -168,7 +174,7 @@ export default function EventAdminCreate() {
                           }
                         }
                       }}
-                      locale={ptBR} 
+                      locale={ptBR}
                       dateFormat="dd/MM/yyyy"
                       popperClassName="z-50"
                       portalId="root"
@@ -210,7 +216,7 @@ export default function EventAdminCreate() {
                           }
                         }
                       }}
-                      locale={ptBR} 
+                      locale={ptBR}
                       dateFormat="dd/MM/yyyy"
                       popperClassName="z-50"
                       portalId="root"
@@ -236,7 +242,7 @@ export default function EventAdminCreate() {
                   </Pressable>
                 )}
               </View>
-                
+
               <Button title="Criar" className="mt-auto mb-8" loading={isLoading} onPress={handleCreateEvent}/>
             </View>
           </ScrollView>

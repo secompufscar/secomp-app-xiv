@@ -1,5 +1,6 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { useEffect, useRef, useState } from "react";
-import { View, Text, StyleSheet, AppState, Platform } from "react-native";
+import { View, Text, StyleSheet, AppState, Platform, ScrollView } from "react-native";
 import { ParamListBase, useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -81,7 +82,8 @@ export default function QRCode() {
   return (
     <SafeAreaView className="flex-1" style={StyleSheet.absoluteFillObject}>
       {Platform.OS === "web" ? (
-        <View style={styles.webContainer}>
+        <ScrollView contentContainerStyle={styles.webContainer}>
+          <ParticipantViewToggle />
           <Text style={styles.webText}>Escaneie o QR Code</Text>
           <QrReader
             constraints={{ facingMode: "environment" }}
@@ -93,7 +95,7 @@ export default function QRCode() {
             containerStyle={{ width: "100%" }}
             videoContainerStyle={{ width: "100%" }}
           />
-        </View>
+        </ScrollView>
       ) : (
         <CameraView style={StyleSheet.absoluteFillObject} facing="back" onBarcodeScanned={handleBarCodeScanned}>
           <View style={styles.overlay}>
@@ -146,7 +148,7 @@ const styles = StyleSheet.create({
   },
 
   webContainer: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 16,

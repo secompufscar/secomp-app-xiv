@@ -1,3 +1,4 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { useCallback, useState } from "react";
 import { View, Text, FlatList, ActivityIndicator, StatusBar, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -19,8 +20,8 @@ export default function Notifications() {
     setLoading(true)
     try {
       const [notifs, acts] = await Promise.all([
-        getNotifications(), 
-        getActivities(),    
+        getNotifications(),
+        getActivities(),
       ])
       setNotifications(notifs)
       setActivities(acts)
@@ -46,7 +47,20 @@ export default function Notifications() {
       navigation.navigate("ActivityDetails", { item: activity })
     }
   }
-  
+
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      <BackButton />
+
+      <View className="mb-8">
+        <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Notificações</Text>
+        <Text className="text-gray-400 font-inter">Fique por dentro das novidades e atualizações importantes!</Text>
+      </View>
+
+      {/* Lista de notificações */}
+    </>
+  );
   return (
     <SafeAreaView className="bg-blue-900 flex-1 items-center">
       <View className="flex-1 w-full">
@@ -57,21 +71,13 @@ export default function Notifications() {
         />
 
         <View className="w-full flex-1 px-6 max-w-[1000px] mx-auto">
-          <BackButton/>
-
-          <View className="mb-8">
-            <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Notificações</Text> 
-            <Text className="text-gray-400 font-inter">
-              Fique por dentro das novidades e atualizações importantes!
-            </Text> 
-          </View>
-
-          {/* Lista de notificações */}
-          {loading ? 
+          {Platform.OS !== "web" && pageHeader}
+          {loading ?
             <ActivityIndicator size="large" color={colors.blue[500]} className="mt-8"/>
           :
             <View className="flex-1">
               <FlatList
+                ListHeaderComponent={Platform.OS === "web" ? pageHeader : undefined}
                 data={notifications}
                 keyExtractor={(item) => String(item.id)}
                 contentContainerStyle={{ paddingBottom: 24, paddingTop: 16 }}

@@ -10,7 +10,7 @@ export default function ParticipantViewToggle() {
   const label = isParticipantView ? "Voltar à visão administrativa" : "Visão do participante";
 
   return (
-    <View style={{ flexShrink: 0, backgroundColor: colors.background, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+    <View style={{ width: "100%", flexShrink: 0, backgroundColor: colors.background, borderBottomWidth: 1, borderBottomColor: colors.border }}>
       <View style={{ width: "100%", maxWidth: 1000, alignSelf: "center", padding: 16, gap: 12, flexDirection: compact ? "column" : "row", alignItems: compact ? "stretch" : "center" }}>
         <View style={{ flex: compact ? undefined : 1 }}>
           <Text accessibilityLiveRegion="polite" style={{ color: colors.white, fontFamily: "Inter_500Medium", fontSize: 14, lineHeight: 22 }}>

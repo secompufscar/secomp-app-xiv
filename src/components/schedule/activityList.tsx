@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from "react";
+import { ReactElement, memo, useCallback, useState } from "react";
 import { View, Text, FlatList, ActivityIndicator, Pressable } from "react-native";
 import { getActivities } from "../../services/activities";
 import { parseISO, addHours, getDay, isPast } from "date-fns";
@@ -9,6 +9,7 @@ import { faMicrophone, faLaptopCode, faTrophy, faGamepad, faUsers, faIdBadge, fa
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
 type ActivityListProps = {
+  header?: ReactElement | null;
   selectedDay?: string;
   onPressActivity?: (item: Activity) => void;
 };
@@ -32,7 +33,7 @@ function getCategoryIcon(slug?: string) {
   return categoryIconMap[categoryType ?? "default"];
 }
 
-export default function ActivityList({ selectedDay, onPressActivity }: ActivityListProps) {
+export default function ActivityList({ header, selectedDay, onPressActivity }: ActivityListProps) {
   const [allActivities, setAllActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -108,35 +109,36 @@ export default function ActivityList({ selectedDay, onPressActivity }: ActivityL
   const filteredActivities = getFilteredActivitiesByDay();
 
   if (loading) {
-    return (
+    const placeholder = (
       <View className="flex-1 items-center justify-center pb-24">
         <ActivityIndicator size="large" color={colors.blue[500]} />
       </View>
     );
+    return header ? <FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} ListEmptyComponent={placeholder} /> : placeholder;
   }
 
   if (errorMsg) {
-    return (
+    const placeholder = (
       <View className="flex-1 items-center justify-center px-4">
         <Text className="text-danger text-center font-inter text-sm">{errorMsg}</Text>
       </View>
     );
+    return header ? <FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} ListEmptyComponent={placeholder} /> : placeholder;
   }
 
   if (filteredActivities.length === 0) {
-    return (
+    const placeholder = (
       <View className="flex-1 items-center justify-start mt-8">
-        <Text className="text-gray-400 text-center text-sm font-inter">
-          Nenhuma atividade registrada neste dia
-        </Text>
+        <Text className="text-gray-400 text-center text-sm font-inter">Nenhuma atividade registrada neste dia</Text>
       </View>
     );
+    return header ? <FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} ListEmptyComponent={placeholder} /> : placeholder;
   }
 
   const ActivityItem = memo(({ item }: { item: Activity }) => {
     const activityIcon = getCategoryIcon(item.categoria?.slug);
     const rawDate = parseISO(item.data);
-    const activityDateTime = addHours(rawDate, 3); 
+    const activityDateTime = addHours(rawDate, 3);
     const hasOccurred = isPast(activityDateTime);
     const iconColor = hasOccurred ? "#3B465E" : "#4153DF";
 
@@ -173,6 +175,7 @@ export default function ActivityList({ selectedDay, onPressActivity }: ActivityL
 
   return (
     <FlatList
+      ListHeaderComponent={header}
       data={filteredActivities}
       keyExtractor={(item) => item.id}
       contentContainerStyle={{ paddingBottom: 60, paddingTop: 4 }}

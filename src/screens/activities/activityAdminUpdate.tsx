@@ -1,3 +1,4 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import React, { useState, useCallback, useEffect } from "react";
 import { View, Text, Pressable, StatusBar, Platform, ActivityIndicator, ScrollView, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -137,11 +138,11 @@ export default function ActivityAdminUpdate() {
         images.forEach((img) => {
           if (img.typeOfImage === "palestrante") {
             setSpeakerImage(img.imageUrl);
-            setOriginalSpeakerImage(img.imageUrl); 
+            setOriginalSpeakerImage(img.imageUrl);
             setSpeakerImageId(img.id);
           } else {
             setActivityImage(img.imageUrl);
-            setOriginalActivityImage(img.imageUrl); 
+            setOriginalActivityImage(img.imageUrl);
             setActivityImageId(img.id);
           }
         });
@@ -203,10 +204,10 @@ export default function ActivityAdminUpdate() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'], 
+      mediaTypes: ['images'],
       quality: 1,
     });
-    
+
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setImage(result.assets[0].uri);
     }
@@ -271,7 +272,7 @@ export default function ActivityAdminUpdate() {
 
     if (isNaN(parsedPoints) || parsedPoints < 0) {
       setWarningMessage("A pontuação deve ser um valor numérico positivo")
-      setWarningModalVisible(true);  
+      setWarningModalVisible(true);
       return;
     }
 
@@ -300,7 +301,7 @@ export default function ActivityAdminUpdate() {
       };
 
       await updateActivity(activityId, activityData);
-      
+
       // Atualiza imagens apenas se foram alteradas (uri local do dispositivo)
       const uploadPromises: Promise<any>[] = [];
 
@@ -344,6 +345,20 @@ export default function ActivityAdminUpdate() {
     }
   };
 
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      <BackButton />
+
+      {/* Cabeçalho */}
+      <View className="mb-8">
+        <Text className="text-white text-2xl font-poppinsSemiBold mb-2">{activityId ? "Editar atividade" : "Criar nova atividade"}</Text>
+        <Text className="text-blue-200 font-inter">
+          {activityId ? "Atualize os dados da atividade." : "Adicione uma nova atividade ao evento!"}
+        </Text>
+      </View>
+    </>
+  );
   return (
     <SafeAreaView className="bg-blue-900 flex-1 items-center">
       <View className="flex-1 w-full">
@@ -354,21 +369,10 @@ export default function ActivityAdminUpdate() {
         />
 
         <View className="w-full flex-1 px-6 max-w-[1000px] mx-auto">
-          <BackButton />
-
-          {/* Cabeçalho */}
-          <View className="mb-8">
-            <Text className="text-white text-2xl font-poppinsSemiBold mb-2">
-              {activityId ? "Editar atividade" : "Criar nova atividade"}
-            </Text>
-            <Text className="text-blue-200 font-inter">
-              {activityId
-                ? "Atualize os dados da atividade."
-                : "Adicione uma nova atividade ao evento!"}
-            </Text>
-          </View>
+          {Platform.OS !== "web" && pageHeader}
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+            {Platform.OS === "web" && pageHeader}
             <View className="flex-col flex-1 w-full gap-4 text-center justify-start pb-8">
               {/* Nome da atividade */}
               <View className="w-full">

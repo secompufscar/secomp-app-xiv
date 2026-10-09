@@ -1,10 +1,11 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import React, { useState, useCallback } from "react";
 import { View, Text, Pressable, StatusBar, Platform, ActivityIndicator, ScrollView, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, ParamListBase, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { createActivity } from "../../services/activities";
-import { getCategories } from "../../services/categories"; 
+import { getCategories } from "../../services/categories";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -31,12 +32,12 @@ export default function ActivityAdminCreate() {
   const [details, setDetails] = useState<string>("");
   const [location, setLocation] = useState<string>("");
   const [points, setPoints] = useState<string>("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null); 
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  
+
   const [activityImage, setActivityImage] = useState<string | null>(null);
   const [speakerImage, setSpeakerImage] = useState<string | null>(null);
 
@@ -124,7 +125,7 @@ export default function ActivityAdminCreate() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'], 
+      mediaTypes: ['images'],
       quality: 1,
     });
 
@@ -144,7 +145,7 @@ export default function ActivityAdminCreate() {
       !selectedCategoryId
     ) {
       setWarningMessage("Por favor, preencha todos os campos e selecione uma categoria")
-      setWarningModalVisible(true);      
+      setWarningModalVisible(true);
       return;
     }
 
@@ -153,13 +154,13 @@ export default function ActivityAdminCreate() {
 
     if (isNaN(parsedVacancies) || parsedVacancies < 0) {
       setWarningMessage("O número de vagas deve ser um valor numérico positivo")
-      setWarningModalVisible(true);  
+      setWarningModalVisible(true);
       return;
     }
 
     if (isNaN(parsedPoints) || parsedPoints < 0) {
       setWarningMessage("A pontuação deve ser um valor numérico positivo")
-      setWarningModalVisible(true);  
+      setWarningModalVisible(true);
       return;
     }
 
@@ -179,7 +180,7 @@ export default function ActivityAdminCreate() {
       const activityData = {
         nome: name,
         palestranteNome: speakerName,
-        data: adjustedDateTime.toISOString(), 
+        data: adjustedDateTime.toISOString(),
         vagas: parsedVacancies,
         detalhes: details,
         points: parsedPoints,
@@ -213,6 +214,18 @@ export default function ActivityAdminCreate() {
     }
   };
 
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      <BackButton />
+
+      {/* Cabeçalho */}
+      <View className="mb-8">
+        <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Criar nova atividade</Text>
+        <Text className="text-blue-200 font-inter">Adicione uma nova atividade ao evento!</Text>
+      </View>
+    </>
+  );
   return (
     <SafeAreaView className="bg-blue-900 flex-1 items-center">
       <View className="flex-1 w-full">
@@ -223,17 +236,10 @@ export default function ActivityAdminCreate() {
         />
 
         <View className="w-full flex-1 px-6 max-w-[1000px] mx-auto">
-          <BackButton />
-
-          {/* Cabeçalho */}
-          <View className="mb-8">
-            <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Criar nova atividade</Text>
-            <Text className="text-blue-200 font-inter">
-              Adicione uma nova atividade ao evento!
-            </Text>
-          </View>
+          {Platform.OS !== "web" && pageHeader}
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+            {Platform.OS === "web" && pageHeader}
             <View className="flex-col flex-1 w-full gap-4 text-center justify-start pb-8">
               {/* Nome da atividade */}
               <View className="w-full">
@@ -311,7 +317,7 @@ export default function ActivityAdminCreate() {
                       onChange={(date: Date | null) => {
                         if (date) setDate(date);
                       }}
-                      locale={ptBR} 
+                      locale={ptBR}
                       dateFormat="dd/MM/yyyy"
                       popperClassName="z-50"
                       portalId="root"

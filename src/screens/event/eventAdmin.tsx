@@ -1,3 +1,4 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { View, Text, Pressable, StatusBar, Platform, ActivityIndicator, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -24,8 +25,8 @@ export default function EventAdmin() {
   useFocusEffect(
     useCallback(() => {
       const fetchEvents = async () => {
-        setLoading(true); 
-        setError(null); 
+        setLoading(true);
+        setError(null);
 
         try {
           const data = await getEvents();
@@ -33,12 +34,12 @@ export default function EventAdmin() {
         } catch (err) {
           setError("Não foi possível carregar os eventos. Tente novamente.");
         } finally {
-          setLoading(false); 
+          setLoading(false);
         }
       };
 
       fetchEvents();
-    }, []) 
+    }, [])
   );
 
   // Abre modal de confirmação e armazena ID a ser deletado
@@ -51,7 +52,7 @@ export default function EventAdmin() {
   const handleDelete = async () => {
     if (!toDeleteId) return;
 
-    setModalVisible(false); 
+    setModalVisible(false);
     setErrorModalVisible(false);
 
     try {
@@ -87,7 +88,7 @@ export default function EventAdmin() {
 
           {/* Botão de deletar evento */}
           <Pressable onPress={(e) => {
-            e.stopPropagation(); 
+            e.stopPropagation();
             if (item.id) {
               confirmDelete(item.id);
             }
@@ -120,6 +121,26 @@ export default function EventAdmin() {
     );
   };
 
+  const listStatusHeader = <>{error && <Text className="text-red-400 text-center mt-2">{error}</Text>}</>;
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      <BackButton />
+
+      {/* Cabeçalho */}
+      <View className="mb-8">
+        <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Painel de eventos</Text>
+        <Text className="text-gray-400 font-inter">Painel de administração dos eventos</Text>
+      </View>
+
+      <Button
+        title="Criar evento"
+        onPress={() => {
+          navigation.navigate("EventAdminCreate");
+        }}
+      />
+    </>
+  );
   return (
     <SafeAreaView className="bg-blue-900 flex-1 items-center">
       <View className="flex-1 w-full">
@@ -130,22 +151,13 @@ export default function EventAdmin() {
         />
 
         <View className="w-full flex-1 px-6 max-w-[1000px] mx-auto">
-          <BackButton/>
-
-          {/* Cabeçalho */}
-          <View className="mb-8">
-            <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Painel de eventos</Text>
-            <Text className="text-gray-400 font-inter">
-              Painel de administração dos eventos
-            </Text>
-          </View>
-
-          <Button title="Criar evento" onPress={() => {navigation.navigate("EventAdminCreate")}}/>
+          {Platform.OS !== "web" && pageHeader}
 
           <View className="flex-1 mt-8">
-            {error && <Text className="text-red-400 text-center mt-2">{error}</Text>}
+            {Platform.OS !== "web" && listStatusHeader}
 
             <FlatList
+              ListHeaderComponent={Platform.OS === "web" ? <>{pageHeader}{listStatusHeader}</> : undefined}
               data={events}
               renderItem={renderEventItem}
               ListEmptyComponent={emptyList}

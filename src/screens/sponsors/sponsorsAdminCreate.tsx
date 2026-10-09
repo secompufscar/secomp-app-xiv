@@ -1,3 +1,4 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { useEffect, useState } from "react"
 import { View, Text, ActivityIndicator, Pressable, StatusBar, Platform, ScrollView } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -57,8 +58,8 @@ export default function SponsorsAdminCreate() {
   const toggleTag = (tagId: string) => {
     setSelectedTagIds(prev =>
       prev.includes(tagId)
-        ? prev.filter(x => x !== tagId) 
-        : [...prev, tagId] 
+        ? prev.filter(x => x !== tagId)
+        : [...prev, tagId]
     );
   };
 
@@ -85,7 +86,7 @@ export default function SponsorsAdminCreate() {
     })()
 
     setIsLoading(true)
-    
+
     try {
       await createSponsor({
         name,
@@ -93,7 +94,7 @@ export default function SponsorsAdminCreate() {
         description,
         starColor: mappedStarColor,
         link,
-        tagIds: selectedTagIds,      
+        tagIds: selectedTagIds,
       })
 
       navigation.goBack()
@@ -105,6 +106,17 @@ export default function SponsorsAdminCreate() {
     }
   }
 
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      <BackButton />
+
+      <View className="mb-8">
+        <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Criar novo patrocinador</Text>
+        <Text className="text-blue-200 font-inter">Adicione um novo patrocinador para a Secomp!</Text>
+      </View>
+    </>
+  );
   return (
     <SafeAreaView className="bg-blue-900 flex-1 items-center">
       <View className="flex-1 w-full">
@@ -115,16 +127,10 @@ export default function SponsorsAdminCreate() {
         />
 
         <View className="w-full flex-1 px-6 max-w-[1000px] mx-auto">
-          <BackButton />
-
-          <View className="mb-8">
-            <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Criar novo patrocinador</Text>
-            <Text className="text-blue-200 font-inter">
-              Adicione um novo patrocinador para a Secomp!
-            </Text>
-          </View>
+          {Platform.OS !== "web" && pageHeader}
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+            {Platform.OS === "web" && pageHeader}
             <View className="flex-col flex-1 w-full text-center justify-start gap-4">
               <View className="w-full">
                 <Text className="text-gray-400 text-sm font-inter mb-2">Nome do patrocinador</Text>

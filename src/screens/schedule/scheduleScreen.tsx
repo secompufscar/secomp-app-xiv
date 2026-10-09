@@ -1,3 +1,4 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { useState } from "react";
 import { View, Text, StatusBar, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -23,6 +24,23 @@ export default function Activities() {
     navigation.navigate("ActivityDetails", { item });
   };
 
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      {/* Cabeçalho */}
+      <View className="mb-8">
+        <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Cronograma</Text>
+        <Text className="text-gray-400 font-inter text-">Calendário de atividades do evento</Text>
+      </View>
+
+      {/* Filtro de Dias */}
+      <View className="w-full mb-3">
+        <DaysFilter onSelect={handleSelectDay} />
+      </View>
+
+      {/* Lista de Atividades */}
+    </>
+  );
   return (
     <SafeAreaView className="bg-blue-900 flex-1 items-center">
       <View className="flex-1 w-full">
@@ -33,22 +51,10 @@ export default function Activities() {
         />
 
         <View className="w-full flex-1 mt-10 px-6 max-w-[1000px] mx-auto">
-          {/* Cabeçalho */}
-          <View className="mb-8">
-            <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Cronograma</Text>
-            <Text className="text-gray-400 font-inter text-">
-              Calendário de atividades do evento
-            </Text>
-          </View>
-
-          {/* Filtro de Dias */}
-          <View className="w-full mb-3">
-            <DaysFilter onSelect={handleSelectDay} />
-          </View>
-
-          {/* Lista de Atividades */}
+          {Platform.OS !== "web" && pageHeader}
           <View className="w-full flex-1">
-            <ActivityList selectedDay={selectedDay} onPressActivity={handlePressActivity} />
+            <ActivityList
+              header={Platform.OS === "web" ? pageHeader : undefined} selectedDay={selectedDay} onPressActivity={handlePressActivity} />
           </View>
         </View>
       </View>

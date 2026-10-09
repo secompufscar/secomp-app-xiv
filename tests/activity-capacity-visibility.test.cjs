@@ -31,6 +31,7 @@ function screen({ role = 'ADMIN', platform = 'web', enrollment = false, capacity
     },
     '../../services/activityImage': { getImagesByActivityId: async () => [] },
     '../../services/categories': { getCategories: async () => { throw new Error('Simulated category outage'); } },
+    '../../components/app/participantViewToggle': { __esModule: true, default: () => null },
     '../../styles/colors': { colors: { border: '#000', blue: { 500: '#000' } } },
     'date-fns': { parseISO: value => value, addHours: value => value, format: () => 'Data fictícia' }, 'date-fns/locale': { ptBR: {} },
     '@expo/vector-icons/FontAwesome6': noop, '../../components/button/backButton': noop,

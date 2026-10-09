@@ -1,6 +1,6 @@
 # Todos os participantes
 
-Última revisão: 07/10/2026. Publicado na Vercel pelo [PR #21](https://github.com/secompufscar/secomp-app-xiv/pull/21), commit `96f1b712`, depois da publicação da API e da migração. [Evidência conjunta de publicação e revisão](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/participant-directory-release-2026-10-06.md).
+Última revisão: 09/10/2026. A lista inicial foi publicada na Vercel pelo [PR #21](https://github.com/secompufscar/secomp-app-xiv/pull/21), commit `96f1b712`, depois da publicação da API e da migração. [Evidência conjunta de publicação e revisão](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/participant-directory-release-2026-10-06.md).
 
 **Admin → Todos os participantes** lista todas as contas cadastradas, mesmo sem inscrição na edição ou vínculo de credenciamento. A busca aceita nome ou e-mail; filtros **Todos**, **Credenciados** e **Não credenciados** podem ser combinados com ela. A lista tem páginas de 50 pessoas, ordenadas por nome, com desempate por ID.
 
@@ -12,6 +12,16 @@ A consulta utiliza `GET /users/directory`, restrito a admins pela API. A interfa
 
 O horário programado da atividade segue a representação existente do cronograma (componentes UTC usados como horário do evento); `credentialedAt` é um instante real, convertido para São Paulo. São datas com finalidades distintas.
 
+## Credenciar pela lista
+
+Admins da web podem usar **Credenciar** no cartão de quem ainda não tem presença no credenciamento da edição atual. O diálogo exige o nome cadastrado completo, com a mesma caixa e acentos; somente espaços externos são ignorados e formas Unicode equivalentes são aceitas. Cancelar, trocar a pessoa ou sair da tela descarta a confirmação.
+
+Antes da escrita, o app consulta novamente a edição e a atividade de credenciamento e confere se correspondem à lista exibida. Uma mudança de edição ou atividade impede enviar para o alvo antigo. O app usa o mesmo `POST /checkIn/:userId/:activityId` do leitor de QR; exige inscrição válida na edição, registra o horário no servidor e mantém as regras de presença/pontos da API. Não cria inscrição no evento automaticamente.
+
+Durante o envio, o campo e os botões de confirmar/cancelar ficam desabilitados e cliques repetidos não repetem o check-in. Após sucesso, a lista, o selo, a data e os totais são consultados novamente. Falha no check-in mantém o diálogo com a mensagem do servidor. Falha de recarga após sucesso mostra que o credenciamento já foi realizado e permite consultar novamente sem repetir a escrita. Em erro de rede sem resultado confirmado, atualizar a lista antes de tentar novamente.
+
+A confirmação nominal é uma proteção da interface; a autorização ADMIN e a elegibilidade continuam aplicadas pela API. Participantes, visão do participante e mobile não oferecem essa ação.
+
 ## Validação e publicação
 
 Em 06/10/2026, passaram os 62 testes do app, TypeScript e exportação web. Navegador com API fictícia em 320×640 e 1280×900 confirmou busca por nome/e-mail, filtros, paginação, selos/data, rolagem da página inteira, consulta de presenças sem credenciamento, erro com nova tentativa, histórico vazio, resposta atrasada e restrição na visão do participante. Não houve chamadas reais à API durante essa validação visual.
@@ -19,3 +29,5 @@ Em 06/10/2026, passaram os 62 testes do app, TypeScript e exportação web. Nave
 A API do [PR #33](https://github.com/secompufscar/secomp-server-xiv/pull/33), commit `dea590e`, foi mergeada antes da publicação na Railway. A migração `20261006090000_attendance_timestamp` teve conclusão e checksum conferidos pela conexão privada; a consulta online confirmou acesso ADMIN (200), recusa a participante (403) e ausência de autenticação (401), busca e paginação. A Vercel publicou automaticamente o merge do app, com CI e status de deploy aprovados. Os sete cenários de navegador também passaram no domínio publicado, ainda com API e contas fictícias. Isso valida a interface entregue, sem comprovar câmera, check-in ou exclusão reais.
 
 Em novas publicações, atualizar primeiro a API e aplicar migrações de que a tela dependa. Horários antigos só são recuperados quando confiáveis; a lista continua incluindo contas sem essa informação.
+
+Em 09/10/2026, `npm run verify` passou com TypeScript, 75 testes e exportação web. Os testes do credenciamento manual cobrem confirmação completa, cancelamento, envio único, atualização de selo/data/totais, inscrição inválida, falha de recarga, mudança de edição e resposta após sair da tela. O navegador Chromium em 320×640 e 1280×900 confirmou os diálogos e os estados de sucesso/erro; contas comuns e visão do participante continuam sem essa ação. A verificação usa API e participantes fictícios, sem chamadas ou presenças reais. Não valida câmera ou Safari/iOS.

@@ -8,6 +8,10 @@ Durante a consulta, o botão indica carregamento e impede cliques duplicados. Sa
 
 A visão do participante não oferece o menu administrativo nem o leitor. O QR e as regras de presença/pontos da API permanecem os mesmos. O código compartilhado corrige também o atalho nas futuras compilações Android/iOS; publicar na Vercel atualiza somente a versão web.
 
+## Credenciar manualmente na web
+
+**Admin → Todos os participantes → Credenciar** permite registrar presença sem QR, exigindo digitar o nome completo. Usa a mesma rota do leitor, com atividade da edição atual conferida antes do envio, inscrição válida e horário gravado no servidor. [Confirmação, erros e restrições](participant-directory-web.md#credenciar-pela-lista).
+
 ## Excluir um participante do credenciamento na web
 
 Cada pessoa na lista também tem **Ver atividades com presença**, para admins da web consultarem todas as atividades em que houve presença registrada. Consulte o [guia de presenças por usuário](user-attendance-web.md) para os critérios e estados dessa consulta.
@@ -18,7 +22,7 @@ Admins da web podem abrir **Admin → Participantes do credenciamento**, ou **Cr
 
 A confirmação mostra o nome da pessoa e exige digitá-lo completo, com a mesma caixa e acentos. Espaços nas extremidades são ignorados. Cancelar descarta o texto; escolher outra pessoa exige uma nova confirmação. Durante o envio, não é possível repetir a exclusão ou fechar a confirmação.
 
-O app usa o `DELETE /userAtActivities/:userId/:activityId` existente. Exclui somente o vínculo com aquela atividade. A API remove a presença e reverte os pontos correspondentes na mesma transação, mantendo a conta, a inscrição no evento e as outras atividades. Se a transação falhar, o vínculo é preservado. A pessoa pode ser credenciada novamente pelo leitor, seguindo as regras usuais da API.
+O app usa o `DELETE /userAtActivities/:userId/:activityId` existente. Exclui somente o vínculo com aquela atividade. A API remove a presença e reverte os pontos correspondentes na mesma transação, mantendo a conta, a inscrição no evento e as outras atividades. Se a transação falhar, o vínculo é preservado. A pessoa pode ser credenciada novamente pelo leitor ou, na web, por **Admin → Todos os participantes → Credenciar**, com confirmação pelo nome completo e as mesmas regras da API.
 
 Após sucesso, a lista e os totais são consultados novamente. Falhas da exclusão mantêm o diálogo e o nome digitado para nova tentativa. Se a exclusão terminar e a recarga falhar, o aviso distingue as duas operações e permite recarregar a lista sem repetir a exclusão. A confirmação pelo nome é uma proteção da interface; a autorização continua sendo aplicada pela API.
 
