@@ -36,7 +36,7 @@ import {
 const Stack = createNativeStackNavigator();
 
 // Rotas para usuários logados
-type StackNavigation = {
+export type StackNavigation = {
   App: undefined;
   Schedule: undefined;
   EventGuide: undefined;

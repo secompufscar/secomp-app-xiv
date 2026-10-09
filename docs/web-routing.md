@@ -1,4 +1,24 @@
-# Acesso direto às rotas da versão web
+# Rotas e recarregamento na versão web
+
+## Comportamento atual — 09/10/2026
+
+A web reconhece as abas e telas disponíveis para a sessão atual. Recarregar ou abrir diretamente uma URL válida mantém a tela, inclusive cronograma, perfil, detalhes, lista de participantes e edição administrativa. `src/routes/webLinking.ts` define os caminhos e parâmetros conforme a estrutura de `stack.routes.tsx` e `tab.routes.tsx`; `src/routes/index.tsx` aplica essa configuração somente na web.
+
+Os detalhes usam `/ActivityDetails?item=<id>`. A URL contém o identificador, e `activityDetailsRouteScreen.tsx` consulta a atividade pela API ao abrir ou recarregar esse link. Falha na consulta mantém a tela de atividade com opção de tentar novamente. A navegação existente com a atividade completa continua funcionando; a URL serializa somente seu ID. Links antigos com `item=[object Object]` não contêm um ID recuperável e voltam ao Início. É necessário abrir a atividade pelo cronograma novamente para obter o link válido.
+
+As telas administrativas só são reconhecidas com ferramentas de admin habilitadas. URL desconhecida, identificador obrigatório ausente ou rota sem permissão usa a tela inicial disponível. Sessão inválida continua exigindo autenticação; indisponibilidade temporária do perfil mantém a URL enquanto o usuário tenta recuperar a sessão. A API continua autorizando cada requisição.
+
+A [visão do participante](participant-view-web.md) agora permanece ao recarregar na mesma aba e para a mesma conta admin. Isso permite conservar também `/App/Perfil` nessa visão. Alternar a visão explicitamente continua retornando ao Início. Formulários não salvos, diálogos, posição da rolagem, filtros locais e abas internas de uma tela não são armazenados como parte da rota.
+
+### Verificação desta alteração
+
+Executar `npm run verify`. Os testes de rota usam os conversores reais do React Navigation instalado, incluindo parâmetros, permissões, links públicos, identificadores ausentes e consulta/repetição dos detalhes. Conferir no navegador em 320 e 1280 px: abertura direta e recarga das abas e telas administrativas, ID correto dos detalhes/edição, histórico voltar/avançar, falhas 503 de atividade e perfil, recuperação de senha e recarga na visão do participante.
+
+Os testes de navegador usam sessão e API fictícias, sem registrar presenças, inscrições ou alterações em produção. Execução no domínio público confirma o frontend publicado; não comprova autenticação com conta real nem execução em Safari/iOS. O fallback da hospedagem descrito abaixo permanece necessário, mas sozinho não restaura a navegação: o frontend também precisa reconhecer a rota.
+
+Configuração conforme a documentação de [links do React Navigation 6](https://reactnavigation.org/docs/6.x/configuring-links/).
+
+Validação local em 09/10/2026: TypeScript, 84 testes e exportação web passaram. O build servido como SPA passou os 38 cenários de navegador descritos acima, sem erros de execução, chamadas reais à API ou escritas em produção. A execução local não confirma a publicação; conferir o deploy e repetir essa validação no domínio público após o merge.
 
 ## Falha confirmada em 03/10/2026
 

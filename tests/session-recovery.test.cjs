@@ -253,7 +253,7 @@ test('401 atrasado do refresh anterior não apaga um login novo', async () => {
   assert.equal(store.state.removed, 0); assert.equal(store.state.expired, 0);
 });
 
-function provider(store, getProfile, platform = 'web') {
+function provider(store, getProfile, platform = 'web', globals = {}) {
   const slots = [], effects = [];
   let index = 0;
   const same = (a, b) => a && a.length === b.length && a.every((v, n) => Object.is(v, b[n]));
@@ -277,7 +277,7 @@ function provider(store, getProfile, platform = 'web') {
     'react-native': { Platform: { OS: platform } },
     '../services/users': { logout: async () => { store.state.remoteLogout++; } },
     '../utils/sessionErrors': sessionErrors,
-  });
+  }, globals);
   function context() { index = 0; return AuthProvider({ children: null }).props.value; }
   context(); effects.splice(0).forEach(fn => fn());
   return { context, expire: () => expire(), flushEffects: () => effects.splice(0).forEach(fn => fn()) };
@@ -439,4 +439,38 @@ test('troca de identidade ou perda do papel administrativo limpa a prévia', asy
   h.context(); h.flushEffects(); assert.equal(h.context().isParticipantView, false);
   await h.context().updateUser({ id: 'other-admin', tipo: 'ADMIN' });
   h.context(); h.flushEffects(); assert.equal(h.context().isParticipantView, false);
+});
+
+test('recarga da mesma aba restaura a prévia só para o mesmo admin e limpa em logout/troca de conta', async () => {
+  const values = new Map();
+  const globals = { window: { sessionStorage: { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) } } };
+  const admin = { id: 'admin-test', tipo: 'ADMIN' };
+  const first = provider(storage(), async () => ({ data: admin }), 'web', globals);
+  await first.context().retrySession(); first.context(); first.flushEffects();
+  first.context().setParticipantView(true);
+  const reload = provider(storage(), async () => ({ data: admin }), 'web', globals);
+  await reload.context().retrySession(); reload.context(); reload.flushEffects();
+  assert.equal(reload.context().isParticipantView, true);
+  assert.equal(reload.context().canUseAdminTools, false);
+  assert.equal(reload.context().user.tipo, 'ADMIN');
+  await reload.context().signOut(); assert.equal(values.size, 0);
+  await reload.context().signIn(admin, 'access', 'refresh'); reload.context(); reload.flushEffects();
+  assert.equal(reload.context().isParticipantView, false);
+  reload.context().setParticipantView(true);
+  const other = provider(storage(), async () => ({ data: { id: 'other-admin', tipo: 'ADMIN' } }), 'web', globals);
+  await other.context().retrySession(); other.context(); other.flushEffects();
+  assert.equal(other.context().isParticipantView, false); assert.equal(values.size, 0);
+});
+
+test('preferência da prévia não concede ferramentas administrativas nem bloqueia sessão se armazenamento falhar', async () => {
+  for (const [tipo, platform] of [['USER', 'web'], ['ADMIN', 'android'], ['ADMIN', 'ios']]) {
+    const globals = { window: { sessionStorage: { getItem: () => 'user-test', removeItem() {} } } };
+    const h = provider(storage(), async () => ({ data: { id: 'user-test', tipo } }), platform, globals);
+    await h.context().retrySession(); h.context(); h.flushEffects();
+    assert.equal(h.context().isParticipantView, false); assert.equal(h.context().canUseAdminTools, tipo === 'ADMIN');
+  }
+  const globals = { window: { sessionStorage: { getItem() { throw Error('Unavailable'); }, removeItem() { throw Error('Unavailable'); } } } };
+  const h = provider(storage(), async () => ({ data: { id: 'admin-test', tipo: 'ADMIN' } }), 'web', globals);
+  await h.context().retrySession(); h.context(); h.flushEffects();
+  assert.equal(h.context().sessionError, null); assert.equal(h.context().canUseAdminTools, true);
 });

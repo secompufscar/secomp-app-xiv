@@ -22,7 +22,7 @@ import SponsorsAdminCreate from "./sponsors/sponsorsAdminCreate";
 import SponsorsAdminUpdate from "./sponsors/sponsorsAdminUpdate";
 import TagsAdmin from "./tags/tagsAdmin";
 import Activities from "./activities/activitiesScreen";
-import ActivityDetails from './activity-details/activityDetailsScreen';
+import ActivityDetails from './activity-details/activityDetailsRouteScreen';
 import ActivityAdmin from "./activities/activityAdmin";
 import ActivityAdminCreate from "./activities/activityAdminCreate";
 import ActivityAdminUpdate from "./activities/activityAdminUpdate";
