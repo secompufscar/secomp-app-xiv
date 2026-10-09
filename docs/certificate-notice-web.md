@@ -28,7 +28,7 @@ O schema atual da API contém início (`data`), mas não duração nem horário 
 
 ## Modelo visual de duas páginas
 
-O gerador local [create_certificate_model.py](../scripts/certificates/create_certificate_model.py) constrói PDF A4 horizontal, SVGs de ambas as páginas e uma prévia HTML imprimível. Inclui as logos da SECOMP e do Departamento de Computação. A segunda página lista atividades e calcula o total em minutos; a primeira usa esse mesmo total. Os nomes, presenças e durações são ilustrativos, marcados como modelo sem validade. Assinaturas e QR de validação continuam reservados.
+O gerador local [create_certificate_model.py](../scripts/certificates/create_certificate_model.py) constrói PDF A4 horizontal, SVGs de ambas as páginas e uma prévia HTML imprimível. Inclui as logos da SECOMP, do Departamento de Computação e da UFSCar. As duas logos institucionais compartilham alinhamento e espaçamento no cabeçalho das duas páginas; os arquivos originais conservam transparência e proporção. A segunda página lista atividades e calcula o total em minutos; a primeira usa esse mesmo total. Os nomes, presenças e durações são ilustrativos, marcados como modelo sem validade. Assinaturas e QR de validação continuam reservados.
 
 Após instalar as dependências do app (fontes) e Python, executar:
 
@@ -39,7 +39,7 @@ python scripts/certificates/create_certificate_model.py --output-dir certificate
 
 O script verifica duas páginas e os textos esperados do PDF. Os arquivos gerados ficam fora do controle de versão. A prévia permite editar nome, data e responsáveis; o total de exemplo é somente leitura para manter a soma do anexo coerente. O gerador não consulta o banco, não habilita o botão do app e não emite certificados reais.
 
-Validação do modelo em 09/10/2026: PDF com duas páginas renderizadas e revisadas; soma dos sete exemplos de duração igual a 750 minutos (12 horas e 30 minutos) nas duas páginas. No navegador, a prévia imprimiu exatamente duas páginas, atualizou o nome em ambas e manteve o total somente leitura, sem erros de execução. Nenhuma consulta ou alteração no banco.
+Validação do modelo em 09/10/2026: PDF com duas páginas renderizadas e revisadas, cada uma com as três logos; arquivo transparente da UFSCar preservado, idêntico ao fornecido pelo usuário. Soma dos sete exemplos de duração igual a 750 minutos (12 horas e 30 minutos) nas duas páginas. No navegador, a prévia imprimiu exatamente duas páginas, atualizou o nome em ambas e manteve o total somente leitura, sem erros de execução. Nenhuma consulta ou alteração no banco.
 
 ## Verificação
 

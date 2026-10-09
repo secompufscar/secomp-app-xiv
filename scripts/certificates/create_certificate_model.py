@@ -18,6 +18,7 @@ OUT.mkdir(parents=True,exist_ok=True)
 PDF.parent.mkdir(parents=True,exist_ok=True)
 FONT=REPO/'node_modules/@expo-google-fonts'
 DC_LOGO=REPO/'assets/certificate/logo-departamento-computacao-ufscar.png'
+UFSCAR_LOGO=REPO/'assets/certificate/logo-ufscar-fundo-transparente.png'
 fonts={
  'Poppins':FONT/'poppins/400Regular/Poppins_400Regular.ttf',
  'PoppinsMedium':FONT/'poppins/500Medium/Poppins_500Medium.ttf',
@@ -73,6 +74,19 @@ def picture(x,y,w,h,file):
  data=base64.b64encode(file.read_bytes()).decode()
  svg.append(f'<image x="{x}" y="{y}" width="{w}" height="{h}" href="data:image/png;base64,{data}"/>')
 
+def institutional_header():
+ # Shared alignment and original aspect ratios for both institutional marks.
+ rect(302,44,3,43,BLUE)
+ text(320,60,'XIV SECOMP',13,'PoppinsSemiBold',BLUE)
+ text(320,82,'Semana Acadêmica da Computação',12,'Inter',MUTED)
+ line(686,42,686,95,'#DCE1ED')
+ dc_w,dc_h=ImageReader(str(DC_LOGO)).getSize()
+ ufscar_w,ufscar_h=ImageReader(str(UFSCAR_LOGO)).getSize()
+ picture(711,68-218*dc_h/dc_w/2,218,218*dc_h/dc_w,DC_LOGO)
+ line(950,42,950,95,'#DCE1ED')
+ picture(977,68-76*ufscar_h/ufscar_w/2,76,76*ufscar_h/ufscar_w,UFSCAR_LOGO)
+ line(302,106,1053,106,'#DCE1ED')
+
 rect(0,0,W,H,BG)
 rect(0,0,244,H,DARK)
 rect(244,0,5,H,GREEN)
@@ -93,13 +107,7 @@ for pts in [((42,548),(99,548),(99,588),(184,588),(184,638)),((42,569),(73,569),
 text(42,737,'2026',31,'PoppinsMedium',GREEN)
 text(42,765,'05 - 08 OUTUBRO',10,'InterMedium','#A9B4F4')
 # Main content.
-# Shared institutional header: both identities have one alignment and separator.
-rect(302,44,3,43,BLUE)
-text(320,60,'XIV SECOMP',13,'PoppinsSemiBold',BLUE)
-text(320,82,'Semana Acadêmica da Computação',12,'Inter',MUTED)
-line(776,44,776,87,'#DCE1ED',1)
-picture(807,41,246,246*417/2048,DC_LOGO)
-line(302,106,1053,106,'#DCE1ED',1)
+institutional_header()
 text(298,166,'Certificado',53,'PoppinsSemiBold')
 text(302,199,'D E   P A R T I C I P A Ç Ã O',12,'InterMedium',MUTED)
 text(302,240,'Certificamos que',16,'Inter',MUTED)
@@ -154,12 +162,7 @@ text(42,463,'atividades',20,'PoppinsMedium','#E5E7F0')
 text(42,493,'realizadas',20,'PoppinsMedium','#E5E7F0')
 text(42,737,'2026',31,'PoppinsMedium',GREEN)
 text(42,765,'05 - 08 OUTUBRO',10,'InterMedium','#A9B4F4')
-rect(302,44,3,43,BLUE)
-text(320,60,'XIV SECOMP',13,'PoppinsSemiBold',BLUE)
-text(320,82,'Semana Acadêmica da Computação',12,'Inter',MUTED)
-line(776,44,776,87,'#DCE1ED')
-picture(807,41,246,246*417/2048,DC_LOGO)
-line(302,106,1053,106,'#DCE1ED')
+institutional_header()
 text(300,167,'Atividades realizadas',32,'PoppinsSemiBold')
 text(302,198,'ANEXO AO CERTIFICADO DE PARTICIPAÇÃO',10,'InterMedium',MUTED)
 text(302,231,'Marina Alves de Souza',18,'PoppinsSemiBold',id='participant-name-details')
