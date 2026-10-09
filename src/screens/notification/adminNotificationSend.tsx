@@ -1,5 +1,6 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { useState, useCallback } from "react";
-import { View, Text, StatusBar, Platform, ActivityIndicator, Switch, Pressable, FlatList } from "react-native";
+import { ScrollView, View, Text, StatusBar, Platform, ActivityIndicator, Switch, Pressable, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, ParamListBase, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -124,7 +125,7 @@ export default function AdminNotificationSend() {
     setSelectedActivityName(String(act?.nome ?? act?.title ?? "Atividade"));
     setShowActivitiesList(false);
   };
-  
+
   // Lista de atividades
   const renderActivityItem = ({ item }: { item: any }) => (
     <Pressable
@@ -136,12 +137,15 @@ export default function AdminNotificationSend() {
     </Pressable>
   );
 
+  const PageContainer = Platform.OS === "web" ? ScrollView : View;
+
   return (
     <SafeAreaView className="bg-blue-900 flex-1 items-center">
       <View className="flex-1 w-full">
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={Platform.OS === "android"} />
 
-        <View className="w-full flex-1 px-6 max-w-[1000px] mx-auto">
+        <PageContainer className="w-full flex-1 px-6 max-w-[1000px] mx-auto">
+          {Platform.OS === "web" && <ParticipantViewToggle />}
           <BackButton />
 
           <View className="mb-8">
@@ -236,7 +240,7 @@ export default function AdminNotificationSend() {
           )}
 
           <Button title="Enviar Notificação" className="mt-auto mb-8" loading={isLoading} onPress={handleSendNotification} />
-        </View>
+        </PageContainer>
       </View>
 
       <ErrorOverlay visible={errorModalVisible} title="Erro" message={errorMessage} onConfirm={() => { setErrorModalVisible(false) }} confirmText="OK" />

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { ReactElement, useCallback, useState } from "react";
 import { View, Text, FlatList, ActivityIndicator, Pressable, Platform } from "react-native";
 import { getActivities } from "../../services/activities";
 import { getCategories } from "../../services/categories";
@@ -8,11 +8,12 @@ import { colors } from "../../styles/colors";
 import { useFocusEffect } from "@react-navigation/native";
 
 type ActivityListProps = {
-  selectedCategory?: string; 
-  onPressActivity?: (item: Activity) => void; 
+  header?: ReactElement | null;
+  selectedCategory?: string;
+  onPressActivity?: (item: Activity) => void;
 };
 
-export default function ActivityList({ selectedCategory, onPressActivity }: ActivityListProps) {
+export default function ActivityList({ header, selectedCategory, onPressActivity }: ActivityListProps) {
   const [allActivities, setAllActivities] = useState<Activity[]>([]);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -27,14 +28,14 @@ export default function ActivityList({ selectedCategory, onPressActivity }: Acti
       let isActive = true;
 
       const fetchData = async () => {
-        setLoading(true); 
+        setLoading(true);
         try {
           const [cats, acts] = await Promise.all([getCategories(), getActivities()]);
 
           if (isActive) {
             setAllCategories(cats);
             setAllActivities(acts);
-            setErrorMsg(null); 
+            setErrorMsg(null);
           }
         } catch (err: any) {
           console.error("Erro ao buscar dados:", err);
@@ -53,36 +54,37 @@ export default function ActivityList({ selectedCategory, onPressActivity }: Acti
       return () => {
         isActive = false;
       };
-    }, []), 
+    }, []),
   );
 
   // Tela de loading
   if (loading) {
-    return (
+    const placeholder = (
       <View className="flex-1 items-center justify-center pb-24">
         <ActivityIndicator size="large" color={colors.blue[500]} />
       </View>
     );
+    return header ? <FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} ListEmptyComponent={placeholder} /> : placeholder;
   }
 
   // Tela de erro
   if (errorMsg) {
-    return (
+    const placeholder = (
       <View className="flex-1 items-center justify-center px-4 pb-24">
         <Text className="text-danger text-center font-inter text-sm">{errorMsg}</Text>
       </View>
     );
+    return header ? <FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} ListEmptyComponent={placeholder} /> : placeholder;
   }
 
   // Exibe aviso enquanto categorias ainda carregam
   if (selectedCategory && allCategories.length === 0) {
-    return (
+    const placeholder = (
       <View className="flex-1 items-center justify-center px-4 pb-24">
-        <Text className="text-gray-400 text-center font-inter text-sm">
-          Carregando categorias...
-        </Text>
+        <Text className="text-gray-400 text-center font-inter text-sm">Carregando categorias...</Text>
       </View>
     );
+    return header ? <FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} ListEmptyComponent={placeholder} /> : placeholder;
   }
 
   // Retorna apenas as atividades pertencentes à categoria selecionada
@@ -126,24 +128,24 @@ export default function ActivityList({ selectedCategory, onPressActivity }: Acti
 
   // Nenhuma atividade encontrada para a categoria
   if (filtered.length === 0) {
-    return (
+    const placeholder = (
       <View className="flex-1 items-center justify-start mt-8">
-        <Text className="text-gray-400 text-center text-sm font-inter">
-          Nenhuma atividade em {selectedCategory}
-        </Text>
+        <Text className="text-gray-400 text-center text-sm font-inter">Nenhuma atividade em {selectedCategory}</Text>
       </View>
     );
+    return header ? <FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} ListEmptyComponent={placeholder} /> : placeholder;
   }
 
   return (
     <FlatList
+      ListHeaderComponent={header}
       data={filtered}
       keyExtractor={(item) => item.id}
       contentContainerStyle={{ paddingBottom: 60, paddingTop: 4 }}
       showsVerticalScrollIndicator={false}
       renderItem={({ item }) => {
         const rawDate = parseISO(item.data);
-        const dataObj = addHours(rawDate, 3); 
+        const dataObj = addHours(rawDate, 3);
         const dia = format(dataObj, "dd", { locale: ptBR });
         const mes = format(dataObj, "MMMM", { locale: ptBR });
 

@@ -1,3 +1,4 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { useCallback, useState } from "react";
 import { View, Text, Pressable, ActivityIndicator, StatusBar, Platform, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -104,62 +105,63 @@ export default function UserProfile() {
 
   const nomeCompleto = new BeautifulName(userFromContext.nome || "").beautifulName;
 
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={Platform.OS === "android"} />
+
+      <View className="flex-row justify-between items-center">
+        <BackButton />
+
+        <Text className="text-white text-xl font-poppinsSemiBold text-center mt-6">Perfil</Text>
+
+        <EditButton disabled={isParticipantView} />
+      </View>
+
+      <View className="items-center mb-8">
+        <View className="w-32 h-32 rounded-full border-[1px] border-[#3DCC87] bg-[#21353A] flex items-center justify-center mb-4">
+          <View className="w-6 h-full flex items-center justify-center">
+            <FontAwesomeIcon icon={faUser} size={48} color="#3DCC87" />
+          </View>
+        </View>
+
+        <Text className="text-white text-2xl font-poppinsSemiBold mb-1">{nomeCompleto}</Text>
+
+        <Text className="text-gray-400 font-poppins">{user.email}</Text>
+      </View>
+
+      {/* Stats */}
+      <View className="relative flex-row justify-around items-center mb-8 px-5 py-7 border border-blue-100/30 rounded-lg">
+        <Text className="absolute top-0 left-3 mt-[-8] px-1 bg-blue-900 text-gray-400 text-sm font-inter uppercase"> Estatísticas </Text>
+
+        <View className="items-center">
+          <Text className="text-white text-4xl font-poppinsSemiBold">{ranking ?? "-"}</Text>
+          <Text className="text-gray-500 font-inter text-xs uppercase">No rank</Text>
+        </View>
+
+        <View className="items-center">
+          <Text className="text-white text-4xl font-poppinsSemiBold">{user.points}</Text>
+          <Text className="text-gray-500 font-inter text-xs uppercase">Pontos</Text>
+        </View>
+
+        <View className="items-center">
+          <Text className="text-white text-4xl font-poppinsSemiBold">{activities ?? 0}</Text>
+          <Text className="text-gray-500 font-inter text-xs uppercase">Atividades</Text>
+        </View>
+      </View>
+    </>
+  );
   return (
     <SafeAreaView className="bg-blue-900 flex-1 items-center">
       <View className="w-full px-6 max-w-[1000px] mx-auto flex-1">
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor="transparent"
-          translucent={Platform.OS === "android"}
-        />
-
-        <View className="flex-row justify-between items-center">
-          <BackButton />
-
-          <Text className="text-white text-xl font-poppinsSemiBold text-center mt-6">Perfil</Text>
-
-          <EditButton disabled={isParticipantView} />
-        </View>
-    
-        <View className="items-center mb-8">
-          <View className="w-32 h-32 rounded-full border-[1px] border-[#3DCC87] bg-[#21353A] flex items-center justify-center mb-4">
-            <View className="w-6 h-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faUser} size={48} color="#3DCC87" />
-            </View>
-          </View>
-
-          <Text className="text-white text-2xl font-poppinsSemiBold mb-1">{nomeCompleto}</Text>
-
-          <Text className="text-gray-400 font-poppins">{user.email}</Text>
-        </View>
-
-        {/* Stats */}
-        <View className="relative flex-row justify-around items-center mb-8 px-5 py-7 border border-blue-100/30 rounded-lg">
-          <Text className="absolute top-0 left-3 mt-[-8] px-1 bg-blue-900 text-gray-400 text-sm font-inter uppercase">
-            {" "}Estatísticas{" "}
-          </Text>
-
-          <View className="items-center">
-            <Text className="text-white text-4xl font-poppinsSemiBold">{ranking ?? "-"}</Text>
-            <Text className="text-gray-500 font-inter text-xs uppercase">No rank</Text>
-          </View>
-
-          <View className="items-center">
-            <Text className="text-white text-4xl font-poppinsSemiBold">{user.points}</Text>
-            <Text className="text-gray-500 font-inter text-xs uppercase">Pontos</Text>
-          </View>
-
-          <View className="items-center">
-            <Text className="text-white text-4xl font-poppinsSemiBold">{activities ?? 0}</Text>
-            <Text className="text-gray-500 font-inter text-xs uppercase">Atividades</Text>
-          </View>
-        </View>
+        {Platform.OS !== "web" && pageHeader}
 
         <ScrollView
           showsVerticalScrollIndicator={false}
           className="flex-1 w-full"
           contentContainerStyle={{ flexGrow: 1 }}
         >
+          {Platform.OS === "web" && pageHeader}
           <ProfileButton
             icon={faCalendarDays}
             label="Minhas Atividades"
@@ -182,7 +184,7 @@ export default function UserProfile() {
           <Pressable onPress={signOut}>
             {({ pressed }) => (
               <View
-                className={`flex-row h-[58px] items-center justify-between rounded-lg p-4 border border-iconbg transition-all duration-100 
+                className={`flex-row h-[58px] items-center justify-between rounded-lg p-4 border border-iconbg transition-all duration-100
                   ${ pressed ? "bg-background/30" : "" }
                   ${ isUserSubscribed ? "mb-8" : "mb-24" }
                 `}
@@ -198,7 +200,7 @@ export default function UserProfile() {
             )}
           </Pressable>
 
-          {isUserSubscribed && 
+          {isUserSubscribed &&
             <View className="w-full flex flex-col gap-4 mb-24">
               <Text className="text-sm text-[#F8F8F8] font-poppinsMedium">Inscrição no evento</Text>
 

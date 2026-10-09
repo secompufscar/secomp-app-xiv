@@ -1,9 +1,10 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { View, Text, Pressable, StatusBar, Platform, ActivityIndicator, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { ParamListBase, useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useState } from "react";
-import { getActivities, deleteActivity } from "../../services/activities"; 
+import { getActivities, deleteActivity } from "../../services/activities";
 import { getImagesByActivityId, deleteActivityImageById } from "../../services/activityImage";
 import { colors } from "../../styles/colors";
 import ConfirmationOverlay from "../../components/overlay/confirmationOverlay";
@@ -12,10 +13,10 @@ import BackButton from "../../components/button/backButton";
 import Button from "../../components/button/button";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-export default function ActivityAdmin() { 
+export default function ActivityAdmin() {
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
 
-  const [activities, setActivities] = useState<Activity[]>([]); 
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
@@ -25,20 +26,20 @@ export default function ActivityAdmin() {
 
   useFocusEffect(
     useCallback(() => {
-      const fetchActivities = async () => { 
+      const fetchActivities = async () => {
         setLoading(true);
         setError(null);
 
         try {
-          const data = await getActivities(); 
+          const data = await getActivities();
 
           const sorted = data.sort((a, b) =>
             a.nome.localeCompare(b.nome, "pt", { sensitivity: "base" })
           );
 
-          setActivities(sorted); 
+          setActivities(sorted);
         } catch (err) {
-          setError("Não foi possível carregar as atividades. Tente novamente."); 
+          setError("Não foi possível carregar as atividades. Tente novamente.");
         } finally {
           setLoading(false);
         }
@@ -65,7 +66,7 @@ export default function ActivityAdmin() {
   const handleDelete = async () => {
     if (!toDeleteId) return;
 
-    setModalVisible(false); 
+    setModalVisible(false);
     setErrorModalVisible(false);
 
     try {
@@ -84,7 +85,7 @@ export default function ActivityAdmin() {
     }
   };
 
-  const renderActivityItem = ({ item }: { item: Activity }) => ( 
+  const renderActivityItem = ({ item }: { item: Activity }) => (
     <Pressable
       onPress={() => {
         navigation.navigate("ActivityAdminUpdate", { id: item.id });
@@ -130,6 +131,26 @@ export default function ActivityAdmin() {
     );
   };
 
+  const listStatusHeader = <>{error && <Text className="text-red-400 text-center mt-8">{error}</Text>}</>;
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      <BackButton />
+
+      {/* Cabeçalho */}
+      <View className="mb-8">
+        <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Painel de Atividades</Text>
+        <Text className="text-gray-400 font-inter">Painel de administração das atividades</Text>
+      </View>
+
+      <Button
+        title="Criar atividade"
+        onPress={() => {
+          navigation.navigate("ActivityAdminCreate");
+        }}
+      />
+    </>
+  );
   return (
     <SafeAreaView className="bg-blue-900 flex-1 items-center">
       <View className="flex-1 w-full">
@@ -140,26 +161,17 @@ export default function ActivityAdmin() {
         />
 
         <View className="w-full flex-1 px-6 max-w-[1000px] mx-auto">
-          <BackButton/>
-
-          {/* Cabeçalho */}
-          <View className="mb-8">
-            <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Painel de Atividades</Text> 
-            <Text className="text-gray-400 font-inter">
-              Painel de administração das atividades
-            </Text> 
-          </View>
-
-          <Button title="Criar atividade" onPress={() => {navigation.navigate("ActivityAdminCreate")}}/> 
+          {Platform.OS !== "web" && pageHeader}
 
           <View className="flex-1 mt-8">
-            {error && <Text className="text-red-400 text-center mt-8">{error}</Text>}
+            {Platform.OS !== "web" && listStatusHeader}
 
             <FlatList
-              data={activities} 
-              renderItem={renderActivityItem} 
+              ListHeaderComponent={Platform.OS === "web" ? <>{pageHeader}{listStatusHeader}</> : undefined}
+              data={activities}
+              renderItem={renderActivityItem}
               ListEmptyComponent={emptyList}
-              keyExtractor={(item) => item.id.toString()} 
+              keyExtractor={(item) => item.id.toString()}
               showsVerticalScrollIndicator={false}
               initialNumToRender={15}
               contentContainerStyle={{ paddingBottom: 36 }}

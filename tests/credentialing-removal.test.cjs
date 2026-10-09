@@ -59,6 +59,7 @@ function screen({ category = 'credenciamento', platform = 'web', admin = true, r
     '../../components/overlay/userAttendanceDialog': { __esModule: true, default: props => jsx('HistoryDialog', props) },
     '../../services/users': { getUserDetails: () => { throw new Error('Already has name'); } },
     '../../styles/colors': { colors: { blue: { 500: '#000' } } },
+    '../../components/app/participantViewToggle': { __esModule: true, default: () => null },
     '../../components/button/backButton': () => null, '@expo/vector-icons/FontAwesome6': () => null,
   };
   const implementation = load('screens/participants/participantsListScreen.tsx', deps);

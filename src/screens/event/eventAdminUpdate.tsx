@@ -1,3 +1,4 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { useEffect, useState } from "react";
 import { View, Text, Pressable, StatusBar, Platform, ScrollView } from "react-native";
 import { ParamListBase, RouteProp, useNavigation, useRoute } from "@react-navigation/native";
@@ -63,20 +64,20 @@ export default function EventAdminUpdate() {
     };
 
     fetchEventData();
-  }, [id]); 
+  }, [id]);
 
   // Função para lidar com a mudança da data de início
   const onChangeStartDateMobile = (event: DateTimePickerEvent, selectedDate?: Date) => {
     setShowStartDatePicker(false);
     if (selectedDate) {
       setStartDate(selectedDate);
-      
+
       if (selectedDate > endDate) {
         setEndDate(selectedDate);
       }
     }
   };
-  
+
   // Função para lidar com a mudança da data de fim
   const onChangeEndDateMobile = (event: DateTimePickerEvent, selectedDate?: Date) => {
     setShowEndDatePicker(false);
@@ -91,7 +92,7 @@ export default function EventAdminUpdate() {
 
     if (!year.trim()) {
       setWarningMessage("Por favor, preencha o ano da edição")
-      setWarningModalVisible(true);     
+      setWarningModalVisible(true);
       return;
     }
 
@@ -100,16 +101,16 @@ export default function EventAdminUpdate() {
 
     if (isNaN(parsedYear) || parsedYear < currentYear || parsedYear >= 2100) {
       setWarningMessage(`O ano deve ser um número válido, entre ${currentYear} e 2100.`)
-      setWarningModalVisible(true); 
+      setWarningModalVisible(true);
       return;
     }
 
     setIsLoading(true);
 
-    try { 
+    try {
       const eventData: Omit<Events, 'id' | 'isCurrent'> = {
         year: parsedYear,
-        startDate: startDate.toISOString(), 
+        startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
       };
 
@@ -119,10 +120,28 @@ export default function EventAdminUpdate() {
         setErrorMessage("Não foi possível editar este evento")
         setErrorModalVisible(true);
     } finally {
-      setIsLoading(false);  
+      setIsLoading(false);
     }
   };
 
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      <BackButton />
+
+      {/* Cabeçalho */}
+      <View className="mb-8">
+        <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Editar evento</Text>
+        <Text className="text-blue-200 font-inter">Altere os dados de uma edição da Secomp!</Text>
+      </View>
+
+      <View className="w-full rounded-lg border-[1.5px] border-warning bg-warning/10 p-6 mb-8">
+        <Text className="text-sm text-warning font-inter leading-relaxed">
+          Tenha extrema cautela ao modificar informações de um evento, pois isso pode impactar outras interações dentro do aplicativo
+        </Text>
+      </View>
+    </>
+  );
   return (
     <SafeAreaView className="bg-blue-900 flex-1 items-center">
       <View className="flex-1 w-full">
@@ -133,23 +152,10 @@ export default function EventAdminUpdate() {
         />
 
         <View className="w-full flex-1 px-6 max-w-[1000px] mx-auto">
-          <BackButton/>
+          {Platform.OS !== "web" && pageHeader}
 
-          {/* Cabeçalho */}
-          <View className="mb-8">
-            <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Editar evento</Text>
-            <Text className="text-blue-200 font-inter">
-              Altere os dados de uma edição da Secomp!
-            </Text>
-          </View>
-
-          <View className="w-full rounded-lg border-[1.5px] border-warning bg-warning/10 p-6 mb-8">
-            <Text className="text-sm text-warning font-inter leading-relaxed">
-              Tenha extrema cautela ao modificar informações de um evento, pois isso pode impactar outras interações dentro do aplicativo
-            </Text>
-          </View>
-          
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+            {Platform.OS === "web" && pageHeader}
             <View className="flex-col flex-1 w-full gap-4 text-center justify-start">
               {/* Ano da edição */}
               <View className="w-full">
@@ -180,7 +186,7 @@ export default function EventAdminUpdate() {
                           }
                         }
                       }}
-                      locale={ptBR} 
+                      locale={ptBR}
                       dateFormat="dd/MM/yyyy"
                       popperClassName="z-50"
                       customInput={
@@ -221,7 +227,7 @@ export default function EventAdminUpdate() {
                           }
                         }
                       }}
-                      locale={ptBR} 
+                      locale={ptBR}
                       dateFormat="dd/MM/yyyy"
                       popperClassName="z-50"
                       portalId="root"
@@ -247,7 +253,7 @@ export default function EventAdminUpdate() {
                   </Pressable>
                 )}
               </View>
-                
+
               <Button title="Atualizar" className="mt-auto mb-8" loading={isLoading} onPress={handleUpdateEvent}/>
             </View>
           </ScrollView>

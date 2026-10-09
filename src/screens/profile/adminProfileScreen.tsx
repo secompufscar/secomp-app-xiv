@@ -1,3 +1,4 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { useCallback, useRef, useState } from "react";
 import { View, Text, Pressable, StatusBar, Platform, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -43,7 +44,7 @@ export default function AdminProfile() {
       </SafeAreaView>
     );
   }
-  
+
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -59,7 +60,7 @@ export default function AdminProfile() {
           const event = await getCurrentEvent();
 
           if (!isActive) return;
-          
+
           // Status de inscrição no evento
           if (event?.id && freshUser?.id) {
             const registration = await getRegistrationByUserIdAndEventId(freshUser.id, event.id);
@@ -128,40 +129,43 @@ export default function AdminProfile() {
     }
   };
 
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={Platform.OS === "android"} />
+
+      <View className="flex-row justify-between items-center">
+        {<BackButton />}
+
+        <Text className="text-white text-xl font-poppinsSemiBold text-center">Perfil</Text>
+
+        <EditButton />
+      </View>
+
+      <View className="items-center mb-8">
+        <View className="w-32 h-32 rounded-full border-[1px] border-[#3DCC87] bg-[#21353A] flex items-center justify-center mb-4">
+          <View className="w-6 h-full flex items-center justify-center">
+            <FontAwesomeIcon icon={faUser} size={48} color="#3DCC87" />
+          </View>
+        </View>
+
+        <Text className="text-white text-2xl font-poppinsSemiBold mb-1">{nomeCompleto}</Text>
+
+        <Text className="text-gray-400 font-poppins">{user.email}</Text>
+      </View>
+    </>
+  );
   return (
     <SafeAreaView className="bg-blue-900 flex-1 items-center">
       <View className="w-full px-6 max-w-[1000px] mx-auto flex-1">
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor="transparent"
-          translucent={Platform.OS === "android"}
-        />
-        
-        <View className="flex-row justify-between items-center">
-          {<BackButton />}
-
-          <Text className="text-white text-xl font-poppinsSemiBold text-center">Perfil</Text>
-
-          <EditButton />
-        </View>
-
-        <View className="items-center mb-8">
-          <View className="w-32 h-32 rounded-full border-[1px] border-[#3DCC87] bg-[#21353A] flex items-center justify-center mb-4">
-            <View className="w-6 h-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faUser} size={48} color="#3DCC87" />
-            </View>
-          </View>
-
-          <Text className="text-white text-2xl font-poppinsSemiBold mb-1">{nomeCompleto}</Text>
-
-          <Text className="text-gray-400 font-poppins">{user.email}</Text>
-        </View>
+        {Platform.OS !== "web" && pageHeader}
 
         <ScrollView
           showsVerticalScrollIndicator={false}
           className="flex-1 w-full"
           contentContainerStyle={{ flexGrow: 1 }}
         >
+          {Platform.OS === "web" && pageHeader}
           <ProfileButton
             icon={faQrcode}
             label={credentialingDestination === "QRCode" ? "Carregando..." : "Credenciamento"}
@@ -240,7 +244,7 @@ export default function AdminProfile() {
             )}
           </Pressable>
 
-          {isUserSubscribed && 
+          {isUserSubscribed &&
             <View className="w-full flex flex-col gap-4">
               <Text className="text-sm text-[#F8F8F8] font-poppinsMedium">Inscrição no evento</Text>
 

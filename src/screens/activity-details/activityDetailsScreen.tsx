@@ -1,3 +1,4 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { useState, useEffect } from "react";
 import { View, Text, Pressable, ActivityIndicator, Linking, StatusBar, Platform, ScrollView, Image, ImageBackground } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -157,38 +158,37 @@ export default function ActivityDetails() {
   const getTime = () => format(addHours(parseISO(activity.data), 3), "HH:mm'h'", { locale: ptBR });
   const categoryName = category?.nome || "Secomp";
 
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={Platform.OS === "android"} />
+
+      {/* Imagem da atividade */}
+      <View className={`w-full h-[280px] relative ${Platform.OS === "web" ? "" : "-mt-10"}`}>
+        {activityImageUrl !== "" ? (
+          <ImageBackground source={{ uri: activityImageUrl }} className="w-full h-full" resizeMode="cover" />
+        ) : (
+          <View className="w-full h-full flex items-center justify-center bg-background pt-10">
+            <FontAwesome6 name="image" size={56} color={colors.border} />
+          </View>
+        )}
+        <View className="absolute top-6 left-6">
+          <BackButton />
+        </View>
+      </View>
+    </>
+  );
   return (
     <SafeAreaView className="flex-1 bg-blue-900">
       <View className="flex-1 w-full">
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor="transparent"
-          translucent={Platform.OS === "android"}
-        />
-
-        {/* Imagem da atividade */}
-        <View className="w-full h-[280px] relative -mt-10">
-          {activityImageUrl !== "" ? (
-            <ImageBackground
-              source={{ uri: activityImageUrl }}
-              className="w-full h-full"
-              resizeMode="cover"
-            />
-          ) : (
-            <View className="w-full h-full flex items-center justify-center bg-background pt-10">
-              <FontAwesome6 name="image" size={56} color={colors.border}/>
-            </View>
-          )}
-          <View className="absolute top-6 left-6">
-            <BackButton />
-          </View>
-        </View>
+        {Platform.OS !== "web" && pageHeader}
 
         <ScrollView
           showsVerticalScrollIndicator={false}
           className="flex-1 w-full"
           contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-between', paddingBottom: 32 }}
         >
+          {Platform.OS === "web" && pageHeader}
           <View className="w-full px-6 max-w-[1000px] mx-auto mt-6">
             {/* Título da atividade */}
             <View className="mb-6">
@@ -299,13 +299,13 @@ export default function ActivityDetails() {
                 </View>
               </View>
             </View>
-          </View> 
-          
+          </View>
+
           {isSubscribed && requiresEnrollment &&
             <View className="w-full mb-6 flex items-start justify-center px-6 max-w-[1000px] mx-auto">
                 {isUserOnWaitlist ? (
                 <Text className="text-blue-500 font-inter px-5 py-3 border border-blue-500 rounded-lg bg-blue-500/10">
-                  Você está na lista de espera 
+                  Você está na lista de espera
                   {waitlistPosition ? ` (posição ${waitlistPosition})` : ""}
                 </Text>
               ) : (
@@ -347,8 +347,8 @@ export default function ActivityDetails() {
                   onPressOut={() => setIsBtnPressed(false)}
                 >
                   <View
-                    className={`w-full px-4 h-[56px] px-5 items-center justify-center rounded-lg transition-transform duration-100 transform 
-                      ${isSubscribed ? "bg-border" : "bg-blue-500 "} 
+                    className={`w-full px-4 h-[56px] px-5 items-center justify-center rounded-lg transition-transform duration-100 transform
+                      ${isSubscribed ? "bg-border" : "bg-blue-500 "}
                       ${isBtnPressed ? "opacity-80" : "opacity-100"}`}
                   >
                     <Text className="text-white text-base font-interMedium">

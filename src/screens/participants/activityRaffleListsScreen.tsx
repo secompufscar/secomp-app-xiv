@@ -1,3 +1,4 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { View, Text, FlatList, Pressable, ActivityIndicator, StatusBar, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -174,39 +175,83 @@ export default function ActivityRaffleLists() {
       active ? "bg-blue-500/20 border-blue-500" : "bg-iconbg/20 border-border"
     }`;
 
+  const activitySearchHeader = !selected ? (
+    <>
+      <Input>
+        <FontAwesome name="search" size={16} color={colors.border} />
+        <Input.Field placeholder="Buscar atividade" value={search} onChangeText={setSearch} autoCorrect={false} />
+      </Input>
+
+      {activitiesError && <Text className="text-red-400 text-center mt-4">{activitiesError}</Text>}
+    </>
+  ) : null;
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={Platform.OS === "android"} />
+
+      <BackButton />
+
+      <View className="mb-6">
+        <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Listas para sorteio</Text>
+        <Text className="text-gray-400 font-inter">Inscritos (com lista de espera) e presentes por atividade</Text>
+      </View>
+    </>
+  );
+  const participantsHeader = selected ? (
+    <>
+      <View className="flex-row items-center justify-between gap-3 p-4 mb-4 rounded-lg border border-iconbg bg-background">
+        <View className="flex-1">
+          <Text className="text-white font-poppinsMedium">{selected.nome}</Text>
+          <Text className="text-sm text-gray-600 font-interMedium">{selected.palestranteNome}</Text>
+        </View>
+
+        <View className="flex-row items-center gap-4">
+          <Pressable onPress={() => loadEnrollments(selected.id)} hitSlop={8}>
+            <FontAwesome name="refresh" size={18} color={colors.blue[200]} />
+          </Pressable>
+
+          <Pressable onPress={clearSelection} hitSlop={8}>
+            <Text className="text-blue-200 font-interMedium">Trocar</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <View className="flex-row gap-3 mb-6">
+        <Pressable className="flex-1" onPress={() => setMode("inscritos")}>
+          <View className={tabClass(mode === "inscritos")}>
+            <Text className="text-white font-interMedium">Inscritos ({inscritos.length})</Text>
+          </View>
+        </Pressable>
+
+        <Pressable className="flex-1" onPress={() => setMode("presentes")}>
+          <View className={tabClass(mode === "presentes")}>
+            <Text className="text-white font-interMedium">Presentes ({presentes.length})</Text>
+          </View>
+        </Pressable>
+      </View>
+
+      <View className="flex-row mb-2 items-center">
+        <Text className="w-14 text-gray-400 text-sm font-interMedium">Nº</Text>
+        <Text className="flex-1 text-gray-400 text-sm font-interMedium">Nome</Text>
+      </View>
+
+      <View className="h-[1px] bg-[#3B465E] opacity-50 my-1" />
+
+      {error && <Text className="text-red-400 text-center mt-4">{error}</Text>}
+    </>
+  ) : null;
   return (
     <SafeAreaView className="bg-blue-900 flex-1 items-center">
       <View className="w-full flex-1 px-6 max-w-[1000px] mx-auto">
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor="transparent"
-          translucent={Platform.OS === "android"}
-        />
-
-        <BackButton />
-
-        <View className="mb-6">
-          <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Listas para sorteio</Text>
-          <Text className="text-gray-400 font-inter">
-            Inscritos (com lista de espera) e presentes por atividade
-          </Text>
-        </View>
+        {Platform.OS !== "web" && pageHeader}
 
         {!selected ? (
           <View className="flex-1">
-            <Input>
-              <FontAwesome name="search" size={16} color={colors.border} />
-              <Input.Field
-                placeholder="Buscar atividade"
-                value={search}
-                onChangeText={setSearch}
-                autoCorrect={false}
-              />
-            </Input>
-
-            {activitiesError && <Text className="text-red-400 text-center mt-4">{activitiesError}</Text>}
+            {Platform.OS !== "web" && activitySearchHeader}
 
             <FlatList
+              ListHeaderComponent={Platform.OS === "web" ? <>{pageHeader}{activitySearchHeader}</> : undefined}
               className="mt-4"
               data={filteredActivities}
               renderItem={renderActivity}
@@ -227,50 +272,13 @@ export default function ActivityRaffleLists() {
           </View>
         ) : (
           <View className="flex-1">
-            <View className="flex-row items-center justify-between gap-3 p-4 mb-4 rounded-lg border border-iconbg bg-background">
-              <View className="flex-1">
-                <Text className="text-white font-poppinsMedium">{selected.nome}</Text>
-                <Text className="text-sm text-gray-600 font-interMedium">{selected.palestranteNome}</Text>
-              </View>
-
-              <View className="flex-row items-center gap-4">
-                <Pressable onPress={() => loadEnrollments(selected.id)} hitSlop={8}>
-                  <FontAwesome name="refresh" size={18} color={colors.blue[200]} />
-                </Pressable>
-
-                <Pressable onPress={clearSelection} hitSlop={8}>
-                  <Text className="text-blue-200 font-interMedium">Trocar</Text>
-                </Pressable>
-              </View>
-            </View>
-
-            <View className="flex-row gap-3 mb-6">
-              <Pressable className="flex-1" onPress={() => setMode("inscritos")}>
-                <View className={tabClass(mode === "inscritos")}>
-                  <Text className="text-white font-interMedium">Inscritos ({inscritos.length})</Text>
-                </View>
-              </Pressable>
-
-              <Pressable className="flex-1" onPress={() => setMode("presentes")}>
-                <View className={tabClass(mode === "presentes")}>
-                  <Text className="text-white font-interMedium">Presentes ({presentes.length})</Text>
-                </View>
-              </Pressable>
-            </View>
-
-            <View className="flex-row mb-2 items-center">
-              <Text className="w-14 text-gray-400 text-sm font-interMedium">Nº</Text>
-              <Text className="flex-1 text-gray-400 text-sm font-interMedium">Nome</Text>
-            </View>
-
-            <View className="h-[1px] bg-[#3B465E] opacity-50 my-1" />
-
-            {error && <Text className="text-red-400 text-center mt-4">{error}</Text>}
+            {Platform.OS !== "web" && participantsHeader}
 
             {loading ? (
               <ActivityIndicator size="large" color={colors.blue[500]} className="my-6" />
             ) : (
               <FlatList
+                ListHeaderComponent={Platform.OS === "web" ? <>{pageHeader}{participantsHeader}</> : undefined}
                 data={rows}
                 renderItem={renderRow}
                 keyExtractor={(item) => item.id}

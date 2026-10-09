@@ -1,3 +1,4 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { useCallback, useState } from "react";
 import { View, Text, Image, Pressable, Linking, ActivityIndicator, StatusBar, Platform, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -54,30 +55,31 @@ export default function Sponsors() {
     );
   }
 
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={Platform.OS === "android"} />
+
+      <BackButton />
+
+      <View className="mb-8">
+        <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Patrocinadores</Text>
+
+        <Text className="text-gray-400 font-inter text-base">Empresas que confiam em nós e fazem o evento acontecer</Text>
+      </View>
+    </>
+  );
   return (
     <SafeAreaView className="flex-1 bg-blue-900 items-center">
       <View className="w-full px-6 max-w-[1000px] mx-auto flex-1">
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor="transparent"
-          translucent={Platform.OS === "android"}
-        />
-
-        <BackButton />
-
-        <View className="mb-8">
-          <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Patrocinadores</Text>
-
-          <Text className="text-gray-400 font-inter text-base">
-            Empresas que confiam em nós e fazem o evento acontecer
-          </Text>
-        </View>
+        {Platform.OS !== "web" && pageHeader}
 
         <ScrollView
           showsVerticalScrollIndicator={false}
           className="flex-1 w-full"
           contentContainerStyle={{ flexGrow: 1 }}
         >
+          {Platform.OS === "web" && pageHeader}
           {sponsors.map((sponsor) => (
             <Pressable
               onPress={() => {

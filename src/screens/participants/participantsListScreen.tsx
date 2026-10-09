@@ -1,3 +1,4 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { useState, useCallback, useRef } from "react";
 import { View, Text, FlatList, ActivityIndicator, StatusBar, Platform, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -234,51 +235,58 @@ export default function ParticipantsList() {
     );
   }
 
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={Platform.OS === "android"} />
+
+      <BackButton />
+
+      <View className="w-full mb-8">
+        <Text className="text-white text-2xl font-poppinsSemiBold mb-1">Participantes</Text>
+
+        <Text className="text-blue-200 font-inter text-base">{activityName}</Text>
+      </View>
+
+      <View className="w-full mb-10 flex-col gap-3">
+        <Text className="text-gray-400 text-sm font-interMedium w-full">Número de participantes</Text>
+
+        <View className="flex-row gap-5">
+          <View className="flex-1 p-4 flex-row items-center gap-4 bg-iconbg/20 rounded border border-border">
+            <FontAwesome6 name="person" size={24} color={colors.border} />
+            <Text className="text-border font-interSemiBold leading-none">{total}</Text>
+          </View>
+
+          <View className="flex-1 p-4 flex-row items-center gap-4 bg-success/10 rounded border border-success/80">
+            <FontAwesome6 name="person-circle-check" size={24} color={colors.success} />
+            <Text className="text-success font-interSemiBold leading-none">{presentes}</Text>
+          </View>
+        </View>
+      </View>
+
+      <View className="flex flex-row mb-2 items-center justify-between">
+        <Text className="flex-1 mr-2 text-gray-400 text-sm font-interMedium">Nome</Text>
+
+        <View className="w-[90px] flex items-start justify-start">
+          <Text className="text-gray-400 text-sm font-interMedium">Status</Text>
+        </View>
+      </View>
+
+      <View className="h-[1px] bg-[#3B465E] opacity-50 my-1" />
+      {success && (
+        <Text accessibilityLiveRegion="polite" style={{ color: colors.success, fontFamily: "Inter_400Regular", marginVertical: 12 }}>
+          {success}
+        </Text>
+      )}
+    </>
+  );
   return (
     <SafeAreaView className="flex-1 bg-blue-900 items-center">
       <View className="w-full flex-1 px-6 max-w-[1000px] mx-auto">
-        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={Platform.OS === "android"} />
-
-        <BackButton />
-
-        <View className="w-full mb-8">
-          <Text className="text-white text-2xl font-poppinsSemiBold mb-1">Participantes</Text>
-
-          <Text className="text-blue-200 font-inter text-base">{activityName}</Text>
-        </View>
-
-        <View className="w-full mb-10 flex-col gap-3">
-          <Text className="text-gray-400 text-sm font-interMedium w-full">Número de participantes</Text>
-
-          <View className="flex-row gap-5">
-            <View className="flex-1 p-4 flex-row items-center gap-4 bg-iconbg/20 rounded border border-border">
-              <FontAwesome6 name="person" size={24} color={colors.border} />
-              <Text className="text-border font-interSemiBold leading-none">{total}</Text>
-            </View>
-
-            <View className="flex-1 p-4 flex-row items-center gap-4 bg-success/10 rounded border border-success/80">
-              <FontAwesome6 name="person-circle-check" size={24} color={colors.success} />
-              <Text className="text-success font-interSemiBold leading-none">{presentes}</Text>
-            </View>
-          </View>
-        </View>
-
-        <View className="flex flex-row mb-2 items-center justify-between">
-          <Text className="flex-1 mr-2 text-gray-400 text-sm font-interMedium">Nome</Text>
-
-          <View className="w-[90px] flex items-start justify-start">
-            <Text className="text-gray-400 text-sm font-interMedium">Status</Text>
-          </View>
-        </View>
-
-        <View className="h-[1px] bg-[#3B465E] opacity-50 my-1" />
-        {success && (
-          <Text accessibilityLiveRegion="polite" style={{ color: colors.success, fontFamily: "Inter_400Regular", marginVertical: 12 }}>
-            {success}
-          </Text>
-        )}
+        {Platform.OS !== "web" && pageHeader}
 
         <FlatList
+          ListHeaderComponent={Platform.OS === "web" ? pageHeader : undefined}
           data={list}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingBottom: 32 }}

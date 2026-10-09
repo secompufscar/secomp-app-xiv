@@ -1,4 +1,5 @@
-import { View, Text, Image, StatusBar, Platform } from "react-native";
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
+import { View, Text, Image, StatusBar, Platform, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ParamListBase, useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -9,9 +10,12 @@ export default function EventConfirmation() {
   const route = useRoute();
   const event = route.params as { event: Events };
 
+  const PageContainer = Platform.OS === "web" ? ScrollView : View;
+
   return (
     <SafeAreaView className="bg-blue-900 flex-1 items-center">
-      <View className="flex-1 w-full">
+      <PageContainer className="flex-1 w-full">
+        {Platform.OS === "web" && <ParticipantViewToggle />}
         <StatusBar
           barStyle="light-content"
           backgroundColor="transparent"
@@ -35,7 +39,7 @@ export default function EventConfirmation() {
 
           <Button className="mt-4 w-[80%]" title="Continuar" onPress={() => {navigation.navigate("Home")}} />
         </View>
-      </View>
+      </PageContainer>
     </SafeAreaView>
   );
 }

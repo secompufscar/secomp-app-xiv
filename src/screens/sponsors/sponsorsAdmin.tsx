@@ -1,3 +1,4 @@
+import ParticipantViewToggle from "../../components/app/participantViewToggle";
 import { useCallback, useState } from "react";
 import { View, Text, FlatList, Pressable, ActivityIndicator, Image, StatusBar, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -54,7 +55,7 @@ export default function SponsorsAdmin() {
   const handleDelete = async () => {
     if (!toDeleteId) return;
 
-    setModalVisible(false); 
+    setModalVisible(false);
     setErrorModalVisible(false);
 
     try {
@@ -67,7 +68,7 @@ export default function SponsorsAdmin() {
       setToDeleteId(null);
     }
   };
-  
+
   // Itens da lista
   const renderEventItem = ({ item }: { item: Sponsor }) => (
     <Pressable
@@ -89,7 +90,7 @@ export default function SponsorsAdmin() {
 
           {/* Botão de deletar evento */}
           <Pressable onPress={(e) => {
-            e.stopPropagation(); 
+            e.stopPropagation();
             confirmDelete(String(item.id));
           }}>
             {({ pressed }) => (
@@ -120,6 +121,23 @@ export default function SponsorsAdmin() {
     );
   };
 
+  const listStatusHeader = <>{error && <Text className="text-red-400 text-center mt-2">{error}</Text>}</>;
+  const pageHeader = (
+    <>
+      {Platform.OS === "web" && <ParticipantViewToggle />}
+      <BackButton />
+
+      {/* Cabeçalho */}
+      <View className="mb-8">
+        <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Painel de patrocinadores</Text>
+        <Text className="text-gray-400 font-inter">Painel de administração dos patrocinadores</Text>
+      </View>
+
+      <Button title="Criar patrocinador" onPress={() => navigation.navigate("SponsorsAdminCreate")} />
+
+      {/* Lista de patrocinadores */}
+    </>
+  );
   return (
     <SafeAreaView className="bg-blue-900 flex-1 items-center">
       <View className="flex-1 w-full">
@@ -130,23 +148,12 @@ export default function SponsorsAdmin() {
         />
 
         <View className="w-full flex-1 px-6 max-w-[1000px] mx-auto">
-          <BackButton/>
-
-          {/* Cabeçalho */}
-          <View className="mb-8">
-            <Text className="text-white text-2xl font-poppinsSemiBold mb-2">Painel de patrocinadores</Text>
-            <Text className="text-gray-400 font-inter">
-              Painel de administração dos patrocinadores
-            </Text>
-          </View>
-
-          <Button title="Criar patrocinador" onPress={() => navigation.navigate("SponsorsAdminCreate")}/>
-
-          {/* Lista de patrocinadores */}
+          {Platform.OS !== "web" && pageHeader}
           <View className="flex-1 mt-8">
-            {error && <Text className="text-red-400 text-center mt-2">{error}</Text>}
+            {Platform.OS !== "web" && listStatusHeader}
 
             <FlatList
+              ListHeaderComponent={Platform.OS === "web" ? <>{pageHeader}{listStatusHeader}</> : undefined}
               data={list}
               renderItem={renderEventItem}
               ListEmptyComponent={emptyList}

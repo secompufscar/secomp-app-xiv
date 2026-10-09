@@ -77,6 +77,7 @@ function screen(resolveCredentialing, canUseAdminTools = true) {
     '../../services/events': { getCurrentEvent: async () => null },
     '../../services/credentialing': { CredentialingError: service().CredentialingError, getCurrentCredentialingActivity: resolveCredentialing },
     '../../styles/colors': { colors: { blue: { 200: '#000', 500: '#000' } } },
+    '../../components/app/participantViewToggle': { __esModule: true, default: () => null },
     '../../components/button/backButton': noop, '../../components/button/editButton': noop,
     '../../components/button/profileButton': props => jsx('Menu', props),
     '../../components/overlay/confirmationOverlay': noop, '../../components/overlay/errorOverlay': props => props.visible ? jsx('Error', props) : null,

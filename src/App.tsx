@@ -15,7 +15,6 @@ import "@expo/metro-runtime";
 import { AppVersionProvider, useAppVersion } from "./hooks/AppVersionContext";
 import UpdateRequiredScreen from "./screens/update/updateRequiredScreen";
 import SessionRecoveryScreen from "./screens/login-signup/sessionRecoveryScreen";
-import ParticipantViewToggle from "./components/app/participantViewToggle";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -71,7 +70,6 @@ function AppContent() {
 
   return (
     <View style={{ flex: 1 }}>
-      <ParticipantViewToggle />
       <View style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
         <Routes />
       </View>
