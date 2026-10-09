@@ -4,6 +4,8 @@
 
 **Admin → Todos os participantes** lista todas as contas cadastradas, mesmo sem inscrição na edição ou vínculo de credenciamento. A busca aceita nome ou e-mail; filtros **Todos**, **Credenciados** e **Não credenciados** podem ser combinados com ela. A lista tem páginas de 50 pessoas, ordenadas por nome, com desempate por ID.
 
+Essa é a opção de consulta de participantes no menu Admin da web. O atalho separado **Participantes do credenciamento** foi retirado; **Credenciamento** continua abrindo o leitor de QR.
+
 O selo verde **Credenciado** exige presença no credenciamento da edição atual. O vermelho **Não credenciado** inclui ausência de vínculo ou vínculo sem presença; inscrição e credenciamento antigo não equivalem a presença atual. Os textos acompanham as cores. O instante do credenciamento aparece no horário de São Paulo. Registros antigos sem data confiável mostram **Data do credenciamento não disponível**, mantendo o status verde.
 
 **Ver atividades com presença** funciona para qualquer pessoa, incluindo quem não foi credenciado, e usa o [histórico de presenças](user-attendance-web.md). A lista geral não oferece exclusão da conta. Remover o vínculo pelo fluxo existente não retira a pessoa dessa lista; ao atualizar a consulta, ela aparece como não credenciada.
