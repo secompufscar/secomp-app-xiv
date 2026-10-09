@@ -1,5 +1,7 @@
 import { NavigationContainer, useNavigationContainerRef } from "@react-navigation/native";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { Platform } from "react-native";
+import { createWebLinking, type WebRootParamList } from "./webLinking";
 import { useAuth } from "../hooks/AuthContext";
 import StackRoutes from "./stack.routes";
 import AuthRoutes from "./auth.routes";
@@ -19,8 +21,9 @@ const linking = {
 };
 
 export default function Routes() {
-  const { user, isParticipantView } = useAuth();
-  const navigationRef = useNavigationContainerRef();
+  const { user, isParticipantView, canUseAdminTools } = useAuth();
+  const webLinking = useMemo(() => createWebLinking(!!user, canUseAdminTools, isParticipantView), [!!user, canUseAdminTools, isParticipantView]);
+  const navigationRef = useNavigationContainerRef<WebRootParamList>();
   const previousView = useRef(isParticipantView);
 
   useEffect(() => {
@@ -32,7 +35,7 @@ export default function Routes() {
   }, [isParticipantView, user, navigationRef]);
 
   return (
-    <NavigationContainer ref={navigationRef} linking={linking}>
+    <NavigationContainer ref={navigationRef} linking={Platform.OS === "web" ? webLinking : linking}>
       {user ? <StackRoutes /> : <AuthRoutes />}
     </NavigationContainer>
   );

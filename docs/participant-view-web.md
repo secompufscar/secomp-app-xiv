@@ -6,7 +6,7 @@ A prévia usa os dados da própria conta: perfil, credencial, inscrições e pos
 
 Os detalhes seguem a regra dos participantes: vagas e lista de espera aparecem somente nas categorias com `requiresEnrollment`. Ao voltar à visão administrativa, o admin web vê novamente os totais de todas as categorias e pode editar as atividades.
 
-O modo fica somente em memória. Recarregar a página, entrar novamente, sair ou trocar a identidade/papel da conta restaura a visão normal. Atualizar o perfil da mesma conta mantém a prévia. A versão Android/iOS não oferece essa alternância.
+Desde 09/10/2026, a preferência é mantida em `sessionStorage`, vinculada ao ID da conta admin, para conservar a visão e a rota ao recarregar na mesma aba. Entrar novamente, sair, perder a sessão ou trocar a identidade/papel da conta restaura a visão normal. Atualizar o perfil da mesma conta mantém a prévia. Se o armazenamento da preferência estiver indisponível, a autenticação continua funcionando e a recarga usa a visão administrativa. A versão Android/iOS não oferece essa alternância.
 
 ## Implementação e verificação
 
@@ -14,4 +14,4 @@ O estado está em `src/hooks/AuthContext.tsx`; o botão em `src/components/app/p
 
 `npm test` cobre preservação da sessão/papel, restrição à web/admin, saída e mudança de conta, atualização de perfil e detalhes com/sem inscrição obrigatória. Verificar também TypeScript, exportação web e navegação no navegador em 320 e 1280 px, incluindo entrar pela tela de detalhes, voltar à administração e recarregar. Testes de navegador usam dados fictícios e não comprovam inscrições ou permissões de uma conta real no serviço online.
 
-Em 05/10/2026, a suíte passou com 29 testes, TypeScript e exportação web. O navegador confirmou admin em 320/1280 px e participante em 320 px: alternância pelos detalhes, perfil com edição/cancelamento desativados, retorno ao Início e restauração da visão administrativa após recarregar. O botão de retorno ficou inteiramente exposto, sem sobreposição ou rolagem horizontal. Não houve escritas nem chamadas reais à API; a dependência do leitor QR foi simulada.
+Na validação inicial de 05/10/2026, a suíte passou com 29 testes, TypeScript e exportação web. O navegador confirmou admin em 320/1280 px e participante em 320 px: alternância pelos detalhes, perfil com edição/cancelamento desativados e retorno ao Início. Naquele momento a recarga restaurava a administração; a alteração de 09/10 substitui esse comportamento pela conservação da visão na mesma aba. O botão de retorno ficou inteiramente exposto, sem sobreposição ou rolagem horizontal. Não houve escritas nem chamadas reais à API; a dependência do leitor QR foi simulada.

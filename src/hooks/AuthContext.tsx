@@ -26,6 +26,20 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+const participantViewKey = "secomp:participant-view-user";
+function readParticipantView(user: User): boolean {
+  if (Platform.OS !== "web" || user.tipo !== "ADMIN") return false;
+  try { return window.sessionStorage.getItem(participantViewKey) === user.id; }
+  catch { return false; }
+}
+function storeParticipantView(userId?: string) {
+  if (Platform.OS !== "web") return;
+  try {
+    if (userId) window.sessionStorage.setItem(participantViewKey, userId);
+    else window.sessionStorage.removeItem(participantViewKey);
+  } catch { /* The visual preference must not block authentication. */ }
+}
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,13 +51,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const isParticipantView = canPreviewParticipant && participantViewRequested;
   const canUseAdminTools = user?.tipo === "ADMIN" && !isParticipantView;
   const setParticipantView = useCallback((enabled: boolean) => {
+    storeParticipantView(canPreviewParticipant && enabled ? user?.id : undefined);
     setParticipantViewRequested(canPreviewParticipant && enabled);
-  }, [canPreviewParticipant]);
+  }, [canPreviewParticipant, user?.id]);
 
-  useEffect(() => { setParticipantViewRequested(false); }, [user?.id, user?.tipo]);
+  useEffect(() => {
+    if (!user) return;
+    const enabled = readParticipantView(user);
+    setParticipantViewRequested(enabled);
+    if (!enabled) storeParticipantView();
+  }, [user?.id, user?.tipo]);
 
   const resetAuthState = useCallback(async () => {
     sessionGeneration.current++;
+    storeParticipantView();
     setUser(null);
     setParticipantViewRequested(false);
     setSessionError(null);
@@ -54,6 +75,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       sessionGeneration.current++;
       await setSessionTokens(token, refreshToken);
+      storeParticipantView();
       setUser(data);
       setParticipantViewRequested(false);
       setSessionError(null);
@@ -103,7 +125,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (generation !== sessionGeneration.current) return;
         if (storedToken || storedRefreshToken) {
           const response = await api.get("/users/me", { timeout: 10000 });
-          if (generation === sessionGeneration.current) setUser(response.data);
+          if (generation === sessionGeneration.current) {
+            setParticipantViewRequested(readParticipantView(response.data));
+            setUser(response.data);
+          }
         } else if (generation === sessionGeneration.current) {
           setUser(null);
         }

@@ -4,7 +4,7 @@ import { Login, SignUp, EmailConfirmation, PasswordReset, VerifyEmail, SetNewPas
 const Stack = createNativeStackNavigator();
 
 // Rotas para usuários não logados
-type StackNavigation = {
+export type StackNavigation = {
   Welcome: undefined;
   Login: undefined;
   SignUp: undefined;

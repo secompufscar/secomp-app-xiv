@@ -20,10 +20,10 @@ import InfoRow from "../../components/info/infoRow";
 import ErrorOverlay from "../../components/overlay/errorOverlay";
 import ActivityTextEditor from "../../components/activity/activityTextEditor";
 
-export default function ActivityDetails() {
+export default function ActivityDetails({ activity: resolvedActivity }: { activity?: Activity } = {}) {
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const route = useRoute();
-  const { item: activity } = route.params as { item: Activity };
+  const activity = resolvedActivity ?? (route.params as { item: Activity }).item;
   const { user, isParticipantView, canUseAdminTools } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
