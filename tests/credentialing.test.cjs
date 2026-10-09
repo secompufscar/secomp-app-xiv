@@ -89,14 +89,9 @@ function screen(resolveCredentialing, canUseAdminTools = true) {
   return { navigation, button: (label = 'Credenciamento') => render().find(node => node.type === 'Menu' && (node.props.label === label || node.props.busy)), errors: () => render().filter(node => node.type === 'Error'), leave: () => cleanup[0]() };
 }
 
-test('atalho da lista usa o credenciamento atual e passa ID/nome para Participantes', async () => {
-  const view = screen(async () => current);
-  await view.button('Participantes do credenciamento').props.onPress();
-  assert.equal(JSON.stringify(view.navigation), JSON.stringify([['ParticipantsList', { activityId: current.id, activityName: current.nome }]]));
-});
-
 test('menu de todos os participantes abre diretório sem exigir vínculo de credenciamento', () => {
   const view = screen(() => { throw new Error('Must not resolve credentialing to open directory'); });
+  assert.equal(view.button('Participantes do credenciamento'), undefined);
   view.button('Todos os participantes').props.onPress();
   assert.equal(JSON.stringify(view.navigation), JSON.stringify([['ParticipantDirectory']]));
 });

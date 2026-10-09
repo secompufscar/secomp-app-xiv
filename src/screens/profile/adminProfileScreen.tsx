@@ -31,8 +31,7 @@ export default function AdminProfile() {
 
   const [confirmAction, setConfirmAction] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
-  const [credentialingDestination, setCredentialingDestination] = useState<"QRCode" | "ParticipantsList" | null>(null);
-  const credentialingLoading = credentialingDestination !== null;
+  const [credentialingLoading, setCredentialingLoading] = useState(false);
   const [credentialingError, setCredentialingError] = useState<string | null>(null);
   const credentialingGeneration = useRef(0);
   const credentialingInFlight = useRef(false);
@@ -86,7 +85,7 @@ export default function AdminProfile() {
         isActive = false;
         credentialingGeneration.current++;
         credentialingInFlight.current = false;
-        setCredentialingDestination(null);
+        setCredentialingLoading(false);
         setCredentialingError(null);
         setConfirmAction(false);
         setErrorModalVisible(false);
@@ -94,17 +93,16 @@ export default function AdminProfile() {
     }, [updateUser])
   );
 
-  const openCredentialing = async (destination: "QRCode" | "ParticipantsList") => {
+  const openCredentialing = async () => {
     if (!canUseAdminTools || credentialingInFlight.current) return;
     const generation = ++credentialingGeneration.current;
     credentialingInFlight.current = true;
-    setCredentialingDestination(destination);
+    setCredentialingLoading(true);
     setCredentialingError(null);
     try {
       const activity = await getCurrentCredentialingActivity();
       if (generation === credentialingGeneration.current) {
-        if (destination === "QRCode") navigation.navigate("QRCode", { id: activity.id });
-        else navigation.navigate("ParticipantsList", { activityId: activity.id, activityName: activity.nome });
+        navigation.navigate("QRCode", { id: activity.id });
       }
     } catch (error) {
       if (generation === credentialingGeneration.current) {
@@ -113,7 +111,7 @@ export default function AdminProfile() {
     } finally {
       if (generation === credentialingGeneration.current) {
         credentialingInFlight.current = false;
-        setCredentialingDestination(null);
+        setCredentialingLoading(false);
       }
     }
   };
@@ -168,24 +166,16 @@ export default function AdminProfile() {
           {Platform.OS === "web" && pageHeader}
           <ProfileButton
             icon={faQrcode}
-            label={credentialingDestination === "QRCode" ? "Carregando..." : "Credenciamento"}
+            label={credentialingLoading ? "Carregando..." : "Credenciamento"}
             disabled={credentialingLoading}
-            busy={credentialingDestination === "QRCode"}
-            onPress={() => openCredentialing("QRCode")}
+            busy={credentialingLoading}
+            onPress={openCredentialing}
           />
 
           {Platform.OS === "web" && canUseAdminTools && <ProfileButton
             icon={faUser}
             label="Todos os participantes"
             onPress={() => { if (canUseAdminTools) navigation.navigate("ParticipantDirectory"); }}
-          />}
-
-          {Platform.OS === "web" && <ProfileButton
-            icon={faUser}
-            label={credentialingDestination === "ParticipantsList" ? "Carregando..." : "Participantes do credenciamento"}
-            disabled={credentialingLoading}
-            busy={credentialingDestination === "ParticipantsList"}
-            onPress={() => openCredentialing("ParticipantsList")}
           />}
 
           <ProfileButton
