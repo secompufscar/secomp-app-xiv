@@ -38,6 +38,7 @@ export async function validateCertificate(code: string, signal?: AbortSignal) {
 export function certificateError(error: unknown) {
   if (axios.isAxiosError(error)) {
     if (error.response?.status === 404) return "Certificado não encontrado. Confira o código informado.";
+    if (error.response?.status === 410) return "Certificado revogado. Entre em contato com a organização.";
     if ([403, 409].includes(error.response?.status ?? 0)) return error.response?.data?.message || "Certificado indisponível.";
     if (error.response?.status === 429) return "Muitas tentativas. Aguarde um minuto e tente novamente.";
     return "Não foi possível consultar o certificado. Tente novamente.";

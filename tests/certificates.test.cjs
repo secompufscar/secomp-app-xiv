@@ -28,3 +28,8 @@ test('total deve coincidir com anexo e link deve apontar para o mesmo código', 
   assert.equal(service.certificateWorkload(150), '2 horas e 30 minutos');
   assert.match(service.certificateActivityDate('2026-10-06T13:00:00Z'), /06\/10\/2026.*13:00/);
 });
+
+test('revogação pública tem mensagem própria e não revela motivo administrativo', () => {
+  const service = load({ './api': {}, axios: { isAxiosError: () => true } });
+  assert.equal(service.certificateError({ response: { status: 410, data: { message: 'Motivo sigiloso' } } }), 'Certificado revogado. Entre em contato com a organização.');
+});

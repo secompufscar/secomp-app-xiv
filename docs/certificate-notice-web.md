@@ -16,15 +16,23 @@ O PDF A4 horizontal preserva as logos originais SECOMP, DC e UFSCar, fontes Inte
 
 O documento não inventa assinaturas ou nomes de signatários: identifica a comissão organizadora e usa a validação pública do registro. O PDF é gerado no navegador com jsPDF e AutoTable. Código, total, atividades e URL vêm da API. O código não muda ao baixar novamente e o total precisa corresponder ao anexo.
 
+O endereço impresso conserva o caminho configurado na URL da API, inclusive caminhos customizados; link e QR incluem o código completo. Revogação retorna HTTP 410 com mensagem própria, remove o resultado válido anterior e não oferece download. Uma reemissão administrativa recebe outro código; o participante recupera a versão ativa ao gerar novamente. A página pública não revela motivos de correção nem o código substituto. PDF antigo baixado permanece no dispositivo, mas seu código deixa de validar.
+
 `/certificados?codigo=...` funciona sem login, inclusive com sessão local expirada. Também aceita entrada manual do código e apresenta nome, edição, emissão, total e atividades. A consulta usa um cliente público, sem enviar tokens ou tentar renovar sessão. Código inválido, não encontrado e indisponibilidade têm estados distintos; não exibem um resultado válido anterior. A página permite baixar o mesmo documento.
 
 ## Verificação e publicação
 
 Executar `npm run verify`. Os testes verificam o contrato público/autenticado, consistência total/anexo/código e paginação de listas longas. Conferir a interface em 320 e 1280 px, código e QR, download, erros/retry, fechamento por Escape e ausência de credenciais nas consultas públicas. Revisar as páginas do PDF renderizado, não apenas sua extração de texto.
 
+Os testes versionados agora extraem o texto e as anotações do PDF para conferir todas as 45 atividades exatamente uma vez, totais, paginação, código e link customizado. Renderizam duas páginas e decodificam seus QRs com um leitor independente. Dependências de inspeção/renderização são somente de desenvolvimento. `CERTIFICATE_TEST_OUTPUT` opcional grava PNGs para inspeção.
+
+Após `npm run build:web`, executar `npx playwright install chromium` e `npm run test:certificates:e2e`. O CI instala Chromium, executa o fluxo sintético em 320/1280 px e guarda evidências por sete dias. Todas as requisições externas são interceptadas ou bloqueadas; nenhum participante real é usado. O teste cobre estado válido, 404, 410, indisponibilidade, bloqueio de emissão, nova tentativa, download e Escape. Para usar Edge localmente, configurar `CERTIFICATE_BROWSER_CHANNEL=msedge`.
+
 O PR do app é separado do PR da API. Fazer merge da API antes de publicá-la; aplicar migração e publicar endpoints antes do app. Publicar a página de validação antes de habilitar novas emissões. Testes com dados sintéticos não comprovam contas reais nem configuração de produção. Não alterar ou remover arquivos, ignorados ou backups locais do usuário.
 
 ## Modelo ilustrativo preservado
+
+Revisão técnica em 10/10/2026: 89 testes do app e TypeScript aprovados, exportação web concluída e fluxo E2E versionado aprovado em 320/1280 px, incluindo revogação HTTP 410. As duas páginas renderizadas com URL customizada foram inspecionadas e seus QRs decodificados. O lockfile preservou todas as versões existentes; foram adicionadas apenas dependências de desenvolvimento para os testes. A auditoria npm continua apontando alertas em dependências existentes, fora do escopo desta mudança; não foi executado `npm audit fix`.
 
 Validação local em 09/10/2026: 87 testes passaram, TypeScript aprovado e exportação web concluída. Navegador com API sintética cobriu 320/1280 px, acesso público sem token, código inválido/desconhecido, indisponibilidade, emissão bloqueada por duração pendente, nova tentativa, download e Escape. PDF de teste de duas páginas renderizado e inspecionado; os QRs de ambas as páginas foram decodificados e coincidem com código/URL. Teste adicional cobriu anexo extenso com paginação. Esses resultados não comprovam dados reais, CI remota, migração nem liberação de produção.
 

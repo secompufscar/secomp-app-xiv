@@ -85,7 +85,10 @@ export function createCertificatePdf(certificate: CertificateData, assets: Asset
     text(certificate.code, 80, 186, 9, true);
     text("Validação pública por código ou QR", 80, 193, 8);
     doc.setFont("Inter", "normal").setFontSize(7).setTextColor("#1400FF");
-    doc.textWithLink(new URL(certificate.validationUrl).origin + "/certificados", 80, 199, { url: certificate.validationUrl });
+    const address = new URL(certificate.validationUrl);
+    const label = address.origin + address.pathname;
+    doc.setFontSize(Math.min(7, 7 * 165 / Math.max(165, doc.getTextWidth(label))));
+    doc.textWithLink(label, 80, 199, { url: certificate.validationUrl });
     doc.addImage(certificate.qrCode, "PNG", 251, 181, 24, 24);
     text(`Página ${page} de ${pages}`, 205, 202, 8);
   }
