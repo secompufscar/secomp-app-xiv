@@ -2,13 +2,13 @@
 
 A tela Início disponibiliza **Gerar certificado** para participantes e administradores. Abrir o diálogo não emite nada. O comando dentro do diálogo solicita `POST /certificates/mine` para o usuário autenticado. Após sucesso, mostra nome, carga horária, código, link público e **Baixar PDF**. Ao repetir, a API devolve o mesmo registro. Fechar ou sair da tela descarta respostas tardias. Android/iOS continuam sem essa opção.
 
-O credenciamento confirmado na edição 2026 comprova a doação. A carga horária soma apenas atividades dessa edição com presença registrada, uma vez por atividade, excluindo credenciamento. Ausência de credenciamento, de atividades certificáveis ou de duração oficial impede emissão. O servidor decide a elegibilidade; o navegador não calcula horas a partir do histórico.
+O credenciamento confirmado na edição 2026 comprova a doação. A carga horária soma apenas atividades certificáveis dessa edição com presença registrada, uma vez por atividade. Credenciamento, Feira da Comp, Camisetas, Coffee, Lual, abertura e encerramento ficam fora da soma e do anexo. Ausência de credenciamento, de atividades certificáveis ou de duração oficial impede emissão. O servidor decide a elegibilidade; o navegador não calcula horas a partir do histórico.
 
 ## Durações
 
-Regra atualizada pela organização em 09/10/2026: a duração pode ser a diferença de inícios quando houver uma atividade imediatamente seguinte no mesmo local. Sem sucessora clara, consultar a organização; não usar pontos ou check-in. O workshop de terça da Karina dura 150 minutos. Minicursos/workshop simultâneos não servem de término uns para os outros. Restam confirmações para atividades sem sucessora e intervalos ambíguos. Camisetas, Coffee e Lual aguardam definição específica antes de serem excluídos ou contabilizados.
+Regras confirmadas pela organização em 10/10/2026: palestras de 60 minutos, inclusive as das 11h, sem contabilizar almoço; quatro minicursos de 180 minutos; workshop da Karina e Maratona M@U de 150 minutos cada; mesa-redonda de curricularização de 60 minutos. Mesa Monks tem 90 minutos pela regra anterior de atividades consecutivas no mesmo local. Feira da Comp, Camisetas, Coffee, Lual, abertura e encerramento não concedem horas. O plano por ID está versionado na API e sua aplicação é separada da migração e da habilitação da emissão.
 
-O banco da API armazena minutos e fonte da duração. A emissão global permanece bloqueada até `CERTIFICATES_ENABLED=true`; a duração ausente em qualquer atividade presente continua bloqueando o certificado individual. Contrato, migração e sequência de liberação estão em `secomp-server-xiv/docs/funcionalidades/certificados.md`.
+O banco da API armazena minutos, fonte da duração e exclusão da certificação. A emissão global permanece bloqueada até `CERTIFICATES_ENABLED=true`; duração ausente numa atividade certificável presente continua bloqueando o certificado individual. Atividade explicitamente excluída não soma horas nem bloqueia por duração ausente. Contrato, migração e sequência de liberação estão em `secomp-server-xiv/docs/funcionalidades/certificados.md`.
 
 ## PDF e validação
 
