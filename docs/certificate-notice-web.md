@@ -1,48 +1,39 @@
-# Certificado na tela inicial da web
+# Certificados individuais na web
 
-A tela **Início** da versão web exibe **Certificado de participação**, logo após **Minhas atividades**. O botão **Gerar certificado** tem a indicação **Em breve** e abre um aviso temporário com as orientações. Está disponível para participantes, admins e admins na visão do participante, inclusive após o término do evento. Android e iOS não exibem essa opção.
+A tela Início disponibiliza **Gerar certificado** para participantes e administradores. Abrir o diálogo não emite nada. O comando dentro do diálogo solicita `POST /certificates/mine` para o usuário autenticado. Após sucesso, mostra nome, carga horária, código, link público e **Baixar PDF**. Ao repetir, a API devolve o mesmo registro. Fechar ou sair da tela descarta respostas tardias. Android/iOS continuam sem essa opção.
 
-O aviso informa que a geração estará disponível em breve e explica:
+O credenciamento confirmado na edição 2026 comprova a doação. A carga horária soma apenas atividades certificáveis dessa edição com presença registrada, uma vez por atividade. Credenciamento, Feira da Comp, Camisetas, Coffee, Lual, abertura e encerramento ficam fora da soma e do anexo. Ausência de credenciamento, de atividades certificáveis ou de duração oficial impede emissão. O servidor decide a elegibilidade; o navegador não calcula horas a partir do histórico.
 
-> Para receber seu certificado, sua doação precisa estar registrada pela equipe da SECOMP.
->
-> As horas certificadas correspondem às atividades com presença registrada.
+## Durações
 
-Quem já doou e tem dúvidas sobre o registro é orientado a procurar a equipe da SECOMP. **Entendi** e a tecla **Escape** fecham a janela; sair da tela também descarta o aviso.
+Regras confirmadas pela organização em 10/10/2026: palestras de 60 minutos, inclusive as das 11h, sem contabilizar almoço; quatro minicursos de 180 minutos; workshop da Karina e Maratona M@U de 150 minutos cada; mesa-redonda de curricularização de 60 minutos. Mesa Monks tem 90 minutos pela regra anterior de atividades consecutivas no mesmo local. Feira da Comp, Camisetas, Coffee, Lual, abertura e encerramento não concedem horas. O plano por ID está versionado na API e sua aplicação é separada da migração e da habilitação da emissão.
 
-Em telas baixas, o título e o botão **Entendi** permanecem visíveis enquanto as orientações podem ser roladas. O cartão permite quebra de linha para manter texto e indicação **Em breve** dentro da tela.
+O banco da API armazena minutos, fonte da duração e exclusão da certificação. A emissão global permanece bloqueada até `CERTIFICATES_ENABLED=true`; duração ausente numa atividade certificável presente continua bloqueando o certificado individual. Atividade explicitamente excluída não soma horas nem bloqueia por duração ausente. Contrato, migração e sequência de liberação estão em `secomp-server-xiv/docs/funcionalidades/certificados.md`.
 
-## Limites desta etapa
+## PDF e validação
 
-Esta entrada é informativa: não emite nem baixa PDF, não solicita um certificado à API e não altera inscrição, credenciamento ou presença. A janela mostra uma orientação geral e não verifica se a conta já doou. Uma inscrição sem presença registrada não comprova horas para certificação.
+O PDF A4 horizontal preserva as logos originais SECOMP, DC e UFSCar, fontes Inter/Poppins, identificação da XIV edição e paleta do modelo. A primeira página mostra nome, período, carga horária total, emissão, código, link e QR. O anexo lista nome, categoria, data/início e duração das atividades do snapshot. Listas extensas continuam em páginas adicionais, repetindo logos, identificação, código e QR, sem truncar atividades. Horários de atividade seguem os componentes UTC usados pelo cronograma existente; a data de emissão usa America/Sao_Paulo.
 
-A emissão efetiva exige integrar o modelo à regra de carga horária, à validação de credenciamento/presença no servidor e ao download. A emissão individual ainda não existe nesta etapa.
+O documento não inventa assinaturas ou nomes de signatários: identifica a comissão organizadora e usa a validação pública do registro. O PDF é gerado no navegador com jsPDF e AutoTable. Código, total, atividades e URL vêm da API. O código não muda ao baixar novamente e o total precisa corresponder ao anexo.
 
-## Regras definidas para a emissão — 09/10/2026
+O endereço impresso conserva o caminho configurado na URL da API, inclusive caminhos customizados; link e QR incluem o código completo. Revogação retorna HTTP 410 com mensagem própria, remove o resultado válido anterior e não oferece download. Uma reemissão administrativa recebe outro código; o participante recupera a versão ativa ao gerar novamente. A página pública não revela motivos de correção nem o código substituto. PDF antigo baixado permanece no dispositivo, mas seu código deixa de validar.
 
-O usuário definiu o **credenciamento da edição como comprovação da doação**. A futura emissão deverá exigir presença confirmada na atividade de credenciamento da mesma edição do certificado. Ausência desse credenciamento impede a emissão, mesmo que existam presenças em palestras ou outras atividades. Inscrição prévia, lista de espera, presença em outra atividade ou credenciamento de uma edição anterior não comprovam a doação dessa edição. Credenciamento legado com presença confirmada e horário desconhecido continua comprovando a doação; o instante não altera essa regra.
+`/certificados?codigo=...` funciona sem login, inclusive com sessão local expirada. Também aceita entrada manual do código e apresenta nome, edição, emissão, total e atividades. A consulta usa um cliente público, sem enviar tokens ou tentar renovar sessão. Código inválido, não encontrado e indisponibilidade têm estados distintos; não exibem um resultado válido anterior. A página permite baixar o mesmo documento.
 
-A carga horária deverá somar as durações das atividades da edição com presença confirmada, contando cada atividade uma vez e excluindo o próprio credenciamento. O certificado terá uma página principal com o total e um anexo com nomes, datas, horários de início e duração de cada atividade. O horário do check-in não é a duração da atividade.
+## Verificação e publicação
 
-O schema atual da API contém início (`data`), mas não duração nem horário de término. A fonte das durações ainda precisa ser definida; não inferir horas por pontos, pelo check-in ou pelo horário da próxima atividade. Essas regras estão documentadas para a implementação, **ainda não há validação de elegibilidade ou emissão pela API/app**.
+Executar `npm run verify`. Os testes verificam o contrato público/autenticado, consistência total/anexo/código e paginação de listas longas. Conferir a interface em 320 e 1280 px, código e QR, download, erros/retry, fechamento por Escape e ausência de credenciais nas consultas públicas. Revisar as páginas do PDF renderizado, não apenas sua extração de texto.
 
-## Modelo visual de duas páginas
+Os testes versionados agora extraem o texto e as anotações do PDF para conferir todas as 45 atividades exatamente uma vez, totais, paginação, código e link customizado. Renderizam duas páginas e decodificam seus QRs com um leitor independente. Dependências de inspeção/renderização são somente de desenvolvimento. `CERTIFICATE_TEST_OUTPUT` opcional grava PNGs para inspeção.
 
-O gerador local [create_certificate_model.py](../scripts/certificates/create_certificate_model.py) constrói PDF A4 horizontal, SVGs de ambas as páginas e uma prévia HTML imprimível. Inclui as logos da SECOMP, do Departamento de Computação e da UFSCar. As duas logos institucionais compartilham alinhamento e espaçamento no cabeçalho das duas páginas; os arquivos originais conservam transparência e proporção. A segunda página lista atividades e calcula o total em minutos; a primeira usa esse mesmo total. Os nomes, presenças e durações são ilustrativos, marcados como modelo sem validade. Assinaturas e QR de validação continuam reservados.
+Após `npm run build:web`, executar `npx playwright install chromium` e `npm run test:certificates:e2e`. O CI instala Chromium, executa o fluxo sintético em 320/1280 px e guarda evidências por sete dias. Todas as requisições externas são interceptadas ou bloqueadas; nenhum participante real é usado. O teste cobre estado válido, 404, 410, indisponibilidade, bloqueio de emissão, nova tentativa, download e Escape. Para usar Edge localmente, configurar `CERTIFICATE_BROWSER_CHANNEL=msedge`.
 
-Após instalar as dependências do app (fontes) e Python, executar:
+O PR do app é separado do PR da API. Fazer merge da API antes de publicá-la; aplicar migração e publicar endpoints antes do app. Publicar a página de validação antes de habilitar novas emissões. Testes com dados sintéticos não comprovam contas reais nem configuração de produção. Não alterar ou remover arquivos, ignorados ou backups locais do usuário.
 
-```sh
-python -m pip install -r scripts/certificates/requirements.txt
-python scripts/certificates/create_certificate_model.py --output-dir certificate-model-output
-```
+## Modelo ilustrativo preservado
 
-O script verifica duas páginas e os textos esperados do PDF. Os arquivos gerados ficam fora do controle de versão. A prévia permite editar nome, data e responsáveis; o total de exemplo é somente leitura para manter a soma do anexo coerente. O gerador não consulta o banco, não habilita o botão do app e não emite certificados reais.
+Revisão técnica em 10/10/2026: 89 testes do app e TypeScript aprovados, exportação web concluída e fluxo E2E versionado aprovado em 320/1280 px, incluindo revogação HTTP 410. As duas páginas renderizadas com URL customizada foram inspecionadas e seus QRs decodificados. O lockfile preservou todas as versões existentes; foram adicionadas apenas dependências de desenvolvimento para os testes. A auditoria npm continua apontando alertas em dependências existentes, fora do escopo desta mudança; não foi executado `npm audit fix`.
 
-Validação do modelo em 09/10/2026: PDF com duas páginas renderizadas e revisadas, cada uma com as três logos; arquivo transparente da UFSCar preservado, idêntico ao fornecido pelo usuário. Soma dos sete exemplos de duração igual a 750 minutos (12 horas e 30 minutos) nas duas páginas. No navegador, a prévia imprimiu exatamente duas páginas, atualizou o nome em ambas e manteve o total somente leitura, sem erros de execução. Nenhuma consulta ou alteração no banco.
+Validação local em 09/10/2026: 87 testes passaram, TypeScript aprovado e exportação web concluída. Navegador com API sintética cobriu 320/1280 px, acesso público sem token, código inválido/desconhecido, indisponibilidade, emissão bloqueada por duração pendente, nova tentativa, download e Escape. PDF de teste de duas páginas renderizado e inspecionado; os QRs de ambas as páginas foram decodificados e coincidem com código/URL. Teste adicional cobriu anexo extenso com paginação. Esses resultados não comprovam dados reais, CI remota, migração nem liberação de produção.
 
-## Verificação
-
-Executar `npm run verify` e conferir a tela inicial em 320 e 1280 px, incluindo abrir/fechar o aviso, fechar por Escape e navegar para outra tela. Confirmar a indicação **Em breve**, a leitura completa do texto e a ausência de downloads ou chamadas de escrita ao abrir a janela. A validação com dados fictícios não comprova a elegibilidade de participantes no serviço online.
-
-Em 08/10/2026, TypeScript, os 70 testes existentes e a exportação web passaram. A conferência local no navegador cobriu participante em 320×480 px, admin em 1280×900 px, visão do participante e indisponibilidade simulada do evento em 320×900 px. Foram verificados aviso, fechamento por botão e Escape, título/botão expostos na tela baixa e ausência de rolagem horizontal, downloads e escritas na API.
+`scripts/certificates/create_certificate_model.py` continua disponível para gerar o modelo local em PDF, SVG e HTML com dados fictícios. Dependências em `scripts/certificates/requirements.txt`. Esse script não consulta o banco nem emite certificados reais; o fluxo web é independente e usa os dados persistidos pela API.

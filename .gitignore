@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 /certificate-model-output/
+/test-results/
 *.local
 /android
 /ios
