@@ -15,6 +15,7 @@ import "@expo/metro-runtime";
 import { AppVersionProvider, useAppVersion } from "./hooks/AppVersionContext";
 import UpdateRequiredScreen from "./screens/update/updateRequiredScreen";
 import SessionRecoveryScreen from "./screens/login-signup/sessionRecoveryScreen";
+import CertificateValidationScreen from "./screens/certificates/certificateValidationScreen";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -40,6 +41,10 @@ export default function App() {
 
   if (!fontsLoaded) {
     return null;
+  }
+
+  if (Platform.OS === "web" && /^\/certificados\/?$/.test(window.location.pathname)) {
+    return <CertificateValidationScreen />;
   }
 
   return (
