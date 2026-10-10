@@ -30,6 +30,16 @@ Após `npm run build:web`, executar `npx playwright install chromium` e `npm run
 
 O PR do app é separado do PR da API. Fazer merge da API antes de publicá-la; aplicar migração e publicar endpoints antes do app. Publicar a página de validação antes de habilitar novas emissões. Testes com dados sintéticos não comprovam contas reais nem configuração de produção. Não alterar ou remover arquivos, ignorados ou backups locais do usuário.
 
+## Homologação e publicação em 10/10/2026
+
+O [PR #30](https://github.com/secompufscar/secomp-app-xiv/pull/30) foi integrado após a API do [PR #36](https://github.com/secompufscar/secomp-server-xiv/pull/36) ter sido integrada e publicada. Vercel confirmou sucesso no merge `8792266cfbcebd59fb26a29e7a04f8f18bc9ee3d`; CI desse commit aprovada. Railway confirmou 19 migrações concluídas e o plano de 37 atividades aplicado, com 28 incluídas e 9 excluídas.
+
+Conta real sorteada a pedido da organização entre 59 elegíveis foi ensaiada primeiro numa cópia privada do backup. Depois, houve uma emissão controlada em produção, ainda com emissão geral desativada. Nenhuma senha, papel ou presença foi alterada. Recuperação HTTP autenticada usou credencial de 60 segundos gerada pelo servidor apenas em memória: não comprova login interativo com senha nem renovação de sessão no navegador.
+
+Página pública e API reais, sem mocks, conferidas com Playwright em 320/1280 px: consulta sem credenciais, 11 atividades e 780 minutos consistentes, três logos carregadas, sem overflow horizontal ou erro de página, códigos malformados/desconhecidos rejeitados e resultado válido anterior removido. PDF baixado da página publicado contém três páginas, todas inspecionadas visualmente e com QR/link conferidos; atividades aparecem exatamente uma vez e somam 13 horas. Dados pessoais e artefatos privados não entram em repositório ou CI.
+
+Essa homologação representa uma conta controlada, não todos os participantes. Revogação/reemissão e falhas de transação foram testadas no banco isolado, sem invalidar um certificado real para testar 410. Dependências antigas com alertas de auditoria e capacidade de produção sob carga permanecem riscos fora da comprovação deste teste. A [evidência operacional da API](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-release-2026-10-10.md) registra também backup, diferenças de MySQL/fuso e estado da habilitação geral.
+
 ## Modelo ilustrativo preservado
 
 Revisão técnica em 10/10/2026: 89 testes do app e TypeScript aprovados, exportação web concluída e fluxo E2E versionado aprovado em 320/1280 px, incluindo revogação HTTP 410. As duas páginas renderizadas com URL customizada foram inspecionadas e seus QRs decodificados. O lockfile preservou todas as versões existentes; foram adicionadas apenas dependências de desenvolvimento para os testes. A auditoria npm continua apontando alertas em dependências existentes, fora do escopo desta mudança; não foi executado `npm audit fix`.
