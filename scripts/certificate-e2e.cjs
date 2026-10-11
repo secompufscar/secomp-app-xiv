@@ -16,11 +16,6 @@ const nextFixture = { ...fixture, code: nextCode, issuedAt: '2027-10-10T01:00:00
   validationUrl: `https://secomp-app-xiv.vercel.app/certificados?codigo=${nextCode}` };
 const replacementCode = 'E'.repeat(32);
 const replacementFixture = { ...fixture, code: replacementCode, validationUrl: `https://secomp-app-xiv.vercel.app/certificados?codigo=${replacementCode}` };
-const adminFixture = { ...fixture, kind: 'admin-test', code: '0000000000000000000000000000000G', participantName: 'Nome de Exemplo',
-  validationUrl: 'https://secomp-app-xiv.vercel.app/certificados?codigo=0000000000000000000000000000000G',
-  activities: [fixture.activities[0], ...Array.from({ length: 23 }, (_, i) => ({ ...fixture.activities[3],
-    name: `Atividade ${i + 2}: ${fixture.activities[3].name}`, minutes: i === 0 ? 150 : i === 1 ? 90 : 60 }))] };
-adminFixture.totalMinutes = adminFixture.activities.reduce((sum, activity) => sum + activity.minutes, 0);
 const summary = (item, overrides = {}) => ({ code: item.code, year: item.event.year, edition: item.presentation?.edition || 'XIV',
   templateId: 'secomp-landscape-v1', issuedAt: item.issuedAt, totalMinutes: item.totalMinutes, status: 'active', revision: 1, ...overrides });
 const server = http.createServer((req, res) => {
@@ -32,7 +27,6 @@ const server = http.createServer((req, res) => {
   fixture.qrCode = await QRCode.toDataURL(fixture.validationUrl, { width: 300, margin: 4 });
   nextFixture.qrCode = await QRCode.toDataURL(nextFixture.validationUrl, { width: 300, margin: 4 });
   replacementFixture.qrCode = await QRCode.toDataURL(replacementFixture.validationUrl, { width: 300, margin: 4 });
-  adminFixture.qrCode = await QRCode.toDataURL(adminFixture.validationUrl, { width: 300, margin: 4 });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
   const browser = await chromium.launch({ ...(process.env.CERTIFICATE_BROWSER_CHANNEL ? { channel: process.env.CERTIFICATE_BROWSER_CHANNEL } : {}), headless: true });
@@ -42,15 +36,14 @@ const server = http.createServer((req, res) => {
       const calls = [], errors = [];
       let mode = 'success';
       let mineState = 'normal';
-      let admin = false, testPending = false;
+      let admin = false;
       await context.route('**/*', async route => {
         const url = new URL(route.request().url());
         if (url.origin === 'https://secomp-server-xiv-production.up.railway.app') {
           calls.push({ path: url.pathname, method: route.request().method(), auth: route.request().headers().authorization });
           const json = (body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
           if (url.pathname.endsWith('/certificates/admin/preview')) {
-            assert.equal(url.searchParams.get('format'), 'example');
-            return testPending ? json({ message: 'Duração oficial pendente.' }, 409) : json(adminFixture);
+            throw new Error('O fluxo ADMIN removido nao deve ser consultado.');
           }
           if (url.pathname.includes('/certificates/validate/')) return mode === 'next' ? json(nextFixture) : mode === 'success' ? json(fixture) : json({ message: 'Failure' }, mode === 'missing' ? 404 : mode === 'revoked' ? 410 : 503);
           if (url.pathname.endsWith('/certificates/mine')) {
@@ -172,21 +165,12 @@ const server = http.createServer((req, res) => {
       assert.equal(await editions.inputValue(), nextCode);
       assert.equal(await page.getByRole('button', { name: 'Baixar modelo de exemplo', exact: true }).count(), 0);
       admin = true; await page.reload();
-      const testButton = page.getByRole('button', { name: 'Baixar modelo de exemplo', exact: true });
-      await testButton.waitFor();
-      const previousSelection = await editions.inputValue();
-      const issuesBefore = calls.filter(call => call.path.endsWith('/certificates/mine') && call.method === 'POST').length;
-      testPending = true; await testButton.click(); await page.getByText('Duração oficial pendente.', { exact: true }).waitFor();
-      testPending = false;
-      const testDownload = page.waitForEvent('download'); await testButton.click();
-      const testResult = await testDownload; assert.equal(testResult.suggestedFilename(), 'certificado-exemplo-secomp.pdf');
-      await testResult.saveAs(path.join(outputDir, `synthetic-admin-test-${width}.pdf`));
-      assert.equal(await editions.inputValue(), previousSelection);
-      assert.equal(calls.filter(call => call.path.endsWith('/certificates/mine') && call.method === 'POST').length, issuesBefore);
-      assert.ok(calls.filter(call => call.path.endsWith('/certificates/admin/preview')).every(call => call.method === 'GET' && call.auth === 'Bearer synthetic-access'));
+      await page.getByRole('button', { name: 'Baixar PDF', exact: true }).waitFor();
+      assert.equal(await page.getByRole('button', { name: 'Baixar modelo de exemplo', exact: true }).count(), 0);
+      assert.equal(calls.filter(call => call.path.endsWith('/certificates/admin/preview')).length, 0);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-      await page.screenshot({ path: path.join(outputDir, `admin-certificate-test-${width}.png`), fullPage: true });
-      await page.goto(`${base}/certificados?codigo=${adminFixture.code}`);
+      await page.screenshot({ path: path.join(outputDir, `admin-my-certificates-${width}.png`), fullPage: true });
+      await page.goto(`${base}/certificados?codigo=0000000000000000000000000000000G`);
       await page.getByText('Código de certificado inválido.', { exact: true }).waitFor();
       assert.equal(await page.getByText('Certificado válido', { exact: true }).count(), 0);
       assert.equal(await page.getByRole('button', { name: 'Baixar PDF' }).count(), 0);

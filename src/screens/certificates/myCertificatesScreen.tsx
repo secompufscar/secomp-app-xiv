@@ -6,16 +6,22 @@ import AppLayout from "../../components/app/appLayout";
 import BackButton from "../../components/button/backButton";
 import { useAuth } from "../../hooks/AuthContext";
 import { CertificateData, CertificateSummary, certificateActivityDate, certificateError, certificateIssuedAt, certificateWorkload, getMyCertificate, issueMyCertificate, listMyCertificates } from "../../services/certificates";
-import { downloadCertificate, downloadAdminTestCertificate } from "../../services/certificateDownload";
-import { getAdminTestCertificate } from "../../services/certificateAdminPreview";
+import { downloadCertificate } from "../../services/certificateDownload";
 import { supportsCertificateTemplate } from "../../utils/certificatePresentation";
 
 const label = (item: CertificateSummary) => `${item.edition ? `${item.edition} SECOMP` : "Edição não identificada"}${item.year ? ` · ${item.year}` : ""}`;
 const button = { minHeight: 48, padding: 12, borderRadius: 6, flexDirection: "row" as const, alignItems: "center" as const, justifyContent: "center" as const, gap: 8 };
 const regular = { fontFamily: "Inter_400Regular", color: "#A9B4F4", lineHeight: 23 };
 
+function checkSelection(result: CertificateData, item: CertificateSummary) {
+  if (result.code !== item.code || result.event.year !== item.year
+    || result.presentation?.edition !== item.edition || result.presentation?.templateId !== item.templateId) {
+    throw new Error("O certificado recebido não corresponde à edição selecionada.");
+  }
+}
+
 export default function MyCertificatesScreen(): ReactElement | null {
-  const { user, isParticipantView, canUseAdminTools } = useAuth();
+  const { user, isParticipantView } = useAuth();
   const allowed = Platform.OS === "web" && !!user?.id;
   const [items, setItems] = useState<CertificateSummary[] | null>(null);
   const [selected, setSelected] = useState<CertificateSummary | null>(null);
@@ -26,9 +32,7 @@ export default function MyCertificatesScreen(): ReactElement | null {
   const focused = useRef(false), focusGeneration = useRef(0), listGeneration = useRef(0), detailGeneration = useRef(0);
   const selectedRef = useRef<CertificateSummary | null>(null);
   const listRequest = useRef<AbortController | null>(null), detailRequest = useRef<AbortController | null>(null), downloadRequest = useRef<AbortController | null>(null);
-  const issuePending = useRef(false), downloadPending = useRef(false);
-  const [testing, setTesting] = useState(false), [testError, setTestError] = useState("");
-  const testRequest = useRef<AbortController | null>(null);
+  const issuePending = useRef(false);
 
   function revoked(item: CertificateSummary) {
     const value = { ...item, status: "revoked" as const };
@@ -40,13 +44,14 @@ export default function MyCertificatesScreen(): ReactElement | null {
     if (!allowed || !focused.current) return;
     const generation = ++detailGeneration.current;
     detailRequest.current?.abort(); downloadRequest.current?.abort();
+    downloadRequest.current = null; setDownloading(false);
     selectedRef.current = item; setSelected(item); setCertificate(null); setDetailError(""); setDetailLoading(false);
     if (!item || item.status !== "active" || !supportsCertificateTemplate(item.templateId)) return;
     const controller = new AbortController(); detailRequest.current = controller;
     setDetailLoading(true);
     try {
       const result = await getMyCertificate(item.code, controller.signal);
-      if (result.event.year !== item.year || result.presentation?.edition !== item.edition) throw new Error("O certificado recebido não corresponde à edição selecionada.");
+      checkSelection(result, item);
       if (generation === detailGeneration.current && focused.current) setCertificate(result);
     } catch (error: any) {
       if (generation === detailGeneration.current && focused.current) {
@@ -82,32 +87,11 @@ export default function MyCertificatesScreen(): ReactElement | null {
     return () => {
       focused.current = false; focusGeneration.current++; listGeneration.current++; detailGeneration.current++;
       listRequest.current?.abort(); detailRequest.current?.abort(); downloadRequest.current?.abort();
+      downloadRequest.current = null;
       selectedRef.current = null; setItems(null); setSelected(null); setCertificate(null);
       setLoading(true); setDetailLoading(false); setEmitting(false); setDownloading(false);
     };
   }, [loadList, user?.id]));
-
-  useFocusEffect(useCallback(() => {
-    setTestError(""); setTesting(false);
-    return () => { testRequest.current?.abort(); testRequest.current = null; };
-  }, [user?.id, canUseAdminTools]));
-
-  async function generateTest() {
-    if (!allowed || !canUseAdminTools || !focused.current || testRequest.current) return;
-    const controller = new AbortController(); testRequest.current = controller;
-    setTesting(true); setTestError("");
-    try {
-      const result = await getAdminTestCertificate(controller.signal);
-      if (!controller.signal.aborted && focused.current) await downloadAdminTestCertificate(result, controller.signal);
-    } catch (error) {
-      if (!controller.signal.aborted && focused.current) setTestError(certificateError(error));
-    } finally {
-      if (testRequest.current === controller) {
-        testRequest.current = null;
-        if (focused.current) setTesting(false);
-      }
-    }
-  }
 
   async function generate() {
     if (!allowed || isParticipantView || !focused.current || issuePending.current) return;
@@ -128,19 +112,25 @@ export default function MyCertificatesScreen(): ReactElement | null {
 
   async function download() {
     const item = selectedRef.current;
-    if (!allowed || !focused.current || !item || item.status !== "active" || !certificate || downloadPending.current) return;
+    if (!allowed || !focused.current || !item || item.status !== "active" || !certificate || downloadRequest.current) return;
     const generation = detailGeneration.current;
     const controller = new AbortController(); downloadRequest.current = controller;
-    downloadPending.current = true; setDownloading(true); setDetailError("");
+    setDownloading(true); setDetailError("");
     try {
       const fresh = await getMyCertificate(item.code, controller.signal);
+      checkSelection(fresh, item);
       if (focused.current && generation === detailGeneration.current && !controller.signal.aborted) await downloadCertificate(fresh, controller.signal);
     } catch (error: any) {
       if (focused.current && generation === detailGeneration.current) {
         if (error.response?.status === 410) revoked(item);
         setDetailError(certificateError(error));
       }
-    } finally { downloadPending.current = false; if (focused.current) setDownloading(false); }
+    } finally {
+      if (downloadRequest.current === controller) {
+        downloadRequest.current = null;
+        if (focused.current) setDownloading(false);
+      }
+    }
   }
 
   if (!allowed) return null;
@@ -152,10 +142,6 @@ export default function MyCertificatesScreen(): ReactElement | null {
         <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 16, borderBottomWidth: 1, borderColor: "#374151", paddingBottom: 20 }}>
           <Text accessibilityRole="header" style={{ fontFamily: "Poppins_600SemiBold", fontSize: 24, color: "#FFFFFF" }}>Meus certificados</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, maxWidth: "100%" }}>
-          {canUseAdminTools && <Pressable accessibilityRole="button" accessibilityLabel="Baixar modelo de exemplo" disabled={testing} onPress={generateTest} style={{ ...button, borderWidth: 1, borderColor: "#737B8C", opacity: testing ? 0.6 : 1, maxWidth: "100%" }}>
-            {testing ? <ActivityIndicator color="white" /> : <Download color="white" size={18} />}
-            <Text style={{ fontFamily: "Inter_500Medium", fontSize: 13, color: "white", flexShrink: 1 }}>{testing ? "Preparando modelo..." : "Baixar modelo de exemplo"}</Text>
-          </Pressable>}
           {!isParticipantView && <Pressable accessibilityRole="button" accessibilityLabel="Gerar certificado da edição habilitada" disabled={emitting} onPress={generate} style={{ ...button, backgroundColor: "#1400FF", opacity: emitting ? 0.6 : 1, maxWidth: "100%" }}>
             {emitting ? <ActivityIndicator color="white" /> : <Award color="white" size={18} />}
             <Text style={{ fontFamily: "Inter_500Medium", fontSize: 13, color: "white", flexShrink: 1 }}>{emitting ? "Gerando..." : "Gerar certificado da edição habilitada"}</Text>
@@ -163,7 +149,6 @@ export default function MyCertificatesScreen(): ReactElement | null {
           </View>
         </View>
         {!!issueError && <Text accessibilityRole="alert" style={{ ...regular, color: "#FDA4AF" }}>{issueError}</Text>}
-        {!!testError && <Text accessibilityRole="alert" style={{ ...regular, color: "#FDA4AF" }}>{testError}</Text>}
         {loading ? <ActivityIndicator accessibilityLabel="Carregando meus certificados" color="white" /> : listError ? <View style={{ gap: 12 }}>
           <Text accessibilityRole="alert" style={{ ...regular, color: "#FDA4AF" }}>{listError}</Text>
           <Pressable accessibilityRole="button" onPress={() => void loadList()} style={{ ...button, borderWidth: 1, borderColor: "#737B8C" }}><RefreshCw color="white" size={18} /><Text style={{ color: "white" }}>Tentar novamente</Text></Pressable>

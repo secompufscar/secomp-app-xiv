@@ -12,9 +12,15 @@ export default function CertificateValidationScreen() {
   const [loading, setLoading] = useState(false), [downloading, setDownloading] = useState(false);
   const [error, setError] = useState("");
   const request = useRef<AbortController | null>(null);
+  const downloadRequest = useRef<AbortController | null>(null);
+
+  function cancelDownload() {
+    downloadRequest.current?.abort(); downloadRequest.current = null; setDownloading(false);
+  }
 
   async function search(value: string) {
     request.current?.abort();
+    cancelDownload();
     const controller = new AbortController(); request.current = controller;
     setLoading(true); setError(""); setCertificate(null);
     const normalized = value.trim().toUpperCase();
@@ -29,8 +35,25 @@ export default function CertificateValidationScreen() {
   }
   useEffect(() => {
     if (initialCode) void search(initialCode);
-    return () => request.current?.abort();
+    return () => { request.current?.abort(); downloadRequest.current?.abort(); downloadRequest.current = null; };
   }, []);
+
+  async function download() {
+    if (!certificate || downloadRequest.current) return;
+    const controller = new AbortController(); downloadRequest.current = controller;
+    setDownloading(true); setError("");
+    try {
+      const fresh = await validateCertificate(certificate.code, controller.signal);
+      if (!controller.signal.aborted) await downloadCertificate(fresh, controller.signal);
+    } catch (e: any) {
+      if (!controller.signal.aborted) {
+        if ([404, 410].includes(e.response?.status)) setCertificate(null);
+        setError(certificateError(e));
+      }
+    } finally {
+      if (downloadRequest.current === controller) { downloadRequest.current = null; setDownloading(false); }
+    }
+  }
 
   return <ScrollView style={{ flex: 1, backgroundColor: "#FCFCFF" }} contentContainerStyle={{ padding: 24, paddingBottom: 48 }}>
     <View style={{ width: "100%", maxWidth: 920, alignSelf: "center", gap: 24 }}>
@@ -45,7 +68,7 @@ export default function CertificateValidationScreen() {
       </View>
       <View style={{ gap: 10 }}>
         <Text style={{ color: "#171923", fontFamily: "Inter_500Medium" }}>Código do certificado</Text>
-        <TextInput accessibilityLabel="Código do certificado" value={code} onChangeText={value => { request.current?.abort(); setLoading(false); setCode(value); setCertificate(null); setError(""); }} onSubmitEditing={() => void search(code)} autoCapitalize="characters" autoCorrect={false} maxLength={64} style={{ minHeight: 48, padding: 12, borderWidth: 1, borderColor: "#737B8C", borderRadius: 6, color: "#171923", fontFamily: "Inter_400Regular" }} />
+        <TextInput accessibilityLabel="Código do certificado" value={code} onChangeText={value => { request.current?.abort(); cancelDownload(); setLoading(false); setCode(value); setCertificate(null); setError(""); }} onSubmitEditing={() => void search(code)} autoCapitalize="characters" autoCorrect={false} maxLength={64} style={{ minHeight: 48, padding: 12, borderWidth: 1, borderColor: "#737B8C", borderRadius: 6, color: "#171923", fontFamily: "Inter_400Regular" }} />
         <Pressable accessibilityRole="button" disabled={loading} onPress={() => void search(code)} style={{ minHeight: 48, flexDirection: "row", gap: 10, alignItems: "center", justifyContent: "center", backgroundColor: "#1400FF", borderRadius: 6, padding: 12 }}>
           {loading ? <ActivityIndicator color="white" /> : <Search color="white" size={18} />}
           <Text style={{ color: "white", fontFamily: "Inter_500Medium" }}>{loading ? "Consultando..." : "Validar certificado"}</Text>
@@ -56,7 +79,7 @@ export default function CertificateValidationScreen() {
         <Text accessibilityRole="header" style={{ color: "#087443", fontFamily: "Poppins_600SemiBold", fontSize: 22 }}>Certificado válido</Text>
         <Text style={{ color: "#171923", fontFamily: "Poppins_600SemiBold", fontSize: 20 }}>{certificate.participantName}</Text>
         <Text style={{ color: "#171923", fontFamily: "Inter_400Regular", lineHeight: 24 }}>{certificatePresentation(certificate).edition} SECOMP · {certificateWorkload(certificate.totalMinutes)}{"\n"}Emitido em {certificateIssuedAt(certificate.issuedAt)}</Text>
-        <Pressable accessibilityRole="button" disabled={downloading} onPress={async () => { setDownloading(true); setError(""); try { await downloadCertificate(certificate); } catch (e) { setError(certificateError(e)); } finally { setDownloading(false); } }} style={{ minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, padding: 12, backgroundColor: "#171923", borderRadius: 6 }}>
+        <Pressable accessibilityRole="button" disabled={downloading} onPress={download} style={{ minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, padding: 12, backgroundColor: "#171923", borderRadius: 6 }}>
           <Download color="white" size={18} /><Text style={{ color: "white", fontFamily: "Inter_500Medium" }}>{downloading ? "Preparando PDF..." : "Baixar PDF"}</Text>
         </Pressable>
         <Text style={{ color: "#171923", fontFamily: "Poppins_600SemiBold", fontSize: 18 }}>Atividades realizadas</Text>

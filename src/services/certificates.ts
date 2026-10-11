@@ -31,7 +31,7 @@ export interface CertificateSummary {
 export async function listMyCertificates(signal?: AbortSignal): Promise<CertificateSummary[]> {
   const { data } = await api.get("/certificates/mine", { signal, timeout: 15000 });
   const items = data?.certificates;
-  if (!Array.isArray(items) || items.some(item => !item || !certificateCodePattern.test(item.code)
+  if (!Array.isArray(items) || items.some(item => !item || typeof item.code !== "string" || !certificateCodePattern.test(item.code)
     || !["active", "revoked", "unavailable"].includes(item.status)
     || !(item.year === null || (Number.isInteger(item.year) && item.year >= 1900 && item.year <= 9999))
     || !(item.edition === null || (typeof item.edition === "string" && /^[IVXLCDM]{1,20}$/.test(item.edition)))
@@ -52,14 +52,24 @@ export async function getMyCertificate(code: string, signal?: AbortSignal): Prom
 }
 
 export function checkedCertificate(data: CertificateData): CertificateData {
-  if (!data || !certificateCodePattern.test(data.code) || !data.participantName?.trim()
+  if (!data || typeof data.code !== "string" || !certificateCodePattern.test(data.code)
+    || typeof data.participantName !== "string" || !data.participantName.trim()
     || typeof data.issuedAt !== "string" || !Number.isFinite(Date.parse(data.issuedAt))
     || !data.event || !Array.isArray(data.activities) || !data.activities.length
-    || data.activities.some(a => !a.name || !Number.isInteger(a.minutes) || a.minutes <= 0)
+    || typeof data.event.startDate !== "string" || !Number.isFinite(Date.parse(data.event.startDate))
+    || typeof data.event.endDate !== "string" || !Number.isFinite(Date.parse(data.event.endDate))
+    || Date.parse(data.event.startDate) > Date.parse(data.event.endDate)
+    || data.activities.some(a => !a || typeof a.name !== "string" || !a.name.trim()
+      || typeof a.category !== "string" || !a.category.trim()
+      || !(a.startsAt === null || (typeof a.startsAt === "string" && Number.isFinite(Date.parse(a.startsAt))))
+      || !Number.isInteger(a.minutes) || a.minutes <= 0 || a.minutes > 10080)
+    || !Number.isSafeInteger(data.totalMinutes) || data.totalMinutes <= 0
     || data.activities.reduce((sum, a) => sum + a.minutes, 0) !== data.totalMinutes
-    || !/^data:image\/png;base64,/.test(data.qrCode)) throw new Error("Dados do certificado inválidos.");
+    || typeof data.qrCode !== "string" || !/^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/.test(data.qrCode)
+    || typeof data.validationUrl !== "string") throw new Error("Dados do certificado inválidos.");
   const url = new URL(data.validationUrl);
-  if (url.protocol !== "https:" || url.searchParams.get("codigo") !== data.code) throw new Error("Endereço de validação inválido.");
+  if (url.protocol !== "https:" || url.username || url.password || url.hash
+    || url.searchParams.getAll("codigo").length !== 1 || url.searchParams.get("codigo") !== data.code) throw new Error("Endereço de validação inválido.");
   return { ...data, presentation: certificatePresentation(data) };
 }
 
@@ -70,7 +80,9 @@ export async function issueMyCertificate() {
 export async function validateCertificate(code: string, signal?: AbortSignal) {
   if (!certificateCodePattern.test(code)) throw new Error("Código de certificado inválido.");
   // Public validation never sends credentials or starts session recovery.
-  return checkedCertificate((await axios.get(`${api.defaults.baseURL}/certificates/validate/${code}`, { signal, timeout: 15000 })).data);
+  const certificate = checkedCertificate((await axios.get(`${api.defaults.baseURL}/certificates/validate/${code}`, { signal, timeout: 15000 })).data);
+  if (certificate.code !== code) throw new Error("O certificado recebido não corresponde ao código consultado.");
+  return certificate;
 }
 
 export function certificateError(error: unknown) {

@@ -100,7 +100,7 @@ test('PDF pagina listas extensas preservando todas as atividades uma vez e o tot
   const long = createCertificatePdf(longFixture, assets);
   assert.ok(long.getNumberOfPages() > 2);
   assert.ok(long.output('arraybuffer').byteLength > 10000);
-  const texts = await inspect(long, longFixture);
+  const texts = await inspect(long, longFixture, true);
   const annex = texts.slice(1).join(' ');
   for (let i = 1; i <= 45; i++) assert.equal(annex.split(`Atividade ${i}:`).length - 1, 1, `Atividade ${i} perdida ou duplicada`);
   assert.ok(texts[0].includes('112 horas e 30 minutos')); assert.ok(texts.at(-1).includes('112h 30min'));

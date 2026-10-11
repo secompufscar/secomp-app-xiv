@@ -18,7 +18,7 @@ export function certificatePresentation(certificate: { event: { year: number }; 
   const year = certificate.event?.year;
   const presentation = certificate.presentation === undefined && year === 2026 ? legacyXiv : certificate.presentation;
   if (!Number.isInteger(year) || year < 1900 || year > 9999 || !presentation
-    || !/^[IVXLCDM]{1,20}$/.test(presentation.edition)
+    || typeof presentation.edition !== "string" || !/^[IVXLCDM]{1,20}$/.test(presentation.edition)
     || ![presentation.eventName, presentation.issuer, presentation.city, presentation.location].every(value => typeof value === "string" && value.trim() && value.length <= 150 && !/[\r\n]/.test(value))
     || !supportsCertificateTemplate(presentation.templateId)) {
     throw new Error("Edição ou modelo de certificado não suportado. Entre em contato com a organização.");
