@@ -1,12 +1,13 @@
 import { useCallback, useRef, useState, type ReactElement } from "react";
 import { ActivityIndicator, Linking, Platform, Pressable, Text, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { Award, Download, ExternalLink, RefreshCw } from "lucide-react-native";
+import { Award, Download, ExternalLink, RefreshCw, FlaskConical } from "lucide-react-native";
 import AppLayout from "../../components/app/appLayout";
 import BackButton from "../../components/button/backButton";
 import { useAuth } from "../../hooks/AuthContext";
 import { CertificateData, CertificateSummary, certificateActivityDate, certificateError, certificateWorkload, getMyCertificate, issueMyCertificate, listMyCertificates } from "../../services/certificates";
-import { downloadCertificate } from "../../services/certificateDownload";
+import { downloadCertificate, downloadAdminTestCertificate } from "../../services/certificateDownload";
+import { getAdminTestCertificate } from "../../services/certificateAdminPreview";
 import { supportsCertificateTemplate } from "../../utils/certificatePresentation";
 
 const label = (item: CertificateSummary) => `${item.edition ? `${item.edition} SECOMP` : "Edição não identificada"}${item.year ? ` · ${item.year}` : ""}`;
@@ -15,7 +16,7 @@ const button = { minHeight: 48, padding: 12, borderRadius: 6, flexDirection: "ro
 const regular = { fontFamily: "Inter_400Regular", color: "#A9B4F4", lineHeight: 23 };
 
 export default function MyCertificatesScreen(): ReactElement | null {
-  const { user, isParticipantView } = useAuth();
+  const { user, isParticipantView, canUseAdminTools } = useAuth();
   const allowed = Platform.OS === "web" && !!user?.id;
   const [items, setItems] = useState<CertificateSummary[] | null>(null);
   const [selected, setSelected] = useState<CertificateSummary | null>(null);
@@ -27,6 +28,8 @@ export default function MyCertificatesScreen(): ReactElement | null {
   const selectedRef = useRef<CertificateSummary | null>(null);
   const listRequest = useRef<AbortController | null>(null), detailRequest = useRef<AbortController | null>(null), downloadRequest = useRef<AbortController | null>(null);
   const issuePending = useRef(false), downloadPending = useRef(false);
+  const [testing, setTesting] = useState(false), [testError, setTestError] = useState("");
+  const testRequest = useRef<AbortController | null>(null);
 
   function revoked(item: CertificateSummary) {
     const value = { ...item, status: "revoked" as const };
@@ -85,6 +88,28 @@ export default function MyCertificatesScreen(): ReactElement | null {
     };
   }, [loadList, user?.id]));
 
+  useFocusEffect(useCallback(() => {
+    setTestError(""); setTesting(false);
+    return () => { testRequest.current?.abort(); testRequest.current = null; };
+  }, [user?.id, canUseAdminTools]));
+
+  async function generateTest() {
+    if (!allowed || !canUseAdminTools || !focused.current || testRequest.current) return;
+    const controller = new AbortController(); testRequest.current = controller;
+    setTesting(true); setTestError("");
+    try {
+      const result = await getAdminTestCertificate(controller.signal);
+      if (!controller.signal.aborted && focused.current) await downloadAdminTestCertificate(result, controller.signal);
+    } catch (error) {
+      if (!controller.signal.aborted && focused.current) setTestError(certificateError(error));
+    } finally {
+      if (testRequest.current === controller) {
+        testRequest.current = null;
+        if (focused.current) setTesting(false);
+      }
+    }
+  }
+
   async function generate() {
     if (!allowed || isParticipantView || !focused.current || issuePending.current) return;
     const focus = focusGeneration.current, selection = detailGeneration.current;
@@ -127,12 +152,19 @@ export default function MyCertificatesScreen(): ReactElement | null {
       <View style={{ gap: 20, paddingBottom: 32 }}>
         <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 16, borderBottomWidth: 1, borderColor: "#374151", paddingBottom: 20 }}>
           <Text accessibilityRole="header" style={{ fontFamily: "Poppins_600SemiBold", fontSize: 24, color: "#FFFFFF" }}>Meus certificados</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, maxWidth: "100%" }}>
+          {canUseAdminTools && <Pressable accessibilityRole="button" accessibilityLabel="Gerar certificado de teste" disabled={testing} onPress={generateTest} style={{ ...button, borderWidth: 1, borderColor: "#737B8C", opacity: testing ? 0.6 : 1, maxWidth: "100%" }}>
+            {testing ? <ActivityIndicator color="white" /> : <FlaskConical color="white" size={18} />}
+            <Text style={{ fontFamily: "Inter_500Medium", fontSize: 13, color: "white", flexShrink: 1 }}>{testing ? "Preparando teste..." : "Gerar certificado de teste"}</Text>
+          </Pressable>}
           {!isParticipantView && <Pressable accessibilityRole="button" accessibilityLabel="Gerar certificado da edição habilitada" disabled={emitting} onPress={generate} style={{ ...button, backgroundColor: "#1400FF", opacity: emitting ? 0.6 : 1, maxWidth: "100%" }}>
             {emitting ? <ActivityIndicator color="white" /> : <Award color="white" size={18} />}
             <Text style={{ fontFamily: "Inter_500Medium", fontSize: 13, color: "white", flexShrink: 1 }}>{emitting ? "Gerando..." : "Gerar certificado da edição habilitada"}</Text>
           </Pressable>}
+          </View>
         </View>
         {!!issueError && <Text accessibilityRole="alert" style={{ ...regular, color: "#FDA4AF" }}>{issueError}</Text>}
+        {!!testError && <Text accessibilityRole="alert" style={{ ...regular, color: "#FDA4AF" }}>{testError}</Text>}
         {loading ? <ActivityIndicator accessibilityLabel="Carregando meus certificados" color="white" /> : listError ? <View style={{ gap: 12 }}>
           <Text accessibilityRole="alert" style={{ ...regular, color: "#FDA4AF" }}>{listError}</Text>
           <Pressable accessibilityRole="button" onPress={() => void loadList()} style={{ ...button, borderWidth: 1, borderColor: "#737B8C" }}><RefreshCw color="white" size={18} /><Text style={{ color: "white" }}>Tentar novamente</Text></Pressable>
