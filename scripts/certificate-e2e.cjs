@@ -123,6 +123,14 @@ const server = http.createServer((req, res) => {
       assert.ok(Math.abs(refreshBounds.x - (selectorBounds.x + selectorBounds.width) - 8) <= 0.5, 'Vao entre seletor e atualizar deve ser 8px');
       assert.equal(selectorBounds.height, 48); assert.equal(refreshBounds.height, 48); assert.equal(refreshBounds.width, 48);
       assert.ok(Math.abs(selectorBounds.y - refreshBounds.y) <= 0.5, 'Controles devem estar alinhados');
+      const chevron = page.locator('[data-certificate-chevron]');
+      const chevronBounds = await chevron.boundingBox();
+      assert.ok(chevronBounds);
+      assert.ok(Math.abs(selectorBounds.x + selectorBounds.width - chevronBounds.x - chevronBounds.width - 12) <= 0.5, 'Seta deve ter margem interna de 12px');
+      assert.equal(await chevron.evaluate(element => getComputedStyle(element).pointerEvents), 'none');
+      assert.equal(await editions.evaluate(element => getComputedStyle(element).appearance), 'none');
+      await editions.focus(); await page.keyboard.press('Home'); await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter');
+      await page.waitForFunction(expected => document.querySelector('select')?.value === expected, code);
       await page.screenshot({ path: path.join(outputDir, `certificate-selector-${width}.png`), clip: {
         x: selectorBounds.x - 4, y: selectorBounds.y - 4,
         width: refreshBounds.x + refreshBounds.width - selectorBounds.x + 8, height: 56,

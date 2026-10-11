@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState, type ReactElement } from "react";
 import { ActivityIndicator, Linking, Platform, Pressable, Text, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { Award, Download, ExternalLink, RefreshCw } from "lucide-react-native";
+import { Award, ChevronDown, Download, ExternalLink, RefreshCw } from "lucide-react-native";
 import AppLayout from "../../components/app/appLayout";
 import BackButton from "../../components/button/backButton";
 import { useAuth } from "../../hooks/AuthContext";
@@ -156,10 +156,13 @@ export default function MyCertificatesScreen(): ReactElement | null {
           <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8 }}>
             <View style={{ flex: 1, minWidth: 0, maxWidth: 480, gap: 8 }}>
               <Text style={regular}>Edição</Text>
-              <select aria-label="Edição do certificado" disabled={!items?.length} value={selected?.code ?? ""} onChange={event => void selectCertificate(items?.find(item => item.code === event.target.value) ?? null)} style={{ width: "100%", height: 48, boxSizing: "border-box", border: "1px solid #737B8C", borderRadius: 6, backgroundColor: "#14131C", color: "#FFFFFF", padding: 12, fontFamily: "Inter_400Regular", fontSize: 14 }}>
+              <div style={{ position: "relative", height: 48 }}>
+              <select aria-label="Edição do certificado" disabled={!items?.length} value={selected?.code ?? ""} onChange={event => void selectCertificate(items?.find(item => item.code === event.target.value) ?? null)} style={{ width: "100%", height: 48, boxSizing: "border-box", border: "1px solid #737B8C", borderRadius: 6, backgroundColor: "#14131C", color: "#FFFFFF", appearance: "none", padding: "12px 44px 12px 12px", fontFamily: "Inter_400Regular", fontSize: 14 }}>
                 {!items?.length && <option value="">Nenhum certificado</option>}
                 {items?.map(item => <option key={item.code} value={item.code}>{label(item)}{item.status === "revoked" ? " · Revogado" : item.status === "unavailable" ? " · Indisponível" : ""}</option>)}
               </select>
+              <div aria-hidden="true" data-certificate-chevron style={{ position: "absolute", right: 12, top: 15, width: 18, height: 18, pointerEvents: "none", display: "flex", opacity: items?.length ? 1 : 0.5 }}><ChevronDown color="#FFFFFF" size={18} /></div>
+              </div>
             </View>
             <div title="Atualizar certificados" style={{ display: "flex", flexShrink: 0, width: 48, height: 48 }}><Pressable accessibilityRole="button" accessibilityLabel="Atualizar certificados" onPress={() => void loadList()} style={{ ...button, width: 48, height: 48, borderWidth: 1, borderColor: "#737B8C" }}><RefreshCw color="white" size={18} /></Pressable></div>
           </View>
