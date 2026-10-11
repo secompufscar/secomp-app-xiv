@@ -30,9 +30,9 @@ test('consulta administrativa usa GET autenticado cancelavel e sem enviar identi
 
 test('PDF longo de teste preserva atividades, total, logos, QR invalido e aviso em todas as paginas', async () => {
   const certificate = fixture();
-  certificate.activities = Array.from({ length: 28 }, (_, i) => ({ ...certificate.activities[0],
+  certificate.activities = Array.from({ length: 24 }, (_, i) => ({ ...certificate.activities[0],
     name: `Atividade ${i + 1}: Desenvolvimento de Software com Spec-Driven Development (SDD) e arquitetura de soluções`,
-    category: i < 4 ? 'Minicursos' : 'Palestras', minutes: i < 4 ? 180 : 60 }));
+    category: i === 0 ? 'Minicursos' : 'Palestras', minutes: i === 0 ? 180 : i === 1 ? 150 : i === 2 ? 90 : 60 }));
   certificate.totalMinutes = certificate.activities.reduce((sum, activity) => sum + activity.minutes, 0);
   certificate.qrCode = await QRCode.toDataURL(certificate.validationUrl, { width: 300, margin: 4 });
   const read = file => new Uint8Array(fs.readFileSync(path.join(__dirname, '../assets/certificate/v1', file)));
@@ -65,7 +65,9 @@ test('PDF longo de teste preserva atividades, total, logos, QR invalido e aviso 
     }
     const annex = texts.slice(1).join(' ').replace(/\s+/g, ' ');
     for (const activity of certificate.activities) assert.equal(annex.split(activity.name).length - 1, 1);
-    assert.ok(texts[0].includes('36 horas')); assert.ok(texts.at(-1).includes('36 horas'));
+    assert.ok(texts[0].includes('28 horas')); assert.ok(texts.at(-1).includes('28 horas'));
+    assert.ok(texts[0].includes('Amostra de atividades certificáveis'));
+    assert.doesNotMatch(texts[0], /Todas as atividades|Inclui atividades simultâneas/);
     assert.equal(JSON.stringify(certificate), original);
   } finally { await pdf.destroy(); }
 });

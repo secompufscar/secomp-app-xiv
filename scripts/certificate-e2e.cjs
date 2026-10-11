@@ -18,7 +18,8 @@ const replacementCode = 'E'.repeat(32);
 const replacementFixture = { ...fixture, code: replacementCode, validationUrl: `https://secomp-app-xiv.vercel.app/certificados?codigo=${replacementCode}` };
 const adminFixture = { ...fixture, kind: 'admin-test', code: 'TESTE-ADMIN-SEM-VALIDADE', participantName: 'Certificado Admin [ TESTE ]',
   validationUrl: 'https://secomp-app-xiv.vercel.app/certificados?codigo=TESTE-ADMIN-SEM-VALIDADE',
-  activities: Array.from({ length: 28 }, (_, i) => ({ ...fixture.activities[i % fixture.activities.length], name: `Atividade ${i + 1}: ${fixture.activities[i % fixture.activities.length].name}` })) };
+  activities: [fixture.activities[0], ...Array.from({ length: 23 }, (_, i) => ({ ...fixture.activities[3],
+    name: `Atividade ${i + 2}: ${fixture.activities[3].name}`, minutes: i === 0 ? 150 : i === 1 ? 90 : 60 }))] };
 adminFixture.totalMinutes = adminFixture.activities.reduce((sum, activity) => sum + activity.minutes, 0);
 const summary = (item, overrides = {}) => ({ code: item.code, year: item.event.year, edition: item.presentation?.edition || 'XIV',
   templateId: 'secomp-landscape-v1', issuedAt: item.issuedAt, totalMinutes: item.totalMinutes, status: 'active', revision: 1, ...overrides });
