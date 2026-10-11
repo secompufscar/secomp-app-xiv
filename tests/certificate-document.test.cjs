@@ -272,6 +272,36 @@ test('PDF equilibra DC e UFSCar com tamanhos calibrados sem distorcer suas propo
   } finally { await pdf.destroy(); }
 });
 
+test('PDF mantém o divisor do cabeçalho fino e uniforme na capa e em todas as páginas do anexo', async () => {
+  const { getDocument, OPS } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const certificate = { ...fixture, totalMinutes: 60 * 35,
+    activities: Array.from({ length: 35 }, (_, i) => ({ ...fixture.activities[0], name: `Atividade ${i + 1}`, minutes: 60 })),
+    qrCode: await QRCode.toDataURL(fixture.validationUrl) };
+  const pdf = await getDocument({ data: new Uint8Array(createCertificatePdf(certificate, assets).output('arraybuffer')) }).promise;
+  const mm = 72 / 25.4, near = (actual, expected) => Math.abs(actual - expected) < 0.03;
+  try {
+    assert.ok(pdf.numPages > 2);
+    for (let number = 1; number <= pdf.numPages; number++) {
+      const operators = await (await pdf.getPage(number)).getOperatorList();
+      let width = 0;
+      const widths = [], stack = [];
+      for (let i = 0; i < operators.fnArray.length; i++) {
+        const operation = operators.fnArray[i], args = operators.argsArray[i];
+        if (operation === OPS.save) stack.push(width);
+        else if (operation === OPS.restore) width = stack.pop();
+        else if (operation === OPS.setLineWidth) width = args[0];
+        else if (operation === OPS.constructPath && args[0] === OPS.stroke) {
+          const bounds = args[2];
+          if (near(bounds[0], 80 * mm) && near(bounds[1], (210 - 29) * mm)
+            && near(bounds[2], 279 * mm) && near(bounds[3], (210 - 29) * mm)) widths.push(width);
+        }
+      }
+      assert.equal(widths.length, 1, `Divisor ausente ou duplicado na página ${number}`);
+      assert.ok(near(widths[0], 0.2 * mm), `Divisor espesso na página ${number}: ${widths[0] / mm} mm`);
+    }
+  } finally { await pdf.destroy(); }
+});
+
 test('PDF de nova edicao usa o snapshot e nao troca identidade de certificados XIV antigos', async () => {
   const { certificatePresentation } = loadTypescript(path.join(__dirname, '../src/utils/certificatePresentation.ts'));
   const legacy = { ...fixture, qrCode: await QRCode.toDataURL(fixture.validationUrl) };
