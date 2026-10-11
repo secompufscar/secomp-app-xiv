@@ -1,5 +1,7 @@
 # Meus certificados
 
+Refinamento atual de apresentação: o PDF real usa `Emitido em` no rodapé de cada página, sem cidade na linha de emissão. A tela privada e a validação pública continuam usando o mesmo instante e formato, já identificados como `Emitido em`. Não houve mudança no fluxo, na API ou no registro do certificado; os marcos seguintes documentam as publicações anteriores.
+
 Atualização publicada em 11/10/2026: app `6a228319` do [PR #42](https://github.com/secompufscar/secomp-app-xiv/pull/42) inclui horas, minutos, segundos e indicação de horário de Brasília, usando `issuedAt` persistido, também na validação pública e na capa do PDF real. TypeScript, 115 testes, build, CI do PR/merge, Vercel e E2E em 320/1280 px aprovados. O fluxo privado no app publicado foi verificado com APIs sintéticas, não com login interativo de participante. API e migrações não foram alteradas. As publicações seguintes neste guia são marcos históricos; regras de apresentação e reemissão estão no [guia de manutenção](certificate-maintenance.md#horário-de-emissão-com-segundos).
 
 Publicado em 11/10/2026: app `8337d569` do [PR #35](https://github.com/secompufscar/secomp-app-xiv/pull/35), após publicação e validação da API `28780cc3` do [PR #40](https://github.com/secompufscar/secomp-server-xiv/pull/40). CI dos PRs/merges e deploys aprovados. [Evidência operacional](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-release-2026-10-11.md). Não houve emissão, reemissão ou escrita administrativa em produção nesta rodada.
@@ -20,7 +22,7 @@ Certificados históricos podem ser consultados mesmo com emissão desabilitada o
 
 Atualizar mantém o código selecionado quando disponível; se houve reemissão, mantém a mesma edição e seleciona sua nova revisão. Após recarregar a página, a rota é restaurada e a edição mais recente é selecionada. A reemissão continua exclusivamente administrativa, auditada e com novo código/QR.
 
-O instante de emissão é mostrado com data, horas, minutos e segundos, por exemplo `11/10/2026 às 17:25:33 (horário de Brasília)`. Meus certificados, validação pública e capa do PDF real compartilham `src/utils/certificateIssuedAt.ts`, usando o `issuedAt` persistido pela API convertido para `America/Sao_Paulo`. Baixar novamente não muda esse instante; uma reemissão tem um novo instante e revisão. O texto pode ocupar mais de uma linha em telas estreitas, sem ocultar segundos ou fuso.
+O instante de emissão é mostrado com data, horas, minutos e segundos, por exemplo `Emitido em 11/10/2026 às 17:25:33 (horário de Brasília)`. Meus certificados, validação pública e rodapé de todas as páginas do PDF real compartilham `src/utils/certificateIssuedAt.ts`, usando o `issuedAt` persistido pela API convertido para `America/Sao_Paulo`. Baixar novamente não muda esse instante; uma reemissão tem um novo instante e revisão. O texto pode ocupar mais de uma linha em telas estreitas, sem ocultar segundos ou fuso.
 
 O seletor e o botão Atualizar têm altura fixa de 48 px e vão de 8 px, alinhados pela base. O botão não encolhe; o seletor se adapta à largura disponível. O E2E mede essas dimensões em 320/1280 px e guarda screenshots do trecho. Esse ajuste de espaçamento é exclusivo da tela web, sem alterar os PDFs ou a API.
 

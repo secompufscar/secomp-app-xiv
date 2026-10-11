@@ -72,8 +72,7 @@ export function createCertificatePdfV1(certificate: CertificateData, assets: Cer
   doc.setFillColor("#EEF0FC").roundedRect(80, 125, 199, 25, 2, 2, "F");
   text("CARGA HORÁRIA TOTAL", 86, 133, 8);
   fitted(fullWorkload(certificate.totalMinutes), 86, 145, 187, 23, true, "#1400FF");
-  fitted(`${presentation.city}, ${certificateIssuedAt(certificate.issuedAt)}.`, 80, 161, 199, 10);
-  fitted(`Comissão organizadora da ${presentation.edition} SECOMP`, 80, 174, 199, 10, true);
+  fitted(`Comissão organizadora da ${presentation.edition} SECOMP`, 80, 166, 199, 10, true);
 
   doc.addPage();
   doc.setLineHeightFactor(1);
@@ -113,15 +112,16 @@ export function createCertificatePdfV1(certificate: CertificateData, assets: Cer
   for (let page = 1; page <= pages; page++) {
     doc.setPage(page);
     doc.setDrawColor("#DCE1ED").setLineWidth(0.2).line(80, 181, 279, 181);
-    text("Validação pública por código ou QR", 80, 186, 7.5, false, "#555C6E");
-    text(certificate.code, 80, 191, 9, true);
+    fitted(`Emitido em ${certificateIssuedAt(certificate.issuedAt)}`, 80, 185, 165, 8, false, "#555C6E");
+    text("Validação pública por código ou QR", 80, 190, 7.5, false, "#555C6E");
+    text(certificate.code, 80, 195, 9, true);
     doc.setFont("Inter", "normal").setFontSize(7).setTextColor("#1400FF");
     const address = new URL(certificate.validationUrl);
     const label = address.origin + address.pathname;
     doc.setFontSize(Math.min(7, 7 * 165 / Math.max(165, doc.getTextWidth(label))));
-    doc.textWithLink(label, 80, 196, { url: certificate.validationUrl });
+    doc.textWithLink(label, 80, 200, { url: certificate.validationUrl });
     doc.addImage(certificate.qrCode, "PNG", 251, 183, 24, 24);
-    text(`Página ${page} de ${pages}`, 80, 202, 7, false, "#555C6E");
+    text(`Página ${page} de ${pages}`, 80, 205, 7, false, "#555C6E");
   }
   return doc;
 }

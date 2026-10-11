@@ -57,21 +57,35 @@ test('PDF preserva conteúdo, total, link customizado e QR legível em ambas as 
   assert.ok(texts[1].includes(custom.activities[0].name));
 });
 
-test('PDF usa o instante original de emissao com segundos, sem alterar o snapshot', async () => {
+test('PDF identifica a emissao com segundos no rodape de cada pagina sem repetir a cidade ou alterar o snapshot', async () => {
   const certificate = { ...fixture, issuedAt: '2026-10-11T01:02:03.456Z', qrCode: await QRCode.toDataURL(fixture.validationUrl) };
   const before = JSON.parse(JSON.stringify(certificate));
   const doc = createCertificatePdf(certificate, assets);
   const texts = await inspect(doc, certificate);
-  assert.ok(texts[0].includes('São Carlos, 10/10/2026 às 22:02:03 (horário de Brasília).'));
+  const label = 'Emitido em 10/10/2026 às 22:02:03 (horário de Brasília)';
+  for (const text of texts) {
+    assert.equal(text.split(label).length - 1, 1);
+    assert.ok(!text.includes('São Carlos, 10/10/2026'));
+  }
+  assert.ok(texts[0].includes('em São Carlos - SP.'));
   assert.deepEqual(certificate, before);
   const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const pdf = await getDocument({ data: new Uint8Array(doc.output('arraybuffer')), useSystemFonts: false }).promise;
   try {
-    const items = (await (await pdf.getPage(1)).getTextContent()).items;
-    const emission = items.find(item => item.str.includes('22:02:03'));
-    assert.ok(emission);
-    assert.ok(emission.transform[4] + emission.width <= 279 * 72 / 25.4);
-    assert.ok(Math.abs(emission.transform[0] - 10) < 0.01);
+    const mm = 72 / 25.4;
+    for (let number = 1; number <= pdf.numPages; number++) {
+      const items = (await (await pdf.getPage(number)).getTextContent()).items;
+      const emission = items.find(item => item.str === label);
+      const heading = items.find(item => item.str === 'Validação pública por código ou QR');
+      const pagination = items.find(item => item.str === `Página ${number} de ${pdf.numPages}`);
+      assert.ok(emission && heading && pagination);
+      assert.ok(Math.abs(emission.transform[4] - 80 * mm) < 0.01);
+      assert.ok(emission.transform[4] + emission.width <= 245 * mm, 'Emissao invade a margem do QR');
+      assert.ok(Math.abs(emission.transform[5] - 25 * mm) < 0.01, 'Emissao deve ficar no rodape');
+      assert.ok(Math.abs(emission.transform[0] - 8) < 0.01);
+      assert.ok(emission.transform[5] - emission.height > heading.transform[5], 'Emissao sobrepoe validacao');
+      assert.ok(Math.abs(pagination.transform[5] - 5 * mm) < 0.01);
+    }
   } finally { await pdf.destroy(); }
 });
 
