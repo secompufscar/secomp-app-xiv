@@ -76,15 +76,18 @@ test('PDF identifica a emissao com segundos no rodape de cada pagina sem repetir
     for (let number = 1; number <= pdf.numPages; number++) {
       const items = (await (await pdf.getPage(number)).getTextContent()).items;
       const emission = items.find(item => item.str === label);
-      const heading = items.find(item => item.str === 'Validação pública por código ou QR');
+      const code = items.find(item => item.str === `Código de validação: ${certificate.code}`);
       const pagination = items.find(item => item.str === `Página ${number} de ${pdf.numPages}`);
-      assert.ok(emission && heading && pagination);
+      assert.ok(emission && code && pagination);
       assert.ok(Math.abs(emission.transform[4] - 80 * mm) < 0.01);
       assert.ok(emission.transform[4] + emission.width <= 245 * mm, 'Emissao invade a margem do QR');
-      assert.ok(Math.abs(emission.transform[5] - 25 * mm) < 0.01, 'Emissao deve ficar no rodape');
+      assert.ok(Math.abs(emission.transform[5] - 23 * mm) < 0.01, 'Emissao deve ficar no rodape');
       assert.ok(Math.abs(emission.transform[0] - 8) < 0.01);
-      assert.ok(emission.transform[5] - emission.height > heading.transform[5], 'Emissao sobrepoe validacao');
-      assert.ok(Math.abs(pagination.transform[5] - 5 * mm) < 0.01);
+      assert.ok(emission.transform[5] - emission.height > code.transform[5], 'Emissao sobrepoe validacao');
+      assert.ok(Math.abs(pagination.transform[4] - 11 * mm) < 0.01);
+      assert.ok(Math.abs(pagination.transform[5] - 6 * mm) < 0.01);
+      assert.ok(pagination.transform[4] + pagination.width <= 55 * mm, 'Paginacao sai da faixa lateral');
+      assert.ok(Math.abs(pagination.transform[0] - 7) < 0.01);
     }
   } finally { await pdf.destroy(); }
 });
@@ -161,14 +164,21 @@ test('PDF acomoda 11 atividades sinteticas em um anexo legivel separado do rodap
   try {
     for (let number = 1; number <= 2; number++) {
       const items = (await (await pdf.getPage(number)).getTextContent()).items;
-      const heading = items.find(item => item.str === 'Validação pública por código ou QR');
-      const code = items.find(item => item.str === certificate.code);
+      const emission = items.find(item => item.str.startsWith('Emitido em '));
+      const code = items.find(item => item.str === `Código de validação: ${certificate.code}`);
       const address = items.find(item => item.str === new URL(certificate.validationUrl).origin + new URL(certificate.validationUrl).pathname);
-      assert.ok(heading && code && address);
-      assert.equal(heading.transform[4], code.transform[4]);
+      assert.ok(emission && code && address);
+      assert.ok(!items.some(item => item.str === 'Validação pública por código ou QR'));
+      assert.equal(emission.transform[4], code.transform[4]);
       assert.equal(address.transform[4], code.transform[4]);
-      assert.ok(heading.transform[5] > code.transform[5] && code.transform[5] > address.transform[5]);
-      assert.ok(Math.abs(heading.transform[5] - address.transform[5] - 10 * mm) < 0.1);
+      assert.ok(emission.transform[5] > code.transform[5] && code.transform[5] > address.transform[5]);
+      assert.ok(Math.abs(emission.transform[5] - code.transform[5] - 7 * mm) < 0.1);
+      assert.ok(Math.abs(code.transform[5] - address.transform[5] - 7 * mm) < 0.1);
+      for (const item of [emission, code, address]) {
+        assert.ok(item.transform[4] + item.width <= 245 * mm, 'Metadados invadem margem do QR');
+      }
+      assert.ok(Math.abs(code.transform[0] - 9) < 0.01);
+      assert.ok(code.transform[5] - code.height > address.transform[5], 'Codigo sobrepoe endereco');
       if (number === 2) {
         const dateHeading = items.find(item => item.str === 'DATA');
         const timeHeading = items.find(item => item.str === 'HORÁRIO');

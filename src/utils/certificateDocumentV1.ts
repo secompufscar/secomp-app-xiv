@@ -112,16 +112,15 @@ export function createCertificatePdfV1(certificate: CertificateData, assets: Cer
   for (let page = 1; page <= pages; page++) {
     doc.setPage(page);
     doc.setDrawColor("#DCE1ED").setLineWidth(0.2).line(80, 181, 279, 181);
-    fitted(`Emitido em ${certificateIssuedAt(certificate.issuedAt)}`, 80, 185, 165, 8, false, "#555C6E");
-    text("Validação pública por código ou QR", 80, 190, 7.5, false, "#555C6E");
-    text(certificate.code, 80, 195, 9, true);
+    fitted(`Emitido em ${certificateIssuedAt(certificate.issuedAt)}`, 80, 187, 165, 8, false, "#555C6E");
+    fitted(`Código de validação: ${certificate.code}`, 80, 194, 165, 9, true);
     doc.setFont("Inter", "normal").setFontSize(7).setTextColor("#1400FF");
     const address = new URL(certificate.validationUrl);
     const label = address.origin + address.pathname;
     doc.setFontSize(Math.min(7, 7 * 165 / Math.max(165, doc.getTextWidth(label))));
-    doc.textWithLink(label, 80, 200, { url: certificate.validationUrl });
+    doc.textWithLink(label, 80, 201, { url: certificate.validationUrl });
     doc.addImage(certificate.qrCode, "PNG", 251, 183, 24, 24);
-    text(`Página ${page} de ${pages}`, 80, 205, 7, false, "#555C6E");
+    fitted(`Página ${page} de ${pages}`, 11, 204, 44, 7, false, "#A9B4F4");
   }
   return doc;
 }

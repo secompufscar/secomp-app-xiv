@@ -1,6 +1,6 @@
 # Meus certificados
 
-Refinamento atual de apresentação: o PDF real usa `Emitido em` no rodapé de cada página, sem cidade na linha de emissão. A tela privada e a validação pública continuam usando o mesmo instante e formato, já identificados como `Emitido em`. Não houve mudança no fluxo, na API ou no registro do certificado; os marcos seguintes documentam as publicações anteriores.
+Refinamento atual de apresentação: o PDF real usa três linhas no rodapé de cada página (`Emitido em`, código de validação e endereço), sem cidade na linha de emissão, e paginação separada na faixa lateral. A tela privada e a validação pública continuam usando o mesmo instante e formato, já identificados como `Emitido em`. Não houve mudança no fluxo, na API ou no registro do certificado; os marcos seguintes documentam as publicações anteriores.
 
 Atualização publicada em 11/10/2026: app `6a228319` do [PR #42](https://github.com/secompufscar/secomp-app-xiv/pull/42) inclui horas, minutos, segundos e indicação de horário de Brasília, usando `issuedAt` persistido, também na validação pública e na capa do PDF real. TypeScript, 115 testes, build, CI do PR/merge, Vercel e E2E em 320/1280 px aprovados. O fluxo privado no app publicado foi verificado com APIs sintéticas, não com login interativo de participante. API e migrações não foram alteradas. As publicações seguintes neste guia são marcos históricos; regras de apresentação e reemissão estão no [guia de manutenção](certificate-maintenance.md#horário-de-emissão-com-segundos).
 

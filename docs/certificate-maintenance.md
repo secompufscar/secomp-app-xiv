@@ -1,6 +1,6 @@
 # Manutenção dos certificados
 
-Composição atual do PDF real: `Emitido em` identifica data, horário com segundos e fuso no rodapé de todas as páginas, antes do bloco de validação. A cidade permanece no texto do evento, sem repetição na emissão. A comissão fica em Y=166, separada do rodapé. Este refinamento autorizado é somente de apresentação; não exige reemissão nem escrita na API. Os parágrafos seguintes registram publicações anteriores.
+Composição atual do PDF real: rodapé com três linhas, `Emitido em` (data, horário com segundos e fuso), `Código de validação` e endereço. A paginação fica separada, na base da faixa lateral; a instrução redundante de validação foi retirada. A cidade permanece no texto do evento, sem repetição na emissão. A comissão fica em Y=166, separada do rodapé. Este refinamento autorizado é somente de apresentação; não exige reemissão nem escrita na API. Os parágrafos seguintes registram publicações anteriores.
 
 Complemento publicado em 11/10/2026: app `6a228319` do [PR #42](https://github.com/secompufscar/secomp-app-xiv/pull/42) mostra data e horário de emissão com segundos na capa do PDF real, em Meus certificados e na validação pública. CI do PR/merge e [deploy Vercel](https://vercel.com/secomp-tis-projects/secomp-app-xiv/DjYFDD48o4k5iqN6pCPrwtWGjJ6G) aprovados; E2E no app publicado em 320/1280 px aprovado com APIs sintéticas. A API vigente não foi modificada nem republicada. Os identificadores abaixo documentam os marcos anteriores; as regras de metadados deste incremento estão em Horário de emissão com segundos.
 
@@ -43,7 +43,7 @@ Todas as coordenadas abaixo estão em milímetros numa página A4 horizontal de 
 | Categorias e espaço entre linhas | `categoryLabels`, `didParseCell`, `didDrawCell`, fontSize 9, categoria 7,5 e padding inferior 3,6 no título |
 | Duração e total do anexo | Coluna 3 à direita, margem interna 2,5; `footStyles` Poppins 9; `showFoot = lastPage` |
 | Paginação | `rowPageBreak = avoid`, `willDrawPage` e loop final por página; não cortar atividades para forçar duas páginas |
-| Rodapé, link e QR | Loop final: linha Y=181, emissão em 185 (8 pontos, largura 165), validação/código/endereço em 190/195/200, página em 205; QR X=251/Y=183/lado=24 |
+| Rodapé, link e QR | Loop final: linha Y=181; emissão/código/endereço em 187/194/201 (fontes 8/9/7 pontos, largura 165), paginação X=11/Y=204/largura=44 em 7 pontos na faixa lateral; QR X=251/Y=183/lado=24 |
 
 Os assets V1 ficam em `assets/certificate/v1/`: `secomp.png`, `dc.png`, `ufscar.png`, `Inter-Regular.ttf`, `Poppins-SemiBold.ttf` e a licença `OFL.txt`. São cópias versionadas: mudanças no ícone do app ou nos pacotes de fontes não devem substituir esses arquivos. O download e os testes carregam a mesma pasta; `tests/certificate-assets.test.cjs` confere seus hashes SHA-256 para detectar substituições acidentais.
 
@@ -57,7 +57,7 @@ A inclusão do horário V1 foi autorizada em 11/10/2026 como complemento de meta
 
 Uma reemissão recebe um novo `issuedAt`, código e revisão e revoga a anterior. Para corrigir títulos, conferir antes que IDs, categorias, horários e minutos das atividades continuem iguais; a API recomputa a partir das presenças atuais. Usar o endpoint administrativo existente, com motivo e responsável autenticado. Nunca alterar apenas o PDF, o snapshot antigo ou presumir que baixar novamente executará essa correção. Preservar evidências reais e dados pessoais somente em diretório privado, fora dos commits.
 
-Os testes unitários cobrem segundos, meia-noite, virada de dia e timestamp inválido. O teste de PDF confere `Emitido em` exatamente uma vez por página, horário original, fonte de 8 pontos, coordenadas e limites do rodapé, separação da validação, ausência de cidade na emissão e preservação do local do evento. O E2E confere o mesmo formato em Meus certificados e na validação pública em 320/1280 px. Horários de atividades e a prévia ADMIN sem validade não foram modificados por este incremento.
+Os testes unitários cobrem segundos, meia-noite, virada de dia e timestamp inválido. O teste de PDF confere `Emitido em` exatamente uma vez por página, horário original, fonte de 8 pontos, três linhas alinhadas com 7 mm entre bases, limites do rodapé e margem do QR, ausência da instrução redundante, paginação de 7 pontos confinada à faixa lateral, ausência de cidade na emissão e preservação do local do evento. O E2E confere o mesmo formato em Meus certificados e na validação pública em 320/1280 px. Horários de atividades e a prévia ADMIN sem validade não foram modificados por este incremento.
 
 ## Criar outro visual
 
