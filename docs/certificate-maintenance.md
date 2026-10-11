@@ -1,6 +1,6 @@
 # Manutenção dos certificados
 
-Revisão: 11/10/2026. Este guia descreve a implementação local, não confirma o deploy desta revisão. Para regras e contrato, consultar [emissão e validação web](certificate-notice-web.md) e o [guia de próximas edições da API](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/funcionalidades/certificados-proximas-edicoes.md).
+Revisão: 11/10/2026. Este guia descreve o código funcional publicado pelo app `8337d569` (PR #35), compatível com a API `28780cc3` (PR #40), publicada primeiro. CI e deploys confirmados; [evidência e limites](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-release-2026-10-11.md). Para regras e contrato, consultar [emissão e validação web](certificate-notice-web.md) e o [guia de próximas edições da API](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/funcionalidades/certificados-proximas-edicoes.md). Revisões documentais posteriores não modificam os modelos funcionais indicados.
 
 ## Fluxo real
 
@@ -79,10 +79,10 @@ PRs de app e API são separados. Fazer merge da API antes de publicá-la, confer
 
 ### Área Meus certificados
 
-A rodada posterior implementou seleção da última revisão por edição e consultas privadas, sem geração automática. Suíte completa do app com 105 casos, TypeScript, exportação web e E2E sintético em 320/1280 px aprovados. API com 144 casos unitários aprovados e 13 casos aprovados no MySQL isolado. Evidências e limitações detalhadas no [guia de Meus certificados](my-certificates-web.md#evidência-local-de-11102026). PRs, CI remota, merge e deploy permanecem pendentes; produção não foi alterada.
+A rodada posterior implementou seleção da última revisão por edição e consultas privadas, sem geração automática. Suíte completa do app com 105 casos, TypeScript, exportação web e E2E sintético em 320/1280 px aprovados. API com 144 casos unitários aprovados e 13 casos aprovados no MySQL isolado. Evidências locais no [guia de Meus certificados](my-certificates-web.md#evidência-local-de-11102026); CI remota, merges e publicação foram confirmados depois, conforme [estado publicado](my-certificates-web.md#estado-publicado). O certificado histórico baixado do domínio publicado manteve 11 atividades, 780 minutos, código e QR em duas páginas inspecionadas, sem reemissão.
 
 ### Versionamento do modelo
 
 TypeScript aprovado; suíte do app com 96 testes aprovada e teste adicional de hashes dos assets V1 aprovado (97 casos no conjunto). Exportação web concluída em pasta separada, após repetir fora do sandbox uma tentativa que havia compilado mas não conseguira gravar assets. E2E com Edge e API sintética aprovado em 320/1280 px: XIV legada, XV/2027 fictícia com metadados, retorno à XIV, downloads, 404/410, indisponibilidade e diálogo autenticado. Nenhuma requisição do E2E alcançou a API real.
 
-O certificado XIV existente foi renderizado localmente com o snapshot privado já disponível: duas páginas, 11 atividades, 780 minutos, sem mudança de código/QR; ambas as páginas foram inspecionadas com PDF.js e Poppler. Os QRs foram decodificados independentemente. Isto não é reemissão, nova homologação de conta real ou publicação. CI remota, merge e deploy desta revisão permanecem pendentes.
+O certificado XIV existente foi renderizado localmente com o snapshot privado já disponível: duas páginas, 11 atividades, 780 minutos, sem mudança de código/QR; ambas as páginas foram inspecionadas com PDF.js e Poppler. Os QRs foram decodificados independentemente. Esse ensaio local não era reemissão nem confirmação de publicação. CI remota, merge e deploy foram conferidos na rodada posterior, descrita no estado publicado acima.
