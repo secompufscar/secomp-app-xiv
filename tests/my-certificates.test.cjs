@@ -12,7 +12,7 @@ const detail = item => ({ code: item.code, participantName: `Pessoa ${item.editi
 const nodes = tree => !tree || typeof tree !== 'object' ? [] : Array.isArray(tree) ? tree.flatMap(nodes) : [tree, ...nodes(tree.props?.children)];
 
 function screen(overrides = {}, options = {}) {
-  const slots = [], effects = [], calls = { list: [], get: [], issue: [], downloads: [] };
+  const slots = [], effects = [], calls = { list: [], get: [], issue: [], downloads: [], tests: [], testDownloads: [] };
   let cursor = 0, userId = options.anonymous ? null : 'self', participantView = options.preview || false;
   const memo = (factory, deps) => {
     const index = cursor++, previous = slots[index];
@@ -39,9 +39,13 @@ function screen(overrides = {}, options = {}) {
     } },
     'lucide-react-native': Object.fromEntries(['Award', 'Download', 'ExternalLink', 'RefreshCw'].map(name => [name, name])),
     '../../components/app/appLayout': { default: 'AppLayout' }, '../../components/button/backButton': { default: 'BackButton' },
-    '../../hooks/AuthContext': { useAuth: () => ({ user: userId ? { id: userId } : null, isParticipantView: participantView }) },
+    '../../hooks/AuthContext': { useAuth: () => ({ user: userId ? { id: userId } : null, isParticipantView: participantView, canUseAdminTools: !!options.admin && !participantView }) },
     '../../services/certificates': services,
-    '../../services/certificateDownload': { downloadCertificate: async (data, signal) => { calls.downloads.push({ data, signal }); } },
+    '../../services/certificateAdminPreview': { getAdminTestCertificate: async signal => { calls.tests.push(signal); return overrides.test ? overrides.test(signal) : { kind: 'admin-test' }; } },
+    '../../services/certificateDownload': {
+      downloadCertificate: async (data, signal) => { calls.downloads.push({ data, signal }); },
+      downloadAdminTestCertificate: async (data, signal) => { calls.testDownloads.push({ data, signal }); },
+    },
     '../../utils/certificatePresentation': { supportsCertificateTemplate: id => id === 'secomp-landscape-v1' },
   };
   const module = { exports: {} };
@@ -50,12 +54,48 @@ function screen(overrides = {}, options = {}) {
   vm.runInNewContext(code, { exports: module.exports, module, AbortController, require(name) { assert.ok(name in dependencies, name); return dependencies[name]; } });
   const render = () => { cursor = 0; const result = nodes(module.exports.default()); effects.splice(0).forEach(fn => fn()); return result; };
   render();
-  return { calls, render, user(id) { userId = id; render(); }, close() { slots.forEach(slot => slot.cleanup?.()); },
+  return { calls, render, user(id) { userId = id; render(); }, preview(value) { participantView = value; render(); }, close() { slots.forEach(slot => slot.cleanup?.()); },
     choose(code) { render().find(node => node.type === 'select').props.onChange({ target: { value: code } }); },
     press(label) { const node = render().find(node => node.props?.accessibilityLabel === label || (node.type === 'Pressable' && nodes(node).some(child => child.props?.children === label))); assert.ok(node, label); return node.props.onPress(); },
   };
 }
 const text = view => view.render().filter(node => node.type === 'Text').flatMap(node => node.props.children).join(' ');
+
+test('teste somente ADMIN, independe de certificados e nao emite nem altera selecao', async () => {
+  for (const options of [{}, { admin: true, preview: true }]) {
+    const view = screen({}, options); await settle();
+    assert.equal(view.render().some(node => node.props?.accessibilityLabel === 'Gerar certificado de teste'), false);
+  }
+  const view = screen({}, { admin: true }); await settle();
+  const selected = view.render().find(node => node.type === 'select').props.value;
+  await view.press('Gerar certificado de teste');
+  assert.equal(view.calls.tests.length, 1); assert.equal(view.calls.testDownloads.length, 1);
+  assert.equal(view.calls.issue.length, 0); assert.equal(view.calls.list.length, 1);
+  assert.equal(view.render().find(node => node.type === 'select').props.value, selected);
+  const empty = screen({ list: async () => [] }, { admin: true }); await settle();
+  await empty.press('Gerar certificado de teste'); assert.equal(empty.calls.testDownloads.length, 1);
+});
+
+test('teste bloqueia cliques repetidos; erro permite retry e nao altera historico', async () => {
+  let finish, failed = true;
+  const view = screen({ test: () => failed ? new Promise((_resolve, reject) => { finish = reject; }) : Promise.resolve({ kind: 'admin-test' }) }, { admin: true });
+  await settle(); const pending = view.press('Gerar certificado de teste');
+  await view.press('Gerar certificado de teste'); assert.equal(view.calls.tests.length, 1);
+  finish(Error('Duracao oficial pendente')); await pending;
+  assert.match(text(view), /Duracao oficial pendente/); failed = false;
+  await view.press('Gerar certificado de teste'); assert.equal(view.calls.testDownloads.length, 1);
+  assert.equal(view.calls.issue.length, 0);
+});
+
+test('sair, trocar conta ou entrar em previa cancela o download do teste', async () => {
+  for (const change of [view => view.close(), view => view.user('other'), view => view.preview(true)]) {
+    let finish;
+    const view = screen({ test: () => new Promise(resolve => { finish = resolve; }) }, { admin: true }); await settle();
+    const pending = view.press('Gerar certificado de teste'); change(view);
+    assert.equal(view.calls.tests[0].aborted, true); finish({ kind: 'admin-test' }); await pending;
+    assert.equal(view.calls.testDownloads.length, 0);
+  }
+});
 
 test('abrir e selecionar edicoes nao emite; revogado e modelo desconhecido nao escondem outros certificados', async () => {
   const view = screen(); await settle();

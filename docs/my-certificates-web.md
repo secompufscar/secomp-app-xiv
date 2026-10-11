@@ -34,6 +34,16 @@ Lista vazia confirmada e falha de rede têm estados diferentes. Consultas antiga
 
 ## Manutenção
 
+### Certificado de teste para ADMIN
+
+Incremento local de 11/10/2026: o botão **Gerar certificado de teste** é exclusivo de contas ADMIN na visão administrativa da web; fica oculto na prévia de participante. Não exige credenciamento, presença ou certificado anterior do administrador. Usa `GET /certificates/admin/preview` autenticado, nunca `POST /mine`, e não altera histórico, seleção, presenças ou dados da conta.
+
+O documento se chama **Certificado Admin [ TESTE ]**, tem aviso **TESTE - SEM VALIDADE** em todas as páginas e inclui todas as atividades certificáveis da edição habilitada na API, uma vez por ID. Mantém exclusões do fluxo real (incluindo credenciamento, abertura, encerramento e os controles excluídos no cadastro) e requer duração/fonte oficiais para cada atividade incluída. Soma inclusive atividades simultâneas, pois é uma amostra administrativa, não uma declaração de participação. Funciona com emissão real desabilitada. Duração pendente, edição não aprovada ou nenhuma atividade certificável bloqueiam o teste inteiro.
+
+O QR é legível, mas contém o marcador `TESTE-ADMIN-SEM-VALIDADE`, incompatível com códigos reais hexadecimais de 32 caracteres. A página pública rejeita o marcador; a API pública retorna 404 sem procurar um certificado. Não há código aleatório, emissão, snapshot persistido, revisão ou auditoria de certificado real. O PDF de teste não aparece no seletor.
+
+Arquivos: cliente `src/services/certificateAdminPreview.ts`; contrato restrito `src/utils/certificateAdminPreview.ts`; gerador separado `src/utils/certificateAdminPreviewDocument.ts`; download em `src/services/certificateDownload.web.ts`. O renderizador e assets V1 dos documentos reais permanecem inalterados. Testes em `tests/certificate-admin-preview.test.cjs`, `tests/my-certificates.test.cjs` e `scripts/certificate-e2e.cjs` cobrem contrato, permissão, cancelamento, clique duplicado, paginação e rejeição do QR. Publicação desse incremento deve ser comprovada separadamente do estado publicado acima.
+
 | Elemento | Arquivo |
 | --- | --- |
 | Entrada na Home | `src/components/home/homeCertificate.tsx` |
