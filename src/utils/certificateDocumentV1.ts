@@ -55,7 +55,7 @@ export function createCertificatePdfV1(certificate: CertificateData, assets: Cer
     fitted(presentation.eventName, 80, 24, 106, 8, false, "#555C6E");
     logo(assets.dc, ufscarX - 12 - dcWidth, 18, dcWidth);
     logo(assets.ufscar, ufscarX, 18, ufscarWidth);
-    doc.setDrawColor("#DCE1ED").line(80, 29, 279, 29);
+    doc.setDrawColor("#DCE1ED").setLineWidth(0.2).line(80, 29, 279, 29);
     if (annex) {
       text("Atividades realizadas", 80, 43, 21, true);
       fitted(certificate.participantName, 80, 54, 198, 12, true);

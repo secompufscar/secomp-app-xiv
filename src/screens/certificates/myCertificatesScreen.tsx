@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState, type ReactElement } from "react";
 import { ActivityIndicator, Linking, Platform, Pressable, Text, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { Award, Download, ExternalLink, RefreshCw, FlaskConical } from "lucide-react-native";
+import { Award, Download, ExternalLink, RefreshCw } from "lucide-react-native";
 import AppLayout from "../../components/app/appLayout";
 import BackButton from "../../components/button/backButton";
 import { useAuth } from "../../hooks/AuthContext";
@@ -152,9 +152,9 @@ export default function MyCertificatesScreen(): ReactElement | null {
         <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 16, borderBottomWidth: 1, borderColor: "#374151", paddingBottom: 20 }}>
           <Text accessibilityRole="header" style={{ fontFamily: "Poppins_600SemiBold", fontSize: 24, color: "#FFFFFF" }}>Meus certificados</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, maxWidth: "100%" }}>
-          {canUseAdminTools && <Pressable accessibilityRole="button" accessibilityLabel="Gerar certificado de teste" disabled={testing} onPress={generateTest} style={{ ...button, borderWidth: 1, borderColor: "#737B8C", opacity: testing ? 0.6 : 1, maxWidth: "100%" }}>
-            {testing ? <ActivityIndicator color="white" /> : <FlaskConical color="white" size={18} />}
-            <Text style={{ fontFamily: "Inter_500Medium", fontSize: 13, color: "white", flexShrink: 1 }}>{testing ? "Preparando teste..." : "Gerar certificado de teste"}</Text>
+          {canUseAdminTools && <Pressable accessibilityRole="button" accessibilityLabel="Baixar modelo de exemplo" disabled={testing} onPress={generateTest} style={{ ...button, borderWidth: 1, borderColor: "#737B8C", opacity: testing ? 0.6 : 1, maxWidth: "100%" }}>
+            {testing ? <ActivityIndicator color="white" /> : <Download color="white" size={18} />}
+            <Text style={{ fontFamily: "Inter_500Medium", fontSize: 13, color: "white", flexShrink: 1 }}>{testing ? "Preparando modelo..." : "Baixar modelo de exemplo"}</Text>
           </Pressable>}
           {!isParticipantView && <Pressable accessibilityRole="button" accessibilityLabel="Gerar certificado da edição habilitada" disabled={emitting} onPress={generate} style={{ ...button, backgroundColor: "#1400FF", opacity: emitting ? 0.6 : 1, maxWidth: "100%" }}>
             {emitting ? <ActivityIndicator color="white" /> : <Award color="white" size={18} />}

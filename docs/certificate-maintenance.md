@@ -6,7 +6,7 @@ Complemento publicado em 11/10/2026: app `6a228319` do [PR #42](https://github.c
 
 Revisão: 11/10/2026. Este guia descreve o código funcional publicado pelo app `8337d569` (PR #35), compatível com a API `28780cc3` (PR #40), publicada primeiro. CI e deploys confirmados; [evidência e limites](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-release-2026-10-11.md). Para regras e contrato, consultar [emissão e validação web](certificate-notice-web.md) e o [guia de próximas edições da API](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/funcionalidades/certificados-proximas-edicoes.md). Revisões documentais posteriores não modificam os modelos funcionais indicados.
 
-Incremento funcional atual: app `5b547076` (PR #39) e API `5bc02005` (PR #44), API publicada/validada primeiro. Corrige a amostra ADMIN para apenas SDD no bloco simultâneo (24 atividades/28 horas) e usa texto de amostra, sem mudar os modelos reais acima. Ver [estado e limitações da publicação atual](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/admin-certificate-single-course-2026-10-11.md). A publicação inicial dos PRs #37/#42 permanece como histórico.
+Incremento anterior da seleção administrativa (histórico): app `5b547076` (PR #39) e API `5bc02005` (PR #44), API publicada/validada primeiro. Corrigiu a amostra ADMIN para apenas SDD no bloco simultâneo (24 atividades/28 horas) e usava texto de amostra, sem mudar os modelos reais acima. Ver [estado e limitações dessa publicação](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/admin-certificate-single-course-2026-10-11.md). A regra atual de identidade e aparência está em Modelo ADMIN fiel; a publicação inicial dos PRs #37/#42 permanece como histórico.
 
 ## Fluxo real
 
@@ -20,9 +20,11 @@ Incremento funcional atual: app `5b547076` (PR #39) e API `5bc02005` (PR #44), A
 
 ## Mapa do visual V1
 
-A seleção de atividades da amostra é responsabilidade exclusiva da API (`certificateAdminPreviewPolicy.ts`), não deste desenho. Na XIV: somente SDD no bloco simultâneo, sem os outros três minicursos nem o workshop da Karina, total aprovado de 24 atividades/28 horas. O gerador administrativo usa a palavra "Amostra" e não afirma incluir todas as atividades ou as simultâneas. Nunca filtrar o PDF depois de recebê-lo: isso poderia separar o total do anexo. Para outra edição, revisar o bloco administrativo na API antes de publicar; preservar o renderizador real V1 e seus assets.
+A seleção de atividades da amostra é responsabilidade exclusiva da API (`certificateAdminPreviewPolicy.ts`), não deste desenho. Na XIV: somente SDD no bloco simultâneo, sem os outros três minicursos nem o workshop da Karina, total aprovado de 24 atividades/28 horas. Nunca filtrar o PDF depois de recebê-lo: isso poderia separar o total do anexo. Para outra edição, revisar o bloco administrativo na API antes de publicar; preservar o renderizador real V1 e seus assets.
 
-O certificado ADMIN de teste tem fluxo independente: `src/utils/certificateAdminPreviewDocument.ts` desenha capa/anexos explicitamente sem validade, sem afirmar presença; `src/utils/certificateAdminPreview.ts` exige nome, tipo e código fixos de teste. Usa cópias dos assets V1, mas não altera `certificateDocumentV1.ts` nem os certificados históricos. Para mudar somente essa amostra, editar seu gerador separado; isso não modifica o visual dos PDFs reais. Sua tabela usa colunas 24/15/127/33 mm, com datas/horários lado a lado, categorias discretas, total à direita e rodapé reservado de 34 mm. Os avisos de teste e a incompatibilidade do código com a validação real são invariantes, não opções de estilo. Ver [fluxo administrativo de teste](my-certificates-web.md#certificado-de-teste-para-admin).
+Nova regra ADMIN de 11/10/2026: a amostra é visualmente idêntica ao certificado real, com `Nome de Exemplo` e código/QR inválidos, sem faixas, avisos vermelhos, marca-d'água ou textos adicionais. `src/utils/certificateAdminPreviewDocument.ts` apenas valida o contrato e delega a `createCertificatePdf`, incluindo a seleção por `templateId`; não duplica mais o desenho. Usa os mesmos assets, textos, fontes, tabela, rodapé e paginação descritos neste mapa. Alterar o modelo real passa a atualizar também sua amostra, sem mexer nos registros antigos; novos visuais continuam exigindo versionamento. O teste compara os PNGs de todas as páginas, pixel a pixel, com a renderização normal dos mesmos dados.
+
+O fluxo administrativo continua separado da emissão. O cliente pede `GET /certificates/admin/preview?format=example`; o contrato exige `kind: admin-test`, nome fixo e código `0000000000000000000000000000000G`. O `G` final impede validação ou colisão com códigos reais hexadecimais, embora a largura tenha 32 caracteres. QR e link usam esse mesmo código; nada é persistido. `issuedAt` é o instante de preparo da amostra, apresentado como no modelo real, não uma emissão acadêmica. Sem `format=example`, a API conserva o contrato antigo somente para compatibilidade com clientes anteriores durante a publicação. Publicar a API compatível antes do app. Ver [fluxo administrativo de exemplo](my-certificates-web.md#certificado-de-teste-para-admin).
 
 Todas as coordenadas abaixo estão em milímetros numa página A4 horizontal de 297 × 210 mm. Fontes estão em pontos. O código usa `text` para texto simples e `fitted` para diminuir apenas o que ultrapassa a largura disponível.
 
@@ -37,6 +39,7 @@ Todas as coordenadas abaixo estão em milímetros numa página A4 horizontal de 
 | Logos e equilíbrio óptico | `logo`, `dcWidth = 40`, altura UFSCar de 14, centro Y de 18 e intervalo de 12; manter proporções das imagens |
 | Fontes e pesos | `addFileToVFS`, `addFont`, `text`, `fitted`, `styles`, `headStyles` e `footStyles`; Inter regular e Poppins SemiBold |
 | Cores e estrutura | `frame`, fundos, faixa lateral de 64,5 e linha verde de 1,3; cores explícitas em hexadecimal |
+| Divisor do cabeçalho | `frame`: linha de X=80 a X=279 em Y=29, espessura explícita de 0,2; não herdar o estado de outros desenhos |
 | Margens e largura útil | Conteúdo começa em X=80, termina em X=279; texto principal dispõe de 199 mm |
 | Tabela e alinhamentos | `autoTable`: `startY = 60`, margens top=60/bottom=34/left=80/right=18, colunas 24/15/136/24 |
 | Espaçamento entre data e horário | Colunas 0/1 lado a lado; `columnStyles` e `didParseCell` ajustam largura, centralização e padding do cabeçalho |
@@ -97,6 +100,14 @@ Para preservar um `dist` ou evidências locais existentes, exportar para outra p
 PRs de app e API são separados. Fazer merge da API antes de publicá-la, conferir CI e publicar a API compatível antes do app. Não habilitar emissão antes de revisar o plano oficial e publicar a validação pública. Registrar teste local, merge e produção como estados diferentes. Rollback de app deve continuar suportando todo `templateId` já emitido.
 
 ## Evidência local de 11/10/2026
+
+### Modelo ADMIN fiel
+
+TypeScript e os 115 testes do app aprovados, sem casos ignorados; exportação em pasta nova e E2E com APIs sintéticas aprovados em 320/1280 px, sem chamadas à API real. O teste da amostra de 24 atividades/1680 minutos compara os pixels de **todas as páginas** com o renderizador normal, confere ausência de avisos extras, nome `Nome de Exemplo`, total e atividades, e decodifica o QR com o mesmo código inválido do link. O download usa `certificado-exemplo-secomp.pdf`, não emite nem muda a seleção ou o histórico. CI, MySQL e produção são etapas distintas, a confirmar nos PRs separados antes de publicar API e app, nessa ordem.
+
+Correção adicional aprovada do cabeçalho: `frame` fixa o divisor horizontal em 0,2 mm, sem herdar os 0,8 mm do destaque sob o nome na capa. O ajuste é compartilhado pelo PDF real e pela amostra; não altera conteúdo, snapshots ou códigos. O teste de regressão lê os operadores vetoriais do PDF e confere uma única linha nessa posição, com 0,2 mm em cada página, inclusive anexos com paginação. Antes da correção, reproduziu os 0,8 mm da página 2. Arquivos locais antigos não são sobrescritos.
+
+Depois dessa correção, TypeScript, os **116 testes**, nova exportação e E2E sintético em 320/1280 px aprovados. A API compatível foi integrada pelo [PR #46](https://github.com/secompufscar/secomp-server-xiv/pull/46), com CI unitária e MySQL isolado aprovados no PR e no merge `6e7126f6`, e publicada antes do app no deployment Railway `a168511f-2bbf-47f5-873c-3df7a4e04899` SUCCESS. Duas contas ADMIN receberam a amostra nova; contrato legado 200, participante 403, anônimo 401, marcador público 404 e histórico sem a amostra. Hashes integrais dos seis registros de certificado, atividades e presenças permaneceram iguais antes/depois; 19 migrações já concluídas, sem mudança de flags, esquema ou dados. O app é publicado separadamente pelo [PR #45](https://github.com/secompufscar/secomp-app-xiv/pull/45); verificar seus checks e o deployment, sem inferir publicação a partir do ensaio local.
 
 ### Emissão no rodapé
 

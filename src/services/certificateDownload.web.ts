@@ -33,5 +33,5 @@ export async function downloadCertificate(certificate: CertificateData, signal?:
 export async function downloadAdminTestCertificate(certificate: AdminTestCertificate, signal?: AbortSignal): Promise<void> {
   const assets = await certificateAssets(signal);
   if (signal?.aborted) return;
-  createAdminTestCertificatePdf(certificate, assets).save("certificado-admin-teste-secomp.pdf");
+  createAdminTestCertificatePdf(certificate, assets).save("certificado-exemplo-secomp.pdf");
 }

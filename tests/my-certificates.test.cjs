@@ -88,26 +88,26 @@ test('seletor e atualizar usam vao compacto e dimensoes estaveis sem encolher o 
 test('teste somente ADMIN, independe de certificados e nao emite nem altera selecao', async () => {
   for (const options of [{}, { admin: true, preview: true }]) {
     const view = screen({}, options); await settle();
-    assert.equal(view.render().some(node => node.props?.accessibilityLabel === 'Gerar certificado de teste'), false);
+    assert.equal(view.render().some(node => node.props?.accessibilityLabel === 'Baixar modelo de exemplo'), false);
   }
   const view = screen({}, { admin: true }); await settle();
   const selected = view.render().find(node => node.type === 'select').props.value;
-  await view.press('Gerar certificado de teste');
+  await view.press('Baixar modelo de exemplo');
   assert.equal(view.calls.tests.length, 1); assert.equal(view.calls.testDownloads.length, 1);
   assert.equal(view.calls.issue.length, 0); assert.equal(view.calls.list.length, 1);
   assert.equal(view.render().find(node => node.type === 'select').props.value, selected);
   const empty = screen({ list: async () => [] }, { admin: true }); await settle();
-  await empty.press('Gerar certificado de teste'); assert.equal(empty.calls.testDownloads.length, 1);
+  await empty.press('Baixar modelo de exemplo'); assert.equal(empty.calls.testDownloads.length, 1);
 });
 
 test('teste bloqueia cliques repetidos; erro permite retry e nao altera historico', async () => {
   let finish, failed = true;
   const view = screen({ test: () => failed ? new Promise((_resolve, reject) => { finish = reject; }) : Promise.resolve({ kind: 'admin-test' }) }, { admin: true });
-  await settle(); const pending = view.press('Gerar certificado de teste');
-  await view.press('Gerar certificado de teste'); assert.equal(view.calls.tests.length, 1);
+  await settle(); const pending = view.press('Baixar modelo de exemplo');
+  await view.press('Baixar modelo de exemplo'); assert.equal(view.calls.tests.length, 1);
   finish(Error('Duracao oficial pendente')); await pending;
   assert.match(text(view), /Duracao oficial pendente/); failed = false;
-  await view.press('Gerar certificado de teste'); assert.equal(view.calls.testDownloads.length, 1);
+  await view.press('Baixar modelo de exemplo'); assert.equal(view.calls.testDownloads.length, 1);
   assert.equal(view.calls.issue.length, 0);
 });
 
@@ -115,7 +115,7 @@ test('sair, trocar conta ou entrar em previa cancela o download do teste', async
   for (const change of [view => view.close(), view => view.user('other'), view => view.preview(true)]) {
     let finish;
     const view = screen({ test: () => new Promise(resolve => { finish = resolve; }) }, { admin: true }); await settle();
-    const pending = view.press('Gerar certificado de teste'); change(view);
+    const pending = view.press('Baixar modelo de exemplo'); change(view);
     assert.equal(view.calls.tests[0].aborted, true); finish({ kind: 'admin-test' }); await pending;
     assert.equal(view.calls.testDownloads.length, 0);
   }
