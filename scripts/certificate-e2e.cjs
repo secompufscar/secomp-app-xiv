@@ -120,6 +120,16 @@ const server = http.createServer((req, res) => {
       const editions = page.getByRole('combobox', { name: 'Edição do certificado' });
       await page.getByRole('button', { name: 'Baixar PDF', exact: true }).waitFor();
       assert.equal(await editions.inputValue(), nextCode);
+      const selectorBounds = await editions.boundingBox();
+      const refreshBounds = await page.getByRole('button', { name: 'Atualizar certificados', exact: true }).boundingBox();
+      assert.ok(selectorBounds && refreshBounds);
+      assert.ok(Math.abs(refreshBounds.x - (selectorBounds.x + selectorBounds.width) - 8) <= 0.5, 'Vao entre seletor e atualizar deve ser 8px');
+      assert.equal(selectorBounds.height, 48); assert.equal(refreshBounds.height, 48); assert.equal(refreshBounds.width, 48);
+      assert.ok(Math.abs(selectorBounds.y - refreshBounds.y) <= 0.5, 'Controles devem estar alinhados');
+      await page.screenshot({ path: path.join(outputDir, `certificate-selector-${width}.png`), clip: {
+        x: selectorBounds.x - 4, y: selectorBounds.y - 4,
+        width: refreshBounds.x + refreshBounds.width - selectorBounds.x + 8, height: 56,
+      } });
       await editions.selectOption(code);
       await page.getByRole('button', { name: 'Baixar PDF', exact: true }).waitFor();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);

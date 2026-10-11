@@ -61,6 +61,22 @@ function screen(overrides = {}, options = {}) {
 }
 const text = view => view.render().filter(node => node.type === 'Text').flatMap(node => node.props.children).join(' ');
 
+test('seletor e atualizar usam vao compacto e dimensoes estaveis sem encolher o botao', async () => {
+  const view = screen(); await settle();
+  const tree = view.render();
+  const select = tree.find(node => node.type === 'select');
+  assert.equal(select.props.style.height, 48); assert.equal(select.props.style.boxSizing, 'border-box');
+  const row = tree.find(node => node.type === 'View' && node.props.style?.alignItems === 'flex-end');
+  assert.equal(row.props.style.gap, 8);
+  const wrapper = nodes(row).find(node => node.type === 'View' && node.props.style?.maxWidth === 480);
+  assert.equal(wrapper.props.style.minWidth, 0);
+  const tooltip = tree.find(node => node.type === 'div' && node.props.title === 'Atualizar certificados');
+  assert.equal(tooltip.props.style.flexShrink, 0);
+  assert.equal(tooltip.props.style.width, 48); assert.equal(tooltip.props.style.height, 48);
+  const refresh = nodes(tooltip).find(node => node.type === 'Pressable');
+  assert.equal(refresh.props.style.width, 48); assert.equal(refresh.props.style.height, 48);
+});
+
 test('teste somente ADMIN, independe de certificados e nao emite nem altera selecao', async () => {
   for (const options of [{}, { admin: true, preview: true }]) {
     const view = screen({}, options); await settle();
