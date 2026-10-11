@@ -1,14 +1,13 @@
 const assert = require('node:assert/strict'), { test } = require('node:test');
-const fs = require('node:fs'), path = require('node:path'), ts = require('typescript'), Module = require('node:module');
+const fs = require('node:fs'), path = require('node:path');
+const { loadTypescript } = require('./helpers/load-typescript.cjs');
 const QRCode = require('qrcode'), jsQR = require('jsqr');
 const { createCanvas } = require('@napi-rs/canvas');
 const filename = path.join(__dirname, '../src/utils/certificateDocument.ts');
-const compiled = new Module(filename, module); compiled.filename = filename; compiled.paths = module.paths;
-compiled._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText, filename);
-const { createCertificatePdf } = compiled.exports;
+const { createCertificatePdf } = loadTypescript(filename);
 const read = file => new Uint8Array(fs.readFileSync(path.join(__dirname, '..', file)));
-const assets = { secomp: read('assets/icon.png'), dc: read('assets/certificate/logo-departamento-computacao-ufscar.png'), ufscar: read('assets/certificate/logo-ufscar-fundo-transparente.png'),
-  regular: read('node_modules/@expo-google-fonts/inter/Inter_400Regular.ttf'), bold: read('node_modules/@expo-google-fonts/poppins/600SemiBold/Poppins_600SemiBold.ttf') };
+const assets = { secomp: read('assets/certificate/v1/secomp.png'), dc: read('assets/certificate/v1/dc.png'), ufscar: read('assets/certificate/v1/ufscar.png'),
+  regular: read('assets/certificate/v1/Inter-Regular.ttf'), bold: read('assets/certificate/v1/Poppins-SemiBold.ttf') };
 const fixture = { code: 'A'.repeat(32), participantName: 'Marina Alves de Souza', issuedAt: '2026-10-09T12:00:00Z', totalMinutes: 150, event: { year: 2026, startDate: '2026-10-05', endDate: '2026-10-08' }, activities: [{ name: 'A Nova Fronteira do Cyber é a Proteção Humana', category: 'Workshop', startsAt: '2026-10-06T13:00:00Z', minutes: 150 }], validationUrl: `https://secomp-app-xiv.vercel.app/certificados?codigo=${'A'.repeat(32)}`,
   qrCode: '' };
 
@@ -54,7 +53,7 @@ test('PDF preserva conteúdo, total, link customizado e QR legível em ambas as 
   assert.equal(doc.getNumberOfPages(), 2);
   const texts = await inspect(doc, custom, true);
   assert.ok(texts[0].includes(custom.participantName));
-  assert.ok(texts[0].includes('2h 30min')); assert.ok(texts[1].includes('2h 30min'));
+  assert.ok(texts[0].includes('2 horas e 30 minutos')); assert.ok(texts[1].includes('2h 30min'));
   assert.ok(texts[1].includes(custom.activities[0].name));
 });
 
@@ -69,7 +68,28 @@ test('PDF pagina listas extensas preservando todas as atividades uma vez e o tot
   const texts = await inspect(long, longFixture);
   const annex = texts.slice(1).join(' ');
   for (let i = 1; i <= 45; i++) assert.equal(annex.split(`Atividade ${i}:`).length - 1, 1, `Atividade ${i} perdida ou duplicada`);
-  assert.ok(texts[0].includes('112h 30min')); assert.ok(texts.at(-1).includes('112h 30min'));
+  assert.ok(texts[0].includes('112 horas e 30 minutos')); assert.ok(texts.at(-1).includes('112h 30min'));
+});
+
+test('PDF escreve o total por extenso na capa, sem chamada para o anexo ou sobreposicao', async () => {
+  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  for (const [minutes, label] of [[780, '13 horas'], [60, '1 hora'], [1, '1 minuto'], [61, '1 hora e 1 minuto'], [6750, '112 horas e 30 minutos']]) {
+    const certificate = { ...fixture, totalMinutes: minutes, activities: [{ ...fixture.activities[0], minutes }], qrCode: await QRCode.toDataURL(fixture.validationUrl) };
+    const doc = createCertificatePdf(certificate, assets);
+    const texts = await inspect(doc, certificate);
+    assert.ok(texts[0].includes(label));
+    assert.ok(texts[1].includes(`${Math.floor(minutes / 60)}h${minutes % 60 ? ` ${minutes % 60}min` : ''}`));
+    assert.doesNotMatch(texts[0], /Relação.*anexo/);
+    assert.ok(!texts[0].includes('Atividades com presença registrada.'));
+    const pdf = await getDocument({ data: new Uint8Array(doc.output('arraybuffer')), useSystemFonts: false }).promise;
+    try {
+      const content = await (await pdf.getPage(1)).getTextContent();
+      const total = content.items.find(item => item.str === label);
+      assert.ok(total);
+      assert.ok(total.transform[4] + total.width <= 273 * 72 / 25.4 + 0.1, `Total ultrapassa faixa: ${label}`);
+      if (minutes === 780) assert.ok(Math.abs(total.transform[0] - 23) < 0.01, '13 horas deve manter fonte de 23 pontos');
+    } finally { await pdf.destroy(); }
+  }
 });
 
 test('PDF apresenta Palestra e Minicurso no singular sem alterar categorias do snapshot', async () => {
@@ -87,6 +107,92 @@ test('PDF apresenta Palestra e Minicurso no singular sem alterar categorias do s
   assert.ok(annex.includes('hackear'));
   assert.ok(annex.includes('PET - Cibersegurança'));
   assert.deepEqual(certificate, original);
+});
+
+test('PDF acomoda 11 atividades sinteticas em um anexo legivel separado do rodape', async () => {
+  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const activities = Array.from({ length: 11 }, (_, i) => ({
+    ...fixture.activities[0], category: i === 0 ? 'Minicursos' : 'Palestras', minutes: i === 0 ? 180 : 60,
+    name: `Atividade ${i + 1}: ` + (i < 4
+      ? 'Desenvolvimento de Software com Spec-Driven Development (SDD) - Usando Spec Kit e Aplicando Arquitetura com Harness na Prática'
+      : 'Arquitetura e desenvolvimento de aplicações'),
+  }));
+  const certificate = { ...fixture, activities, totalMinutes: 780, qrCode: await QRCode.toDataURL(fixture.validationUrl) };
+  const doc = createCertificatePdf(certificate, assets);
+  assert.equal(doc.getNumberOfPages(), 2);
+  const texts = await inspect(doc, certificate, true);
+  const annex = texts[1].replace(/\s+/g, ' ');
+  for (const activity of activities) assert.equal(annex.split(activity.name).length - 1, 1);
+  assert.ok(annex.includes('13h'));
+  const pdf = await getDocument({ data: new Uint8Array(doc.output('arraybuffer')), useSystemFonts: false }).promise;
+  const mm = 72 / 25.4;
+  try {
+    for (let number = 1; number <= 2; number++) {
+      const items = (await (await pdf.getPage(number)).getTextContent()).items;
+      const heading = items.find(item => item.str === 'Validação pública por código ou QR');
+      const code = items.find(item => item.str === certificate.code);
+      const address = items.find(item => item.str === new URL(certificate.validationUrl).origin + new URL(certificate.validationUrl).pathname);
+      assert.ok(heading && code && address);
+      assert.equal(heading.transform[4], code.transform[4]);
+      assert.equal(address.transform[4], code.transform[4]);
+      assert.ok(heading.transform[5] > code.transform[5] && code.transform[5] > address.transform[5]);
+      assert.ok(Math.abs(heading.transform[5] - address.transform[5] - 10 * mm) < 0.1);
+      if (number === 2) {
+        const dateHeading = items.find(item => item.str === 'DATA');
+        const timeHeading = items.find(item => item.str === 'HORÁRIO');
+        assert.ok(dateHeading && timeHeading);
+        assert.ok(Math.abs(dateHeading.transform[5] - timeHeading.transform[5]) < 0.01, 'Cabecalhos devem ficar inteiros na mesma linha');
+        const dates = items.filter(item => item.str === '06/10/2026');
+        const times = items.filter(item => item.str === '13:00');
+        assert.equal(dates.length, 11);
+        assert.equal(times.length, 11);
+        for (let i = 0; i < dates.length; i++) {
+          assert.ok(Math.abs(dates[i].transform[5] - times[i].transform[5]) < 0.01, 'Data e horario devem ficar na mesma linha');
+          assert.ok(dates[i].transform[4] + dates[i].width < times[i].transform[4], 'Data invade horario');
+          assert.ok(dates[i].transform[4] + dates[i].width < 104 * mm);
+          assert.ok(times[i].transform[4] >= 104 * mm && times[i].transform[4] + times[i].width < 119 * mm);
+          assert.ok(Math.abs(dates[i].transform[0] - 9) < 0.01);
+          assert.ok(Math.abs(times[i].transform[0] - 9) < 0.01);
+        }
+        const labels = items.filter(item => ['Palestra', 'Minicurso'].includes(item.str));
+        assert.equal(labels.length, 11);
+        for (const label of labels) {
+          assert.ok(Math.abs(label.transform[0] - 7.5) < 0.01);
+          assert.ok(label.transform[5] >= 34 * mm, 'Categoria invade rodape');
+        }
+        const total = items.find(item => item.str === 'CARGA HORÁRIA TOTAL');
+        assert.ok(total.transform[5] >= 34 * mm, 'Total invade rodape');
+        const totalValue = items.find(item => item.str === '13h');
+        const durationHeading = items.find(item => item.str === 'DURAÇÃO');
+        const durations = items.filter(item => ['1h', '3h'].includes(item.str));
+        assert.ok(totalValue && durationHeading);
+        assert.equal(durations.length, 11);
+        for (const item of [durationHeading, totalValue, ...durations]) {
+          assert.ok(Math.abs(item.transform[4] + item.width - 276.5 * mm) < 0.5, `Coluna de duracao desalinhada: ${item.str}`);
+        }
+        assert.equal(total.fontName, code.fontName, 'Rotulo do total deve usar a fonte seminegrita');
+        assert.equal(totalValue.fontName, code.fontName, 'Valor total deve usar a fonte seminegrita');
+        assert.notEqual(totalValue.fontName, durations[0].fontName);
+        for (const item of [total, totalValue]) assert.ok(Math.abs(item.transform[0] - 9) < 0.01, 'Total deve manter 9 pontos');
+        assert.ok(Math.abs(durationHeading.transform[0] - 8) < 0.01);
+      }
+    }
+  } finally { await pdf.destroy(); }
+});
+
+test('PDF preserva data ausente sem inventar um horario na nova coluna', async () => {
+  const certificate = { ...fixture, activities: [{ ...fixture.activities[0], startsAt: null }], qrCode: await QRCode.toDataURL(fixture.validationUrl) };
+  const texts = await inspect(createCertificatePdf(certificate, assets), certificate);
+  assert.match(texts[1], /Não\s+informado/);
+  assert.ok(!texts[1].includes('13:00'));
+  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const pdf = await getDocument({ data: new Uint8Array(createCertificatePdf(certificate, assets).output('arraybuffer')), useSystemFonts: false }).promise;
+  try {
+    const items = (await (await pdf.getPage(2)).getTextContent()).items;
+    const placeholder = items.find(item => item.str === '-');
+    assert.ok(placeholder);
+    assert.ok(placeholder.transform[4] >= 104 * 72 / 25.4 && placeholder.transform[4] < 119 * 72 / 25.4);
+  } finally { await pdf.destroy(); }
 });
 
 test('PDF equilibra DC e UFSCar com tamanhos calibrados sem distorcer suas proporcoes', async () => {
@@ -122,4 +228,25 @@ test('PDF equilibra DC e UFSCar com tamanhos calibrados sem distorcer suas propo
       near(ufscar.matrix[4] + ufscar.matrix[0], 279 * mm);
     }
   } finally { await pdf.destroy(); }
+});
+
+test('PDF de nova edicao usa o snapshot e nao troca identidade de certificados XIV antigos', async () => {
+  const { certificatePresentation } = loadTypescript(path.join(__dirname, '../src/utils/certificatePresentation.ts'));
+  const legacy = { ...fixture, qrCode: await QRCode.toDataURL(fixture.validationUrl) };
+  const before = await inspect(createCertificatePdf(legacy, assets), legacy);
+  const code = 'B'.repeat(32), validationUrl = `https://validacao.example.invalid/certificados?codigo=${code}`;
+  const next = { ...legacy, code, validationUrl, qrCode: await QRCode.toDataURL(validationUrl),
+    issuedAt: '2027-10-08T12:00:00Z', event: { year: 2027, startDate: '2027-10-04', endDate: '2027-10-07' },
+    activities: [{ ...legacy.activities[0], startsAt: '2027-10-05T13:00:00Z' }],
+    presentation: { ...certificatePresentation(legacy), edition: 'XV' } };
+  const nextTexts = await inspect(createCertificatePdf(next, assets), next, true);
+  for (const text of nextTexts) {
+    assert.ok(text.includes('XV SECOMP'));
+    assert.ok(text.includes('2027'));
+    assert.ok(!text.includes('XIV'));
+  }
+  assert.deepEqual(await inspect(createCertificatePdf(legacy, assets), legacy), before);
+  assert.equal(legacy.presentation, undefined);
+  assert.throws(() => createCertificatePdf({ ...next, presentation: undefined }, assets));
+  assert.throws(() => createCertificatePdf({ ...next, presentation: { ...next.presentation, templateId: 'unknown' } }, assets));
 });

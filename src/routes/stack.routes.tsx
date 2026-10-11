@@ -8,6 +8,7 @@ import {
   EventGuide,
   Sponsors,
   MyEvents,
+  MyCertificates,
   Ranking,
   Credential,
   Activities,
@@ -42,6 +43,7 @@ export type StackNavigation = {
   EventGuide: undefined;
   Sponsors: undefined;
   MyEvents: undefined;
+  MyCertificates: undefined;
   Ranking: undefined;
   Credential: undefined;
   Activities: undefined;
@@ -80,6 +82,7 @@ export default function StackRoutes() {
       <Stack.Screen name="EventGuide" component={EventGuide} />
       <Stack.Screen name="Sponsors" component={Sponsors} />
       <Stack.Screen name="MyEvents" component={MyEvents} />
+      {Platform.OS === "web" && <Stack.Screen name="MyCertificates" component={MyCertificates} />}
       <Stack.Screen name="Ranking" component={Ranking} />
       <Stack.Screen name="Credential" component={Credential} />
       <Stack.Screen name="Activities" component={Activities} />

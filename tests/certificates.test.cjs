@@ -1,9 +1,10 @@
 const assert = require('node:assert/strict'), { test } = require('node:test');
 const fs = require('node:fs'), path = require('node:path'), vm = require('node:vm'), ts = require('typescript');
+const { loadTypescript } = require('./helpers/load-typescript.cjs');
 function load(dependencies) {
   const module = { exports: {} };
   const code = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/services/certificates.ts'), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, esModuleInterop: true } }).outputText;
-  vm.runInNewContext(code, { exports: module.exports, module, URL, require(name) { return dependencies[name]; } });
+  vm.runInNewContext(code, { exports: module.exports, module, URL, require(name) { return name === '../utils/certificatePresentation' ? loadTypescript(path.join(__dirname, '../src/utils/certificatePresentation.ts')) : dependencies[name]; } });
   return module.exports;
 }
 const code = 'A'.repeat(32);
@@ -32,4 +33,38 @@ test('total deve coincidir com anexo e link deve apontar para o mesmo código', 
 test('revogação pública tem mensagem própria e não revela motivo administrativo', () => {
   const service = load({ './api': {}, axios: { isAxiosError: () => true } });
   assert.equal(service.certificateError({ response: { status: 410, data: { message: 'Motivo sigiloso' } } }), 'Certificado revogado. Entre em contato com a organização.');
+});
+
+test('nova edicao exige identidade explicita e modelo conhecido; legado XIV continua aceito', () => {
+  const service = load({ './api': {}, axios: {} });
+  const legacy = fixture();
+  assert.equal(service.checkedCertificate(legacy).presentation.edition, 'XIV');
+  assert.equal(legacy.presentation, undefined);
+  const presentation = service.checkedCertificate(legacy).presentation;
+  const next = { ...fixture(), event: { year: 2027, startDate: '2027-10-04', endDate: '2027-10-07' }, presentation: { ...presentation, edition: 'XV' } };
+  assert.equal(service.checkedCertificate(next).presentation.edition, 'XV');
+  for (const invalid of [
+    { ...next, presentation: undefined }, { ...next, event: { ...next.event, year: '2027' } },
+    { ...next, presentation: { ...presentation, templateId: 'unknown' } },
+    { ...next, presentation: { ...presentation, edition: 'XV\nXIV' } },
+    { ...next, presentation: { ...presentation, issuer: '' } },
+  ]) assert.throws(() => service.checkedCertificate(invalid));
+  assert.equal(service.checkedCertificate(legacy).presentation.edition, 'XIV');
+});
+
+test('historico e detalhes usam cliente autenticado, mantem modelo desconhecido na lista e rejeitam codigo diferente', async () => {
+  const calls = [], controller = new AbortController();
+  const summary = { code, year: 2026, edition: 'XIV', templateId: 'secomp-landscape-v1', status: 'active', revision: 2, issuedAt: '2026-10-09', totalMinutes: 210 };
+  let data = { certificates: [summary, { ...summary, code: 'B'.repeat(32), year: 2027, edition: 'XV', templateId: 'future-model' }] };
+  const service = load({ './api': { get: async (...args) => { calls.push(args); return { data }; } }, axios: {} });
+  const items = await service.listMyCertificates(controller.signal);
+  assert.equal(items[0].year, 2027); assert.equal(items[0].templateId, 'future-model');
+  assert.equal(calls[0][0], '/certificates/mine'); assert.equal(calls[0][1].signal, controller.signal);
+  for (const invalid of [null, { certificates: [summary, summary] }, { certificates: [{ ...summary, status: 'wrong' }] }, { certificates: [{ ...summary, year: null }] }]) {
+    data = invalid; await assert.rejects(service.listMyCertificates());
+  }
+  data = fixture(); assert.equal((await service.getMyCertificate(code, controller.signal)).code, code);
+  assert.equal(calls.at(-1)[0], `/certificates/mine/${code}`);
+  await assert.rejects(service.getMyCertificate('B'.repeat(32)), /seleção/);
+  const before = calls.length; await assert.rejects(service.getMyCertificate('../users')); assert.equal(calls.length, before);
 });

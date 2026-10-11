@@ -13,7 +13,7 @@ const { createWebLinking } = load('routes/webLinking.ts', { '@react-navigation/n
 const focus = state => { let route = state?.routes.at(-1); while (route?.state) route = route.state.routes.at(-1); return route; };
 test('URLs de abas e telas autenticadas restauram a tela, em vez de iniciar no Home', () => {
   const linking = createWebLinking(true, true, false);
-  for (const url of ['/App/Cronograma', '/App/Activities', '/App/AdminPerfil', '/ParticipantDirectory', '/Schedule', '/Notifications', '/MyEvents', '/Ranking', '/Sponsors', '/ActivityRaffleLists', '/ActivityAdminUpdate?id=activity-test', '/EventAdminUpdate?id=event-test', '/SponsorsAdminUpdate?id=sponsor-test', '/QRCode?id=activity-test', '/ParticipantsList?activityId=activity-test&activityName=Palestra%20teste']) {
+  for (const url of ['/App/Cronograma', '/App/Activities', '/App/AdminPerfil', '/ParticipantDirectory', '/Schedule', '/Notifications', '/MyEvents', '/MyCertificates', '/Ranking', '/Sponsors', '/ActivityRaffleLists', '/ActivityAdminUpdate?id=activity-test', '/EventAdminUpdate?id=event-test', '/SponsorsAdminUpdate?id=sponsor-test', '/QRCode?id=activity-test', '/ParticipantsList?activityId=activity-test&activityName=Palestra%20teste']) {
     const state = linking.getStateFromPath(url, linking.config);
     assert.ok(state, url);
     const restored = linking.getStateFromPath(getPathFromState(state, linking.config), linking.config);

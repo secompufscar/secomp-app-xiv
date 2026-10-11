@@ -28,6 +28,7 @@ export function createWebLinking(authenticated: boolean, admin: boolean, partici
     EventGuide: "EventGuide",
     Sponsors: "Sponsors",
     MyEvents: "MyEvents",
+    MyCertificates: "MyCertificates",
     Ranking: "Ranking",
     Credential: "Credential",
     Activities: "Activities",

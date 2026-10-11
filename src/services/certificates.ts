@@ -1,5 +1,6 @@
 import axios from "axios";
 import api from "./api";
+import { certificatePresentation, CertificatePresentation } from "../utils/certificatePresentation";
 
 export interface CertificateData {
   code: string;
@@ -7,6 +8,7 @@ export interface CertificateData {
   issuedAt: string;
   totalMinutes: number;
   event: { year: number; startDate: string; endDate: string };
+  presentation?: CertificatePresentation;
   activities: { name: string; category: string; startsAt: string | null; minutes: number }[];
   validationUrl: string;
   qrCode: string;
@@ -14,15 +16,49 @@ export interface CertificateData {
 
 export const certificateCodePattern = /^[A-F0-9]{32}$/;
 
+export interface CertificateSummary {
+  code: string;
+  year: number | null;
+  edition: string | null;
+  templateId: string | null;
+  status: "active" | "revoked" | "unavailable";
+  revision: number;
+  issuedAt: string;
+  totalMinutes: number;
+}
+
+export async function listMyCertificates(signal?: AbortSignal): Promise<CertificateSummary[]> {
+  const { data } = await api.get("/certificates/mine", { signal, timeout: 15000 });
+  const items = data?.certificates;
+  if (!Array.isArray(items) || items.some(item => !item || !certificateCodePattern.test(item.code)
+    || !["active", "revoked", "unavailable"].includes(item.status)
+    || !(item.year === null || (Number.isInteger(item.year) && item.year >= 1900 && item.year <= 9999))
+    || !(item.edition === null || (typeof item.edition === "string" && /^[IVXLCDM]{1,20}$/.test(item.edition)))
+    || !(item.templateId === null || (typeof item.templateId === "string" && item.templateId.trim()))
+    || (item.status === "active" && (!item.year || !item.edition || !item.templateId))
+    || !Number.isInteger(item.totalMinutes) || item.totalMinutes <= 0
+    || !Number.isInteger(item.revision) || item.revision <= 0
+    || typeof item.issuedAt !== "string" || !Number.isFinite(Date.parse(item.issuedAt)))
+    || new Set(items.map(item => item.code)).size !== items.length) throw new Error("Lista de certificados inválida.");
+  return [...items].sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || Date.parse(b.issuedAt) - Date.parse(a.issuedAt));
+}
+
+export async function getMyCertificate(code: string, signal?: AbortSignal): Promise<CertificateData> {
+  if (!certificateCodePattern.test(code)) throw new Error("Código de certificado inválido.");
+  const certificate = checkedCertificate((await api.get(`/certificates/mine/${code}`, { signal, timeout: 15000 })).data);
+  if (certificate.code !== code) throw new Error("O certificado recebido não corresponde à seleção.");
+  return certificate;
+}
+
 export function checkedCertificate(data: CertificateData): CertificateData {
   if (!data || !certificateCodePattern.test(data.code) || !data.participantName?.trim()
-    || data.event?.year !== 2026 || !Array.isArray(data.activities) || !data.activities.length
+    || !data.event || !Array.isArray(data.activities) || !data.activities.length
     || data.activities.some(a => !a.name || !Number.isInteger(a.minutes) || a.minutes <= 0)
     || data.activities.reduce((sum, a) => sum + a.minutes, 0) !== data.totalMinutes
     || !/^data:image\/png;base64,/.test(data.qrCode)) throw new Error("Dados do certificado inválidos.");
   const url = new URL(data.validationUrl);
   if (url.protocol !== "https:" || url.searchParams.get("codigo") !== data.code) throw new Error("Endereço de validação inválido.");
-  return data;
+  return { ...data, presentation: certificatePresentation(data) };
 }
 
 export async function issueMyCertificate() {

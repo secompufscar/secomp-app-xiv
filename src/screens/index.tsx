@@ -35,6 +35,7 @@ import ParticipantDirectory from './participants/participantDirectoryScreen';
 import ActivityRaffleLists from './participants/activityRaffleListsScreen';
 import AdminNotificationScreen from "./notification/adminNotificationsScreen"
 import AdminNotificationSend from "./notification/adminNotificationSend"
+import MyCertificates from "./certificates/myCertificatesScreen";
 
 export {
   Login,
@@ -74,4 +75,5 @@ export {
   ActivityRaffleLists,
   AdminNotificationScreen,
   AdminNotificationSend,
+  MyCertificates,
 };

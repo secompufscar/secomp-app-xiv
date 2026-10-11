@@ -1,21 +1,24 @@
 import { Asset } from "expo-asset";
 import type { CertificateData } from "./certificates";
 import { createCertificatePdf } from "../utils/certificateDocument";
+import { certificatePresentation } from "../utils/certificatePresentation";
 
-async function bytes(module: number): Promise<Uint8Array> {
+async function bytes(module: number, signal?: AbortSignal): Promise<Uint8Array> {
   const asset = Asset.fromModule(module);
-  const response = await fetch(asset.uri);
+  const response = await fetch(asset.uri, { signal });
   if (!response.ok) throw new Error("Não foi possível carregar os elementos do certificado. Tente novamente.");
   return new Uint8Array(await response.arrayBuffer());
 }
 
-export async function downloadCertificate(certificate: CertificateData): Promise<void> {
+export async function downloadCertificate(certificate: CertificateData, signal?: AbortSignal): Promise<void> {
+  const presentation = certificatePresentation(certificate);
   const [secomp, dc, ufscar, regular, bold] = await Promise.all([
-    bytes(require("../../assets/icon.png")),
-    bytes(require("../../assets/certificate/logo-departamento-computacao-ufscar.png")),
-    bytes(require("../../assets/certificate/logo-ufscar-fundo-transparente.png")),
-    bytes(require("@expo-google-fonts/inter/Inter_400Regular.ttf")),
-    bytes(require("@expo-google-fonts/poppins/600SemiBold/Poppins_600SemiBold.ttf")),
+    bytes(require("../../assets/certificate/v1/secomp.png"), signal),
+    bytes(require("../../assets/certificate/v1/dc.png"), signal),
+    bytes(require("../../assets/certificate/v1/ufscar.png"), signal),
+    bytes(require("../../assets/certificate/v1/Inter-Regular.ttf"), signal),
+    bytes(require("../../assets/certificate/v1/Poppins-SemiBold.ttf"), signal),
   ]);
-  createCertificatePdf(certificate, { secomp, dc, ufscar, regular, bold }).save(`certificado-xiv-secomp-${certificate.code}.pdf`);
+  if (signal?.aborted) return;
+  createCertificatePdf(certificate, { secomp, dc, ufscar, regular, bold }).save(`certificado-${presentation.edition.toLowerCase()}-secomp-${certificate.code}.pdf`);
 }
