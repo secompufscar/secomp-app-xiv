@@ -2,6 +2,8 @@
 
 Revisão: 11/10/2026. Este guia descreve o código funcional publicado pelo app `8337d569` (PR #35), compatível com a API `28780cc3` (PR #40), publicada primeiro. CI e deploys confirmados; [evidência e limites](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-release-2026-10-11.md). Para regras e contrato, consultar [emissão e validação web](certificate-notice-web.md) e o [guia de próximas edições da API](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/funcionalidades/certificados-proximas-edicoes.md). Revisões documentais posteriores não modificam os modelos funcionais indicados.
 
+Incremento funcional atual: app `bd3a82a7` (PR #37) e API `dd9085ae` (PR #42), API publicada/validada primeiro. Acrescenta gerador separado de amostra ADMIN, sem mudar os modelos reais acima. Ver [estado e limitações da publicação](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/admin-certificate-test-release-2026-10-11.md).
+
 ## Fluxo real
 
 1. `src/components/home/homeCertificate.tsx` abre Meus certificados. `src/screens/certificates/myCertificatesScreen.tsx` lista, seleciona e recupera documentos da própria conta; apenas o comando explícito de geração emite. Ver [guia da área autenticada](my-certificates-web.md).
