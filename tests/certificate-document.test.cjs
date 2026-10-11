@@ -88,3 +88,37 @@ test('PDF apresenta Palestra e Minicurso no singular sem alterar categorias do s
   assert.ok(annex.includes('PET - Cibersegurança'));
   assert.deepEqual(certificate, original);
 });
+
+test('PDF alinha DC e UFSCar com a mesma altura e sem distorcer suas proporcoes', async () => {
+  const { getDocument, OPS, Util } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const certificate = { ...fixture, qrCode: await QRCode.toDataURL(fixture.validationUrl) };
+  const doc = createCertificatePdf(certificate, assets);
+  const pdf = await getDocument({ data: new Uint8Array(doc.output('arraybuffer')), useSystemFonts: false }).promise;
+  const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 0.03, `${actual} != ${expected}`);
+  const mm = 72 / 25.4;
+  try {
+    for (let number = 1; number <= pdf.numPages; number++) {
+      const operators = await (await pdf.getPage(number)).getOperatorList();
+      let matrix = [1, 0, 0, 1, 0, 0];
+      const stack = [], logos = [];
+      for (let i = 0; i < operators.fnArray.length; i++) {
+        const operation = operators.fnArray[i], args = operators.argsArray[i];
+        if (operation === OPS.save) stack.push(matrix.slice());
+        else if (operation === OPS.restore) matrix = stack.pop();
+        else if (operation === OPS.transform) matrix = Util.transform(matrix, args);
+        else if (operation === OPS.paintImageXObject && matrix[4] > 150 * mm && matrix[5] > 170 * mm) {
+          logos.push({ matrix: matrix.slice(), width: args[1], height: args[2] });
+        }
+      }
+      assert.equal(logos.length, 2, `Logos ausentes na pagina ${number}`);
+      const [dc, ufscar] = logos;
+      for (const logo of logos) {
+        near(logo.matrix[3], 14 * mm);
+        near(logo.matrix[0] / logo.matrix[3], logo.width / logo.height);
+      }
+      near(dc.matrix[5], ufscar.matrix[5]);
+      near(ufscar.matrix[4] - dc.matrix[4] - dc.matrix[0], 12 * mm);
+      near(ufscar.matrix[4] + ufscar.matrix[0], 279 * mm);
+    }
+  } finally { await pdf.destroy(); }
+});

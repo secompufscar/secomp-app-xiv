@@ -28,6 +28,11 @@ export function createCertificatePdf(certificate: CertificateData, assets: Asset
     const props = doc.getImageProperties(bytes), height = width * props.height / props.width;
     doc.addImage(bytes, "PNG", x, centerY - height / 2, width, height);
   }
+  const institutionalHeight = 14;
+  const dc = doc.getImageProperties(assets.dc), ufscar = doc.getImageProperties(assets.ufscar);
+  const dcWidth = institutionalHeight * dc.width / dc.height;
+  const ufscarWidth = institutionalHeight * ufscar.width / ufscar.height;
+  const ufscarX = 279 - ufscarWidth;
   function frame(annex = false) {
     doc.setFillColor("#FCFCFF").rect(0, 0, 297, 210, "F");
     doc.setFillColor("#0B0B0F").rect(0, 0, 64.5, 210, "F");
@@ -42,8 +47,8 @@ export function createCertificatePdf(certificate: CertificateData, assets: Asset
     text("2026", 11, 194, 23, true, "#00FF66");
     text("XIV SECOMP", 80, 17, 11, true, "#1400FF");
     text("Semana Acadêmica da Computação", 80, 24, 8, false, "#555C6E");
-    logo(assets.dc, 188, 18, 58);
-    logo(assets.ufscar, 259, 18, 20);
+    logo(assets.dc, ufscarX - 12 - dcWidth, 18, dcWidth);
+    logo(assets.ufscar, ufscarX, 18, ufscarWidth);
     doc.setDrawColor("#DCE1ED").line(80, 29, 279, 29);
     if (annex) {
       text("Atividades realizadas", 80, 43, 21, true);
