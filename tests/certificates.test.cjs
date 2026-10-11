@@ -30,6 +30,30 @@ test('total deve coincidir com anexo e link deve apontar para o mesmo código', 
   assert.match(service.certificateActivityDate('2026-10-06T13:00:00Z'), /06\/10\/2026.*13:00/);
 });
 
+test('validacao publica rejeita resposta de outro codigo sem enviar credenciais', async () => {
+  const other = 'B'.repeat(32);
+  const service = load({ './api': { defaults: { baseURL: 'https://api.example' } }, axios: {
+    get: async () => ({ data: { ...fixture(), code: other, validationUrl: `https://app.example/certificados?codigo=${other}` } }),
+  } });
+  await assert.rejects(service.validateCertificate(code), /código consultado/);
+});
+
+test('contrato rejeita atividades malformadas, datas invalidas e URLs ambiguas', () => {
+  const service = load({ './api': {}, axios: {} });
+  const activity = fixture().activities[0];
+  for (const patch of [
+    { participantName: 42 }, { participantName: ' ' },
+    { activities: [null] }, { activities: [{ ...activity, name: 42 }] },
+    { activities: [{ ...activity, name: ' ' }] }, { activities: [{ ...activity, category: null }] },
+    { activities: [{ ...activity, startsAt: 'invalid' }] }, { activities: [{ ...activity, startsAt: 123 }] },
+    { event: { ...fixture().event, startDate: 'invalid' } },
+    { event: { ...fixture().event, endDate: '2026-10-04' } },
+    { validationUrl: `https://user:password@app.example/certificados?codigo=${code}` },
+    { validationUrl: `https://app.example/certificados?codigo=${code}&codigo=${'B'.repeat(32)}` },
+    { validationUrl: `https://app.example/certificados?codigo=${code}#outro` },
+  ]) assert.throws(() => service.checkedCertificate({ ...fixture(), ...patch }));
+});
+
 test('revogação pública tem mensagem própria e não revela motivo administrativo', () => {
   const service = load({ './api': {}, axios: { isAxiosError: () => true } });
   assert.equal(service.certificateError({ response: { status: 410, data: { message: 'Motivo sigiloso' } } }), 'Certificado revogado. Entre em contato com a organização.');

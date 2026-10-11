@@ -2,13 +2,11 @@
 
 Aplicativo desenvolvido pela equipe de TI da SECOMP UFSCar especialmente para o evento.
 
-Guias: [edição administrativa de atividades na web](docs/activity-text-web.md), [categorias de atividades](docs/activity-categories-web.md), [visão do participante para admins](docs/participant-view-web.md), [credenciamento e presença](docs/credentialing.md), [todos os participantes: busca, status e data de credenciamento](docs/participant-directory-web.md), [presenças de um usuário](docs/user-attendance-web.md), [emissão e validação de certificados na web](docs/certificate-notice-web.md), [manutenção do visual e próximas edições de certificados](docs/certificate-maintenance.md), [rolagem dos cabeçalhos na web](docs/web-page-scrolling.md), [rotas e publicação na Vercel](docs/web-routing.md), [recuperação de sessão em falhas temporárias](docs/session-recovery.md) e [validação da versão mobile](docs/p0-release-blockers.md). O app web é publicado automaticamente pela Vercel após integração na `main`.
+Guias: [edição administrativa de atividades na web](docs/activity-text-web.md), [categorias de atividades](docs/activity-categories-web.md), [visão do participante para admins](docs/participant-view-web.md), [credenciamento e presença](docs/credentialing.md), [todos os participantes: busca, status e data de credenciamento](docs/participant-directory-web.md), [presenças de um usuário](docs/user-attendance-web.md), [emissão e validação de certificados na web](docs/certificate-notice-web.md), [manutenção do visual e próximas edições de certificados](docs/certificate-maintenance.md), [rolagem dos cabeçalhos na web](docs/web-page-scrolling.md), [rotas e publicação na Vercel](docs/web-routing.md), [recuperação de sessão em falhas temporárias](docs/session-recovery.md) e [validação da versão mobile](docs/p0-release-blockers.md). O app web tem publicação automática na Vercel após integração na `main`; conferir o resultado do deployment, não apenas o merge.
 
 Área autenticada de certificados: [Meus certificados por edição](docs/my-certificates-web.md).
 
 Estado funcional em 11/10/2026: Meus certificados e modelos históricos publicados pelo PR #35, commit `8337d569`, após API do PR #40 publicada e validada. CI e deploys confirmados; revisões documentais posteriores não alteram esse código funcional. [Evidências e limites da publicação](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-release-2026-10-11.md).
-
-Incremento atual: [certificado ADMIN de teste](docs/my-certificates-web.md#certificado-de-teste-para-admin) corrigido pelo PR #39, merge `5b547076`, após API `5bc02005` do PR #44 publicada e validada. Na XIV, inclui somente SDD no bloco simultâneo: 24 atividades/28 horas, nome fixo e QR inválido, sem emitir ou modificar certificados reais. [Evidência de publicação atual](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/admin-certificate-single-course-2026-10-11.md). A publicação inicial de 28 atividades do PR #37 é histórica.
 
 Ele é utilizado pelos participantes para realizar a inscrição no evento e em suas atividades, acompanhar novidades e acessar informações importantes. Para a organização, o aplicativo oferece ferramentas que facilitam o controle do evento, como o gerenciamento de atividades e a leitura de presença dos participantes.
 
@@ -88,3 +86,5 @@ Para rodar o aplicativo localmente, siga os passos adicionais abaixo:
 [node-url]: https://nodejs.org/en
 [node-logo]: https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white
 [demo]: assets/images/demo.gif
+
+Certificados: a amostra ADMIN e o protótipo Python foram removidos. [Meus certificados](docs/my-certificates-web.md) e [mapa do gerador real](docs/certificate-maintenance.md) documentam o fluxo mantido, os testes e a preservação das edições antigas.

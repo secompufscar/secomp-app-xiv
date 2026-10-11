@@ -14,7 +14,7 @@ const detail = item => ({ code: item.code, participantName: `Pessoa ${item.editi
 const nodes = tree => !tree || typeof tree !== 'object' ? [] : Array.isArray(tree) ? tree.flatMap(nodes) : [tree, ...nodes(tree.props?.children)];
 
 function screen(overrides = {}, options = {}) {
-  const slots = [], effects = [], calls = { list: [], get: [], issue: [], downloads: [], tests: [], testDownloads: [] };
+  const slots = [], effects = [], calls = { list: [], get: [], issue: [], downloads: [] };
   let cursor = 0, userId = options.anonymous ? null : 'self', participantView = options.preview || false;
   const memo = (factory, deps) => {
     const index = cursor++, previous = slots[index];
@@ -43,10 +43,8 @@ function screen(overrides = {}, options = {}) {
     '../../components/app/appLayout': { default: 'AppLayout' }, '../../components/button/backButton': { default: 'BackButton' },
     '../../hooks/AuthContext': { useAuth: () => ({ user: userId ? { id: userId } : null, isParticipantView: participantView, canUseAdminTools: !!options.admin && !participantView }) },
     '../../services/certificates': services,
-    '../../services/certificateAdminPreview': { getAdminTestCertificate: async signal => { calls.tests.push(signal); return overrides.test ? overrides.test(signal) : { kind: 'admin-test' }; } },
     '../../services/certificateDownload': {
-      downloadCertificate: async (data, signal) => { calls.downloads.push({ data, signal }); },
-      downloadAdminTestCertificate: async (data, signal) => { calls.testDownloads.push({ data, signal }); },
+      downloadCertificate: async (data, signal) => { calls.downloads.push({ data, signal }); if (overrides.download) await overrides.download(data, signal); },
     },
     '../../utils/certificatePresentation': { supportsCertificateTemplate: id => id === 'secomp-landscape-v1' },
   };
@@ -85,39 +83,57 @@ test('seletor e atualizar usam vao compacto e dimensoes estaveis sem encolher o 
   assert.equal(refresh.props.style.width, 48); assert.equal(refresh.props.style.height, 48);
 });
 
-test('teste somente ADMIN, independe de certificados e nao emite nem altera selecao', async () => {
-  for (const options of [{}, { admin: true, preview: true }]) {
+test('ADMIN e USER nao possuem fluxo de amostra; historico vazio nao emite automaticamente', async () => {
+  for (const options of [{}, { admin: true }, { admin: true, preview: true }]) {
     const view = screen({}, options); await settle();
     assert.equal(view.render().some(node => node.props?.accessibilityLabel === 'Baixar modelo de exemplo'), false);
+    assert.equal(view.calls.issue.length, 0);
+    const empty = screen({ list: async () => [] }, options); await settle();
+    assert.equal(empty.render().some(node => node.props?.accessibilityLabel === 'Baixar modelo de exemplo'), false);
+    assert.equal(empty.calls.issue.length, 0); assert.equal(empty.calls.downloads.length, 0);
   }
-  const view = screen({}, { admin: true }); await settle();
-  const selected = view.render().find(node => node.type === 'select').props.value;
-  await view.press('Baixar modelo de exemplo');
-  assert.equal(view.calls.tests.length, 1); assert.equal(view.calls.testDownloads.length, 1);
-  assert.equal(view.calls.issue.length, 0); assert.equal(view.calls.list.length, 1);
-  assert.equal(view.render().find(node => node.type === 'select').props.value, selected);
-  const empty = screen({ list: async () => [] }, { admin: true }); await settle();
-  await empty.press('Baixar modelo de exemplo'); assert.equal(empty.calls.testDownloads.length, 1);
 });
 
-test('teste bloqueia cliques repetidos; erro permite retry e nao altera historico', async () => {
-  let finish, failed = true;
-  const view = screen({ test: () => failed ? new Promise((_resolve, reject) => { finish = reject; }) : Promise.resolve({ kind: 'admin-test' }) }, { admin: true });
-  await settle(); const pending = view.press('Baixar modelo de exemplo');
-  await view.press('Baixar modelo de exemplo'); assert.equal(view.calls.tests.length, 1);
-  finish(Error('Duracao oficial pendente')); await pending;
-  assert.match(text(view), /Duracao oficial pendente/); failed = false;
-  await view.press('Baixar modelo de exemplo'); assert.equal(view.calls.testDownloads.length, 1);
-  assert.equal(view.calls.issue.length, 0);
+test('download rejeita mudanca de edicao/modelo na reconfirmacao', async () => {
+  for (const patch of [
+    { event: { ...detail(future).event, year: 2026 } },
+    { presentation: { ...detail(future).presentation, edition: 'XIV' } },
+    { presentation: { ...detail(future).presentation, templateId: 'other-model' } },
+  ]) {
+    let changed = false;
+    const view = screen({ get: async () => ({ ...detail(future), ...(changed ? patch : {}) }) }); await settle();
+    changed = true; await view.press('Baixar PDF');
+    assert.equal(view.calls.downloads.length, 0); assert.match(text(view), /edição selecionada/);
+  }
 });
 
-test('sair, trocar conta ou entrar em previa cancela o download do teste', async () => {
-  for (const change of [view => view.close(), view => view.user('other'), view => view.preview(true)]) {
-    let finish;
-    const view = screen({ test: () => new Promise(resolve => { finish = resolve; }) }, { admin: true }); await settle();
-    const pending = view.press('Baixar modelo de exemplo'); change(view);
-    assert.equal(view.calls.tests[0].aborted, true); finish({ kind: 'admin-test' }); await pending;
-    assert.equal(view.calls.testDownloads.length, 0);
+test('cancelamento libera novo download e resposta antiga nao encerra o novo', async () => {
+  const pending = [];
+  let delayed = false;
+  const view = screen({ get: code => delayed ? new Promise(resolve => pending.push({ resolve, code })) : Promise.resolve(detail(code === future.code ? future : legacy)) });
+  await settle(); delayed = true;
+  const first = view.press('Baixar PDF');
+  await view.press('Preparando PDF...'); assert.equal(pending.length, 1);
+  const oldSignal = view.calls.get.at(-1).signal;
+  delayed = false; view.choose(legacy.code); await settle();
+  assert.equal(oldSignal.aborted, true);
+  delayed = true; const second = view.press('Baixar PDF');
+  assert.equal(pending.length, 2);
+  pending[0].resolve(detail(future)); await first;
+  assert.match(text(view), /Preparando PDF/);
+  await view.press('Preparando PDF...'); assert.equal(pending.length, 2);
+  pending[1].resolve(detail(legacy)); await second;
+  assert.equal(view.calls.downloads.length, 1); assert.equal(view.calls.downloads[0].data.code, legacy.code);
+});
+
+test('sair e trocar de conta cancelam reconfirmacao sem baixar documento anterior', async () => {
+  for (const change of [view => view.close(), view => view.user('other')]) {
+    let finish, delayed = false;
+    const view = screen({ get: code => delayed ? new Promise(resolve => { finish = resolve; }) : Promise.resolve(detail(code === future.code ? future : legacy)) });
+    await settle(); delayed = true; const pending = view.press('Baixar PDF');
+    const signal = view.calls.get.at(-1).signal; delayed = false; change(view);
+    assert.equal(signal.aborted, true); finish(detail(future)); await pending;
+    assert.equal(view.calls.downloads.length, 0);
   }
 });
 
