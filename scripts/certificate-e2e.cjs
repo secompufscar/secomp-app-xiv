@@ -6,7 +6,7 @@ const outputDir = path.resolve(process.env.CERTIFICATE_E2E_OUTPUT || path.join(_
 fs.mkdirSync(outputDir, { recursive: true });
 const output = path.join(outputDir, 'synthetic-certificate.pdf');
 const code = 'A'.repeat(32);
-const fixture = { code, participantName: 'TESTE SEM VALIDADE - Marina Alves de Souza', issuedAt: '2026-10-10T01:00:00Z', totalMinutes: 450, event: { year: 2026, startDate: '2026-10-05T04:58:38Z', endDate: '2026-10-08T04:58:38Z' },
+const fixture = { code, participantName: 'TESTE SEM VALIDADE - Marina Alves de Souza', issuedAt: '2026-10-10T01:02:03Z', totalMinutes: 450, event: { year: 2026, startDate: '2026-10-05T04:58:38Z', endDate: '2026-10-08T04:58:38Z' },
   activities: [{ name: 'Desenvolvimento de Software com Spec-Driven Development (SDD) - Usando Spec Kit e Aplicando Arquitetura com Harness na Prática', minutes: 180, category: 'Minicursos', startsAt: '2026-10-06T13:00:00Z' }, { name: 'A Nova Fronteira do Cyber é a Proteção Humana', minutes: 150, category: 'Workshop', startsAt: '2026-10-06T13:00:00Z' }, { name: 'Empreendedorismo & Tecnologia', minutes: 60, category: 'Outros', startsAt: '2026-10-07T14:00:00Z' }, { name: 'Acessibilidade em ambientes digitais inclusivos', minutes: 60, category: 'Palestras', startsAt: '2026-10-07T15:00:00Z' }], validationUrl: `https://secomp-app-xiv.vercel.app/certificados?codigo=${code}` };
 const nextCode = 'C'.repeat(32);
 const nextFixture = { ...fixture, code: nextCode, issuedAt: '2027-10-10T01:00:00Z',
@@ -77,6 +77,7 @@ const server = http.createServer((req, res) => {
       const page = await context.newPage(); page.on('pageerror', e => errors.push(e.message));
       await page.goto(`${base}/certificados?codigo=${code}`);
       await page.getByText('Certificado válido', { exact: true }).waitFor();
+      assert.ok(await page.getByText('Emitido em 09/10/2026 às 22:02:03 (horário de Brasília)', { exact: false }).isVisible());
       assert.ok(calls.every(c => c.path.includes('/certificates/validate/') && !c.auth));
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
       await page.screenshot({ path: path.join(outputDir, `individual-certificate-valid-${width}.png`), fullPage: true });
@@ -132,6 +133,7 @@ const server = http.createServer((req, res) => {
       } });
       await editions.selectOption(code);
       await page.getByRole('button', { name: 'Baixar PDF', exact: true }).waitFor();
+      assert.ok(await page.getByText('Emitido em 09/10/2026 às 22:02:03 (horário de Brasília)', { exact: false }).isVisible());
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
       await page.screenshot({ path: path.join(outputDir, `my-certificates-${width}.png`), fullPage: true });
       if (width === 1280) {

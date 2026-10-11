@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { Download, Search } from "lucide-react-native";
-import { CertificateData, certificateActivityDate, certificateError, certificateWorkload, validateCertificate } from "../../services/certificates";
+import { CertificateData, certificateActivityDate, certificateError, certificateIssuedAt, certificateWorkload, validateCertificate } from "../../services/certificates";
 import { downloadCertificate } from "../../services/certificateDownload";
 import { certificatePresentation } from "../../utils/certificatePresentation";
 
@@ -55,7 +55,7 @@ export default function CertificateValidationScreen() {
       {certificate && <View style={{ gap: 20 }}>
         <Text accessibilityRole="header" style={{ color: "#087443", fontFamily: "Poppins_600SemiBold", fontSize: 22 }}>Certificado válido</Text>
         <Text style={{ color: "#171923", fontFamily: "Poppins_600SemiBold", fontSize: 20 }}>{certificate.participantName}</Text>
-        <Text style={{ color: "#171923", fontFamily: "Inter_400Regular", lineHeight: 24 }}>{certificatePresentation(certificate).edition} SECOMP · {certificateWorkload(certificate.totalMinutes)}{"\n"}Emitido em {new Date(certificate.issuedAt).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}</Text>
+        <Text style={{ color: "#171923", fontFamily: "Inter_400Regular", lineHeight: 24 }}>{certificatePresentation(certificate).edition} SECOMP · {certificateWorkload(certificate.totalMinutes)}{"\n"}Emitido em {certificateIssuedAt(certificate.issuedAt)}</Text>
         <Pressable accessibilityRole="button" disabled={downloading} onPress={async () => { setDownloading(true); setError(""); try { await downloadCertificate(certificate); } catch (e) { setError(certificateError(e)); } finally { setDownloading(false); } }} style={{ minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, padding: 12, backgroundColor: "#171923", borderRadius: 6 }}>
           <Download color="white" size={18} /><Text style={{ color: "white", fontFamily: "Inter_500Medium" }}>{downloading ? "Preparando PDF..." : "Baixar PDF"}</Text>
         </Pressable>

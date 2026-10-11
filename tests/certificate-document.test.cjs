@@ -57,6 +57,24 @@ test('PDF preserva conteúdo, total, link customizado e QR legível em ambas as 
   assert.ok(texts[1].includes(custom.activities[0].name));
 });
 
+test('PDF usa o instante original de emissao com segundos, sem alterar o snapshot', async () => {
+  const certificate = { ...fixture, issuedAt: '2026-10-11T01:02:03.456Z', qrCode: await QRCode.toDataURL(fixture.validationUrl) };
+  const before = JSON.parse(JSON.stringify(certificate));
+  const doc = createCertificatePdf(certificate, assets);
+  const texts = await inspect(doc, certificate);
+  assert.ok(texts[0].includes('São Carlos, 10/10/2026 às 22:02:03 (horário de Brasília).'));
+  assert.deepEqual(certificate, before);
+  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const pdf = await getDocument({ data: new Uint8Array(doc.output('arraybuffer')), useSystemFonts: false }).promise;
+  try {
+    const items = (await (await pdf.getPage(1)).getTextContent()).items;
+    const emission = items.find(item => item.str.includes('22:02:03'));
+    assert.ok(emission);
+    assert.ok(emission.transform[4] + emission.width <= 279 * 72 / 25.4);
+    assert.ok(Math.abs(emission.transform[0] - 10) < 0.01);
+  } finally { await pdf.destroy(); }
+});
+
 test('PDF pagina listas extensas preservando todas as atividades uma vez e o total no anexo', async () => {
   fixture.qrCode = await QRCode.toDataURL(fixture.validationUrl);
   const short = createCertificatePdf(fixture, assets);

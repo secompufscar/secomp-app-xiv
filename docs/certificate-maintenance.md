@@ -27,6 +27,7 @@ Todas as coordenadas abaixo estão em milímetros numa página A4 horizontal de 
 | Número da edição, ano, instituição e cidade | Argumento `presentation` e `certificate.event`; valores são persistidos pela API, não editar literais XIV/2026 |
 | Nome do evento, local e período | `frame`, texto principal após `Certificamos que` e datas de `certificate.event` |
 | Nome da pessoa | `fitted(certificate.participantName, ...)` na capa e no cabeçalho do anexo |
+| Data e horário de emissão com segundos | `src/utils/certificateIssuedAt.ts`, usado na capa V1, em Meus certificados e na validação pública; usa somente `issuedAt` persistido |
 | Textos fixos e comissão | Chamadas `text`/`fitted` da capa e `frame`; não inventar signatários |
 | Horas por extenso e abreviadas | `fullWorkload` na capa; `workload` na tabela; minutos vêm da API |
 | Logos e equilíbrio óptico | `logo`, `dcWidth = 40`, altura UFSCar de 14, centro Y de 18 e intervalo de 12; manter proporções das imagens |
@@ -43,6 +44,16 @@ Todas as coordenadas abaixo estão em milímetros numa página A4 horizontal de 
 Os assets V1 ficam em `assets/certificate/v1/`: `secomp.png`, `dc.png`, `ufscar.png`, `Inter-Regular.ttf`, `Poppins-SemiBold.ttf` e a licença `OFL.txt`. São cópias versionadas: mudanças no ícone do app ou nos pacotes de fontes não devem substituir esses arquivos. O download e os testes carregam a mesma pasta; `tests/certificate-assets.test.cjs` confere seus hashes SHA-256 para detectar substituições acidentais.
 
 Horários das atividades usam componentes UTC, como o cronograma existente; emissão usa `America/Sao_Paulo`. Não mudar fuso para corrigir visual. Nomes de atividade são do snapshot; corrigir cadastro não muda documentos já emitidos. Reemissão é uma operação administrativa auditada, não um efeito de baixar PDF.
+
+### Horário de emissão com segundos
+
+O formato comum é `11/10/2026 às 17:25:33 (horário de Brasília)`, com relógio de 24 horas. `certificateIssuedAt` converte o instante ISO recebido da API para `America/Sao_Paulo`, preservando segundos e tratando a virada de dia. Não usar o horário do computador, o momento do download ou o início de uma atividade como emissão. O servidor já persiste e retorna `issuedAt`; não é necessária migração nem atualização da API.
+
+A inclusão do horário na linha de emissão da capa V1 foi autorizada em 11/10/2026 como complemento de metadados, inclusive para downloads de certificados históricos. Esta alteração pontual modifica a apresentação dos PDFs regenerados, mas não os snapshots, os instantes originais, nomes, minutos, códigos, QRs, fontes, logos ou a seleção do modelo. PDFs locais já baixados não são sobrescritos. Não é uma autorização para redesenhar V1; novos visuais continuam exigindo outro `templateId`.
+
+Uma reemissão recebe um novo `issuedAt`, código e revisão e revoga a anterior. Para corrigir títulos, conferir antes que IDs, categorias, horários e minutos das atividades continuem iguais; a API recomputa a partir das presenças atuais. Usar o endpoint administrativo existente, com motivo e responsável autenticado. Nunca alterar apenas o PDF, o snapshot antigo ou presumir que baixar novamente executará essa correção. Preservar evidências reais e dados pessoais somente em diretório privado, fora dos commits.
+
+Os testes unitários cobrem segundos, meia-noite, virada de dia e timestamp inválido. O teste de PDF confere o horário original e os limites da linha da capa; o E2E confere o mesmo formato em Meus certificados e na validação pública em 320/1280 px. Horários de atividades e a prévia ADMIN sem validade não foram modificados por este incremento.
 
 ## Criar outro visual
 

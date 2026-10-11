@@ -4,7 +4,7 @@ const { loadTypescript } = require('./helpers/load-typescript.cjs');
 function load(dependencies) {
   const module = { exports: {} };
   const code = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/services/certificates.ts'), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, esModuleInterop: true } }).outputText;
-  vm.runInNewContext(code, { exports: module.exports, module, URL, require(name) { return name === '../utils/certificatePresentation' ? loadTypescript(path.join(__dirname, '../src/utils/certificatePresentation.ts')) : dependencies[name]; } });
+  vm.runInNewContext(code, { exports: module.exports, module, URL, require(name) { return ['../utils/certificatePresentation', '../utils/certificateIssuedAt'].includes(name) ? loadTypescript(path.join(__dirname, '../src', name.slice(3) + '.ts')) : dependencies[name]; } });
   return module.exports;
 }
 const code = 'A'.repeat(32);
@@ -33,6 +33,17 @@ test('total deve coincidir com anexo e link deve apontar para o mesmo código', 
 test('revogação pública tem mensagem própria e não revela motivo administrativo', () => {
   const service = load({ './api': {}, axios: { isAxiosError: () => true } });
   assert.equal(service.certificateError({ response: { status: 410, data: { message: 'Motivo sigiloso' } } }), 'Certificado revogado. Entre em contato com a organização.');
+});
+
+test('emissao mostra segundos e fuso de Brasilia, independentemente do horario das atividades', () => {
+  const service = load({ './api': {}, axios: {} });
+  assert.equal(service.certificateIssuedAt('2026-10-11T20:25:33.453Z'), '11/10/2026 às 17:25:33 (horário de Brasília)');
+  assert.equal(service.certificateIssuedAt('2026-10-11T01:02:03Z'), '10/10/2026 às 22:02:03 (horário de Brasília)');
+  assert.equal(service.certificateIssuedAt('2026-10-11T03:00:00Z'), '11/10/2026 às 00:00:00 (horário de Brasília)');
+  assert.equal(service.certificateIssuedAt('2026-10-11T17:25:33-03:00'), '11/10/2026 às 17:25:33 (horário de Brasília)');
+  assert.throws(() => service.certificateIssuedAt('invalid'), /emissão/);
+  for (const issuedAt of [undefined, null, '', 'invalid']) assert.throws(() => service.checkedCertificate({ ...fixture(), issuedAt }));
+  assert.match(service.certificateActivityDate('2026-10-06T13:00:00Z'), /13:00/);
 });
 
 test('nova edicao exige identidade explicita e modelo conhecido; legado XIV continua aceito', () => {
