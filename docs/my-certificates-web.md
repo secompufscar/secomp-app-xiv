@@ -18,6 +18,8 @@ Certificados históricos podem ser consultados mesmo com emissão desabilitada o
 
 Atualizar mantém o código selecionado quando disponível; se houve reemissão, mantém a mesma edição e seleciona sua nova revisão. Após recarregar a página, a rota é restaurada e a edição mais recente é selecionada. A reemissão continua exclusivamente administrativa, auditada e com novo código/QR.
 
+O instante de emissão é mostrado com data, horas, minutos e segundos, por exemplo `11/10/2026 às 17:25:33 (horário de Brasília)`. Meus certificados, validação pública e capa do PDF real compartilham `src/utils/certificateIssuedAt.ts`, usando o `issuedAt` persistido pela API convertido para `America/Sao_Paulo`. Baixar novamente não muda esse instante; uma reemissão tem um novo instante e revisão. O texto pode ocupar mais de uma linha em telas estreitas, sem ocultar segundos ou fuso.
+
 O seletor e o botão Atualizar têm altura fixa de 48 px e vão de 8 px, alinhados pela base. O botão não encolhe; o seletor se adapta à largura disponível. O E2E mede essas dimensões em 320/1280 px e guarda screenshots do trecho. Esse ajuste de espaçamento é exclusivo da tela web, sem alterar os PDFs ou a API.
 
 ## Contrato e segurança

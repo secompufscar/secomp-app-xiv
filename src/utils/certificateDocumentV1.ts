@@ -2,6 +2,7 @@ import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import type { CertificateData } from "../services/certificates";
 import type { CertificatePresentation } from "./certificatePresentation";
+import { certificateIssuedAt } from "./certificateIssuedAt";
 
 export type CertificateAssets = { secomp: Uint8Array; dc: Uint8Array; ufscar: Uint8Array; regular: Uint8Array; bold: Uint8Array };
 const workload = (minutes: number) => `${Math.floor(minutes / 60)}h${minutes % 60 ? ` ${minutes % 60}min` : ""}`;
@@ -71,7 +72,7 @@ export function createCertificatePdfV1(certificate: CertificateData, assets: Cer
   doc.setFillColor("#EEF0FC").roundedRect(80, 125, 199, 25, 2, 2, "F");
   text("CARGA HORÁRIA TOTAL", 86, 133, 8);
   fitted(fullWorkload(certificate.totalMinutes), 86, 145, 187, 23, true, "#1400FF");
-  fitted(`${presentation.city}, ${date(certificate.issuedAt, "America/Sao_Paulo")}.`, 80, 161, 199, 10);
+  fitted(`${presentation.city}, ${certificateIssuedAt(certificate.issuedAt)}.`, 80, 161, 199, 10);
   fitted(`Comissão organizadora da ${presentation.edition} SECOMP`, 80, 174, 199, 10, true);
 
   doc.addPage();

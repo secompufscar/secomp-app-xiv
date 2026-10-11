@@ -1,6 +1,8 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path'), vm = require('node:vm'), ts = require('typescript');
+const { loadTypescript } = require('./helpers/load-typescript.cjs');
+const { certificateIssuedAt } = loadTypescript(path.join(__dirname, '../src/utils/certificateIssuedAt.ts'));
 const settle = () => new Promise(resolve => setImmediate(resolve));
 const summary = (character, year, edition, status = 'active') => ({ code: character.repeat(32), year, edition, status,
   templateId: 'secomp-landscape-v1', issuedAt: '2026-10-10T12:00:00Z', revision: 1, totalMinutes: 60 });
@@ -24,7 +26,7 @@ function screen(overrides = {}, options = {}) {
     getMyCertificate: async (code, signal) => { calls.get.push({ code, signal }); return overrides.get ? overrides.get(code, signal) : detail(code === future.code ? future : legacy); },
     issueMyCertificate: async () => { calls.issue.push(true); return overrides.issue ? overrides.issue() : detail(legacy); },
     certificateError: error => error.response?.status === 410 ? 'Certificado revogado. Entre em contato com a organização.' : error.message,
-    certificateWorkload: minutes => `${minutes} minutos`, certificateActivityDate: () => 'Horario nao informado',
+    certificateWorkload: minutes => `${minutes} minutos`, certificateActivityDate: () => 'Horario nao informado', certificateIssuedAt,
   };
   const dependencies = {
     react: {
@@ -60,6 +62,12 @@ function screen(overrides = {}, options = {}) {
   };
 }
 const text = view => view.render().filter(node => node.type === 'Text').flatMap(node => node.props.children).join(' ');
+
+test('historico apresenta o instante persistido com horas, minutos, segundos e fuso', async () => {
+  const view = screen(); await settle(); await settle();
+  assert.ok(text(view).replace(/\s+/g, ' ').includes('Emitido em 10/10/2026 às 09:00:00 (horário de Brasília)'));
+  assert.equal(view.calls.issue.length, 0);
+});
 
 test('seletor e atualizar usam vao compacto e dimensoes estaveis sem encolher o botao', async () => {
   const view = screen(); await settle();

@@ -1,6 +1,7 @@
 import axios from "axios";
 import api from "./api";
 import { certificatePresentation, CertificatePresentation } from "../utils/certificatePresentation";
+export { certificateIssuedAt } from "../utils/certificateIssuedAt";
 
 export interface CertificateData {
   code: string;
@@ -52,6 +53,7 @@ export async function getMyCertificate(code: string, signal?: AbortSignal): Prom
 
 export function checkedCertificate(data: CertificateData): CertificateData {
   if (!data || !certificateCodePattern.test(data.code) || !data.participantName?.trim()
+    || typeof data.issuedAt !== "string" || !Number.isFinite(Date.parse(data.issuedAt))
     || !data.event || !Array.isArray(data.activities) || !data.activities.length
     || data.activities.some(a => !a.name || !Number.isInteger(a.minutes) || a.minutes <= 0)
     || data.activities.reduce((sum, a) => sum + a.minutes, 0) !== data.totalMinutes

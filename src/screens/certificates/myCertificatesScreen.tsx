@@ -5,13 +5,12 @@ import { Award, Download, ExternalLink, RefreshCw, FlaskConical } from "lucide-r
 import AppLayout from "../../components/app/appLayout";
 import BackButton from "../../components/button/backButton";
 import { useAuth } from "../../hooks/AuthContext";
-import { CertificateData, CertificateSummary, certificateActivityDate, certificateError, certificateWorkload, getMyCertificate, issueMyCertificate, listMyCertificates } from "../../services/certificates";
+import { CertificateData, CertificateSummary, certificateActivityDate, certificateError, certificateIssuedAt, certificateWorkload, getMyCertificate, issueMyCertificate, listMyCertificates } from "../../services/certificates";
 import { downloadCertificate, downloadAdminTestCertificate } from "../../services/certificateDownload";
 import { getAdminTestCertificate } from "../../services/certificateAdminPreview";
 import { supportsCertificateTemplate } from "../../utils/certificatePresentation";
 
 const label = (item: CertificateSummary) => `${item.edition ? `${item.edition} SECOMP` : "Edição não identificada"}${item.year ? ` · ${item.year}` : ""}`;
-const issuedDate = (value: string) => new Date(value).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
 const button = { minHeight: 48, padding: 12, borderRadius: 6, flexDirection: "row" as const, alignItems: "center" as const, justifyContent: "center" as const, gap: 8 };
 const regular = { fontFamily: "Inter_400Regular", color: "#A9B4F4", lineHeight: 23 };
 
@@ -184,7 +183,7 @@ export default function MyCertificatesScreen(): ReactElement | null {
             <View style={{ gap: 6 }}>
               <Text accessibilityRole="header" style={{ fontFamily: "Poppins_600SemiBold", fontSize: 20, color: "white" }}>{label(selected)}</Text>
               <Text style={{ ...regular, color: selected.status === "revoked" ? "#FDA4AF" : compatible ? "#00FF66" : "#FCD34D" }}>{selected.status === "revoked" ? "Certificado revogado" : compatible ? "Certificado ativo" : "Modelo de certificado indisponível"}</Text>
-              <Text style={regular}>{certificateWorkload(selected.totalMinutes)} · Emitido em {issuedDate(selected.issuedAt)} · Revisão {selected.revision}</Text>
+              <Text style={regular}>{certificateWorkload(selected.totalMinutes)}{"\n"}Emitido em {certificateIssuedAt(selected.issuedAt)} · Revisão {selected.revision}</Text>
             </View>
             {selected.status === "revoked" && <Text style={regular}>Entre em contato com a organização.</Text>}
             {selected.status !== "revoked" && !compatible && <Text style={regular}>Não foi possível abrir este modelo. Entre em contato com a organização.</Text>}
