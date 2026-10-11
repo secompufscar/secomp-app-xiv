@@ -6,7 +6,7 @@ Complemento publicado em 11/10/2026: app `6a228319` do [PR #42](https://github.c
 
 Revisão: 11/10/2026. Este guia descreve o código funcional publicado pelo app `8337d569` (PR #35), compatível com a API `28780cc3` (PR #40), publicada primeiro. CI e deploys confirmados; [evidência e limites](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-release-2026-10-11.md). Para regras e contrato, consultar [emissão e validação web](certificate-notice-web.md) e o [guia de próximas edições da API](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/funcionalidades/certificados-proximas-edicoes.md). Revisões documentais posteriores não modificam os modelos funcionais indicados.
 
-Incremento funcional atual: app `5b547076` (PR #39) e API `5bc02005` (PR #44), API publicada/validada primeiro. Corrige a amostra ADMIN para apenas SDD no bloco simultâneo (24 atividades/28 horas) e usa texto de amostra, sem mudar os modelos reais acima. Ver [estado e limitações da publicação atual](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/admin-certificate-single-course-2026-10-11.md). A publicação inicial dos PRs #37/#42 permanece como histórico.
+Incremento anterior da seleção administrativa (histórico): app `5b547076` (PR #39) e API `5bc02005` (PR #44), API publicada/validada primeiro. Corrigiu a amostra ADMIN para apenas SDD no bloco simultâneo (24 atividades/28 horas) e usava texto de amostra, sem mudar os modelos reais acima. Ver [estado e limitações dessa publicação](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/admin-certificate-single-course-2026-10-11.md). A regra atual de identidade e aparência está em Modelo ADMIN fiel; a publicação inicial dos PRs #37/#42 permanece como histórico.
 
 ## Fluxo real
 
@@ -39,6 +39,7 @@ Todas as coordenadas abaixo estão em milímetros numa página A4 horizontal de 
 | Logos e equilíbrio óptico | `logo`, `dcWidth = 40`, altura UFSCar de 14, centro Y de 18 e intervalo de 12; manter proporções das imagens |
 | Fontes e pesos | `addFileToVFS`, `addFont`, `text`, `fitted`, `styles`, `headStyles` e `footStyles`; Inter regular e Poppins SemiBold |
 | Cores e estrutura | `frame`, fundos, faixa lateral de 64,5 e linha verde de 1,3; cores explícitas em hexadecimal |
+| Divisor do cabeçalho | `frame`: linha de X=80 a X=279 em Y=29, espessura explícita de 0,2; não herdar o estado de outros desenhos |
 | Margens e largura útil | Conteúdo começa em X=80, termina em X=279; texto principal dispõe de 199 mm |
 | Tabela e alinhamentos | `autoTable`: `startY = 60`, margens top=60/bottom=34/left=80/right=18, colunas 24/15/136/24 |
 | Espaçamento entre data e horário | Colunas 0/1 lado a lado; `columnStyles` e `didParseCell` ajustam largura, centralização e padding do cabeçalho |
