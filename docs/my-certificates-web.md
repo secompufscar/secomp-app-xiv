@@ -1,5 +1,7 @@
 # Meus certificados
 
+Atualização publicada em 11/10/2026: app `6a228319` do [PR #42](https://github.com/secompufscar/secomp-app-xiv/pull/42) inclui horas, minutos, segundos e indicação de horário de Brasília, usando `issuedAt` persistido, também na validação pública e na capa do PDF real. TypeScript, 115 testes, build, CI do PR/merge, Vercel e E2E em 320/1280 px aprovados. O fluxo privado no app publicado foi verificado com APIs sintéticas, não com login interativo de participante. API e migrações não foram alteradas. As publicações seguintes neste guia são marcos históricos; regras de apresentação e reemissão estão no [guia de manutenção](certificate-maintenance.md#horário-de-emissão-com-segundos).
+
 Publicado em 11/10/2026: app `8337d569` do [PR #35](https://github.com/secompufscar/secomp-app-xiv/pull/35), após publicação e validação da API `28780cc3` do [PR #40](https://github.com/secompufscar/secomp-server-xiv/pull/40). CI dos PRs/merges e deploys aprovados. [Evidência operacional](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-release-2026-10-11.md). Não houve emissão, reemissão ou escrita administrativa em produção nesta rodada.
 
 ## Estado publicado
