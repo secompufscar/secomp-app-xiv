@@ -9,6 +9,7 @@ lerna-debug.log*
 
 node_modules
 dist
+/dist-*/
 dist-ssr
 /certificate-model-output/
 /test-results/

@@ -3,6 +3,7 @@ import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Text, TextInp
 import { Download, Search } from "lucide-react-native";
 import { CertificateData, certificateActivityDate, certificateError, certificateWorkload, validateCertificate } from "../../services/certificates";
 import { downloadCertificate } from "../../services/certificateDownload";
+import { certificatePresentation } from "../../utils/certificatePresentation";
 
 export default function CertificateValidationScreen() {
   const initialCode = typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("codigo") || "";
@@ -36,7 +37,7 @@ export default function CertificateValidationScreen() {
       <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 20, paddingBottom: 20, borderBottomWidth: 1, borderColor: "#DCE1ED" }}>
         <Image source={require("../../../assets/icon.png")} style={{ width: 64, height: 64, backgroundColor: "#0B0B0F", borderRadius: 8 }} />
         <View style={{ flex: 1, minWidth: 180 }}>
-          <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 24, color: "#171923" }}>XIV SECOMP</Text>
+          <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: 24, color: "#171923" }}>{certificate ? `${certificatePresentation(certificate).edition} SECOMP` : "SECOMP UFSCar"}</Text>
           <Text style={{ fontFamily: "Inter_400Regular", color: "#555C6E", lineHeight: 22 }}>Validação de certificados</Text>
         </View>
         <Image accessibilityLabel="Departamento de Computação da UFSCar" source={require("../../../assets/certificate/logo-departamento-computacao-ufscar.png")} resizeMode="contain" style={{ width: 174, height: 44 }} />
@@ -54,7 +55,7 @@ export default function CertificateValidationScreen() {
       {certificate && <View style={{ gap: 20 }}>
         <Text accessibilityRole="header" style={{ color: "#087443", fontFamily: "Poppins_600SemiBold", fontSize: 22 }}>Certificado válido</Text>
         <Text style={{ color: "#171923", fontFamily: "Poppins_600SemiBold", fontSize: 20 }}>{certificate.participantName}</Text>
-        <Text style={{ color: "#171923", fontFamily: "Inter_400Regular", lineHeight: 24 }}>XIV SECOMP · {certificateWorkload(certificate.totalMinutes)}{"\n"}Emitido em {new Date(certificate.issuedAt).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}</Text>
+        <Text style={{ color: "#171923", fontFamily: "Inter_400Regular", lineHeight: 24 }}>{certificatePresentation(certificate).edition} SECOMP · {certificateWorkload(certificate.totalMinutes)}{"\n"}Emitido em {new Date(certificate.issuedAt).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}</Text>
         <Pressable accessibilityRole="button" disabled={downloading} onPress={async () => { setDownloading(true); setError(""); try { await downloadCertificate(certificate); } catch (e) { setError(certificateError(e)); } finally { setDownloading(false); } }} style={{ minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, padding: 12, backgroundColor: "#171923", borderRadius: 6 }}>
           <Download color="white" size={18} /><Text style={{ color: "white", fontFamily: "Inter_500Medium" }}>{downloading ? "Preparando PDF..." : "Baixar PDF"}</Text>
         </Pressable>

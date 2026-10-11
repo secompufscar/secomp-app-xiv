@@ -1,0 +1,88 @@
+# Manutenção dos certificados
+
+Revisão: 11/10/2026. Este guia descreve a implementação local, não confirma o deploy desta revisão. Para regras e contrato, consultar [emissão e validação web](certificate-notice-web.md) e o [guia de próximas edições da API](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/funcionalidades/certificados-proximas-edicoes.md).
+
+## Fluxo real
+
+1. `src/components/home/homeCertificate.tsx` abre Meus certificados. `src/screens/certificates/myCertificatesScreen.tsx` lista, seleciona e recupera documentos da própria conta; apenas o comando explícito de geração emite. Ver [guia da área autenticada](my-certificates-web.md).
+2. `src/services/certificates.ts` consulta `GET /certificates/mine`, `GET /certificates/mine/:code` e `POST /certificates/mine`, validando resumos, código, minutos, soma do anexo, URL/QR e apresentação. O servidor verifica credenciamento, presenças únicas e durações oficiais; o app não calcula elegibilidade.
+3. A API guarda o snapshot de versão 2: evento, atividades e `presentation` (`edition`, `eventName`, `issuer`, `city`, `location`, `templateId`). A consulta pública e a recuperação autenticada usam esse registro, não a edição atual.
+4. `src/screens/certificates/certificateValidationScreen.tsx` consulta `/validate/:code` sem credenciais e mostra a edição do certificado. Códigos inválidos/desconhecidos, revogados ou falhas de rede não oferecem download válido.
+5. `src/services/certificateDownload.web.ts` carrega logos e fontes do modelo e define o nome do download. `src/utils/certificateDocument.ts` escolhe o renderizador por `templateId`; `src/utils/certificateDocumentV1.ts` desenha o modelo `secomp-landscape-v1` com jsPDF/AutoTable.
+
+`scripts/certificates/create_certificate_model.py` é um gerador **ilustrativo independente**, com dados fictícios e saídas PDF/SVG/HTML. Não consulta o banco, não emite códigos e não altera o PDF do app. Para modificar o certificado real, começar pelos arquivos TypeScript acima. Manter o script e seus outputs locais; se o modelo ilustrativo também precisar mudar, revisá-lo separadamente.
+
+## Mapa do visual V1
+
+Todas as coordenadas abaixo estão em milímetros numa página A4 horizontal de 297 × 210 mm. Fontes estão em pontos. O código usa `text` para texto simples e `fitted` para diminuir apenas o que ultrapassa a largura disponível.
+
+| Alteração | Ponto de manutenção em `src/utils/certificateDocumentV1.ts` |
+| --- | --- |
+| Número da edição, ano, instituição e cidade | Argumento `presentation` e `certificate.event`; valores são persistidos pela API, não editar literais XIV/2026 |
+| Nome do evento, local e período | `frame`, texto principal após `Certificamos que` e datas de `certificate.event` |
+| Nome da pessoa | `fitted(certificate.participantName, ...)` na capa e no cabeçalho do anexo |
+| Textos fixos e comissão | Chamadas `text`/`fitted` da capa e `frame`; não inventar signatários |
+| Horas por extenso e abreviadas | `fullWorkload` na capa; `workload` na tabela; minutos vêm da API |
+| Logos e equilíbrio óptico | `logo`, `dcWidth = 40`, altura UFSCar de 14, centro Y de 18 e intervalo de 12; manter proporções das imagens |
+| Fontes e pesos | `addFileToVFS`, `addFont`, `text`, `fitted`, `styles`, `headStyles` e `footStyles`; Inter regular e Poppins SemiBold |
+| Cores e estrutura | `frame`, fundos, faixa lateral de 64,5 e linha verde de 1,3; cores explícitas em hexadecimal |
+| Margens e largura útil | Conteúdo começa em X=80, termina em X=279; texto principal dispõe de 199 mm |
+| Tabela e alinhamentos | `autoTable`: `startY = 60`, margens top=60/bottom=34/left=80/right=18, colunas 24/15/136/24 |
+| Espaçamento entre data e horário | Colunas 0/1 lado a lado; `columnStyles` e `didParseCell` ajustam largura, centralização e padding do cabeçalho |
+| Categorias e espaço entre linhas | `categoryLabels`, `didParseCell`, `didDrawCell`, fontSize 9, categoria 7,5 e padding inferior 3,6 no título |
+| Duração e total do anexo | Coluna 3 à direita, margem interna 2,5; `footStyles` Poppins 9; `showFoot = lastPage` |
+| Paginação | `rowPageBreak = avoid`, `willDrawPage` e loop final por página; não cortar atividades para forçar duas páginas |
+| Rodapé, link e QR | Loop final: linha Y=181, validação/código/endereço em 186/191/196, página em 202; QR X=251/Y=183/lado=24 |
+
+Os assets V1 ficam em `assets/certificate/v1/`: `secomp.png`, `dc.png`, `ufscar.png`, `Inter-Regular.ttf`, `Poppins-SemiBold.ttf` e a licença `OFL.txt`. São cópias versionadas: mudanças no ícone do app ou nos pacotes de fontes não devem substituir esses arquivos. O download e os testes carregam a mesma pasta; `tests/certificate-assets.test.cjs` confere seus hashes SHA-256 para detectar substituições acidentais.
+
+Horários das atividades usam componentes UTC, como o cronograma existente; emissão usa `America/Sao_Paulo`. Não mudar fuso para corrigir visual. Nomes de atividade são do snapshot; corrigir cadastro não muda documentos já emitidos. Reemissão é uma operação administrativa auditada, não um efeito de baixar PDF.
+
+## Criar outro visual
+
+O V1 estabelece a composição atual, incluindo as revisões visuais aprovadas para a XIV. Não há promessa de reproduzir o layout de PDFs baixados antes desse versionamento. A partir desta base, preservar renderizador e assets para downloads históricos.
+
+1. Copiar o renderizador para `certificateDocumentV2.ts` e os assets necessários para `assets/certificate/v2/`, com novo ID, por exemplo `secomp-landscape-v2`. Não substituir V1, suas fontes ou logos.
+2. Registrar o novo ID em `certificatePresentation.ts`, no dispatcher `certificateDocument.ts` e no carregamento de assets em `certificateDownload.web.ts`. O ID desconhecido deve continuar bloqueando o download, sem fallback silencioso.
+3. Implementar ajustes apenas no novo modelo. Manter um teste de PDF V1 histórico e adicionar testes V2 para conteúdos extensos, nomes longos, durações, logos, QR, link e paginação.
+4. Publicar suporte no app antes de habilitar emissões com o novo ID na API. Usar a configuração da edição somente para novas emissões. Consulta e reemissão antigas conservam o modelo registrado originalmente.
+
+`snapshot.version` é formato de dados, não versão do visual. Não regravar snapshots antigos para mudar a marca. Legado sem `presentation` é aceito exclusivamente para XIV/2026, com identidade congelada em `certificatePresentation.ts`; manter esse fallback quando outras edições forem adicionadas.
+
+O snapshot e o ID preservam conteúdo e seleção do modelo, não bytes idênticos de um PDF regenerado: jsPDF pode gerar metadados distintos e dependências precisam continuar sendo verificadas. Quando a preservação binária for necessária, guardar também o arquivo originalmente emitido, sem substituí-lo.
+
+## Próxima edição
+
+O app não rejeita um certificado apenas por ter ano diferente de 2026. A API exige cadastro aprovado e `CERTIFICATE_YEAR` explícito; o app exige metadados válidos e modelo suportado. Hoje apenas XIV/2026 está aprovada; XV/2027 dos testes é fictícia.
+
+Seguir o [procedimento da API](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/funcionalidades/certificados-proximas-edicoes.md) para evento, presença, credenciamento e plano oficial. Não trocar globalmente XIV por XV. `POST /mine` atende o ano configurado; `GET /mine` lista a última revisão já emitida de cada edição da conta, independentemente do ano configurado e da flag de emissão. Meus certificados permite selecionar e baixar históricos ativos com modelo suportado, além do acesso pelo código público. Não há primeira emissão retroativa de um ano escolhido no seletor.
+
+## Verificação e publicação
+
+```sh
+npm run typecheck
+npm test
+npm run build:web
+npx playwright install chromium
+npm run test:certificates:e2e
+```
+
+`tests/certificate-document.test.cjs` extrai conteúdo/alinhamentos/fontes, confere paginação e renderiza páginas para leitura independente do QR. Inclui nova edição sintética e prova que o certificado XIV continua XIV após a troca. `tests/certificates.test.cjs` verifica contrato, legado e rejeição de metadados/modelos desconhecidos.
+
+Inspecionar visualmente **todas** as páginas do PDF, não só texto extraído. Conferir capa/anexo, 13 horas por extenso, data/horário lado a lado, título longo, margem do QR, total alinhado, logos sem distorção e ausência de sobreposição. Na web, testar 320/1280 px, download, 404, 410, indisponibilidade e sessão expirada na consulta pública. Usar somente dados sintéticos em CI; PDFs reais e backups ficam privados.
+
+Para preservar um `dist` ou evidências locais existentes, exportar para outra pasta com `npx expo export --platform web --output-dir dist-NOME_NOVO`. Pastas `dist-*` são ignoradas pelo Git e excluídas do TypeScript: bundles minificados não devem entrar na checagem das fontes. Não apagar exports existentes para resolver erros de tipos. O E2E aceita `CERTIFICATE_WEB_ROOT` para essa pasta e `CERTIFICATE_E2E_OUTPUT` para outro destino de evidências; por padrão usa `dist` e `test-results/certificates`. `CERTIFICATE_BROWSER_CHANNEL=msedge` usa Edge instalado. A exportação alternativa não executa o `postbuild:web` de cópia da política de privacidade; a publicação normal deve continuar usando `npm run build:web`.
+
+PRs de app e API são separados. Fazer merge da API antes de publicá-la, conferir CI e publicar a API compatível antes do app. Não habilitar emissão antes de revisar o plano oficial e publicar a validação pública. Registrar teste local, merge e produção como estados diferentes. Rollback de app deve continuar suportando todo `templateId` já emitido.
+
+## Evidência local de 11/10/2026
+
+### Área Meus certificados
+
+A rodada posterior implementou seleção da última revisão por edição e consultas privadas, sem geração automática. Suíte completa do app com 105 casos, TypeScript, exportação web e E2E sintético em 320/1280 px aprovados. API com 144 casos unitários aprovados e 13 casos aprovados no MySQL isolado. Evidências e limitações detalhadas no [guia de Meus certificados](my-certificates-web.md#evidência-local-de-11102026). PRs, CI remota, merge e deploy permanecem pendentes; produção não foi alterada.
+
+### Versionamento do modelo
+
+TypeScript aprovado; suíte do app com 96 testes aprovada e teste adicional de hashes dos assets V1 aprovado (97 casos no conjunto). Exportação web concluída em pasta separada, após repetir fora do sandbox uma tentativa que havia compilado mas não conseguira gravar assets. E2E com Edge e API sintética aprovado em 320/1280 px: XIV legada, XV/2027 fictícia com metadados, retorno à XIV, downloads, 404/410, indisponibilidade e diálogo autenticado. Nenhuma requisição do E2E alcançou a API real.
+
+O certificado XIV existente foi renderizado localmente com o snapshot privado já disponível: duas páginas, 11 atividades, 780 minutos, sem mudança de código/QR; ambas as páginas foram inspecionadas com PDF.js e Poppler. Os QRs foram decodificados independentemente. Isto não é reemissão, nova homologação de conta real ou publicação. CI remota, merge e deploy desta revisão permanecem pendentes.
