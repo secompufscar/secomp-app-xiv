@@ -169,15 +169,15 @@ export default function MyCertificatesScreen(): ReactElement | null {
           <Text accessibilityRole="alert" style={{ ...regular, color: "#FDA4AF" }}>{listError}</Text>
           <Pressable accessibilityRole="button" onPress={() => void loadList()} style={{ ...button, borderWidth: 1, borderColor: "#737B8C" }}><RefreshCw color="white" size={18} /><Text style={{ color: "white" }}>Tentar novamente</Text></Pressable>
         </View> : <>
-          <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 12 }}>
-            <View style={{ flex: 1, maxWidth: 480, gap: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8 }}>
+            <View style={{ flex: 1, minWidth: 0, maxWidth: 480, gap: 8 }}>
               <Text style={regular}>Edição</Text>
-              <select aria-label="Edição do certificado" disabled={!items?.length} value={selected?.code ?? ""} onChange={event => void selectCertificate(items?.find(item => item.code === event.target.value) ?? null)} style={{ width: "100%", minHeight: 48, border: "1px solid #737B8C", borderRadius: 6, backgroundColor: "#14131C", color: "#FFFFFF", padding: 12, fontFamily: "Inter_400Regular", fontSize: 14 }}>
+              <select aria-label="Edição do certificado" disabled={!items?.length} value={selected?.code ?? ""} onChange={event => void selectCertificate(items?.find(item => item.code === event.target.value) ?? null)} style={{ width: "100%", height: 48, boxSizing: "border-box", border: "1px solid #737B8C", borderRadius: 6, backgroundColor: "#14131C", color: "#FFFFFF", padding: 12, fontFamily: "Inter_400Regular", fontSize: 14 }}>
                 {!items?.length && <option value="">Nenhum certificado</option>}
                 {items?.map(item => <option key={item.code} value={item.code}>{label(item)}{item.status === "revoked" ? " · Revogado" : item.status === "unavailable" ? " · Indisponível" : ""}</option>)}
               </select>
             </View>
-            <div title="Atualizar certificados"><Pressable accessibilityRole="button" accessibilityLabel="Atualizar certificados" onPress={() => void loadList()} style={{ ...button, width: 48, borderWidth: 1, borderColor: "#737B8C" }}><RefreshCw color="white" size={18} /></Pressable></div>
+            <div title="Atualizar certificados" style={{ display: "flex", flexShrink: 0, width: 48, height: 48 }}><Pressable accessibilityRole="button" accessibilityLabel="Atualizar certificados" onPress={() => void loadList()} style={{ ...button, width: 48, height: 48, borderWidth: 1, borderColor: "#737B8C" }}><RefreshCw color="white" size={18} /></Pressable></div>
           </View>
           {!items?.length && <Text style={regular}>Você ainda não possui certificados emitidos.</Text>}
           {selected && <View style={{ gap: 16, borderTopWidth: 1, borderColor: "#374151", paddingTop: 20 }}>
