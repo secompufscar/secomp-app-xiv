@@ -28,10 +28,10 @@ export function createCertificatePdf(certificate: CertificateData, assets: Asset
     const props = doc.getImageProperties(bytes), height = width * props.height / props.width;
     doc.addImage(bytes, "PNG", x, centerY - height / 2, width, height);
   }
-  const institutionalHeight = 14;
-  const dc = doc.getImageProperties(assets.dc), ufscar = doc.getImageProperties(assets.ufscar);
-  const dcWidth = institutionalHeight * dc.width / dc.height;
-  const ufscarWidth = institutionalHeight * ufscar.width / ufscar.height;
+  // The horizontal DC wordmark needs a smaller height for optical balance.
+  const dcWidth = 40;
+  const ufscar = doc.getImageProperties(assets.ufscar);
+  const ufscarWidth = 14 * ufscar.width / ufscar.height;
   const ufscarX = 279 - ufscarWidth;
   function frame(annex = false) {
     doc.setFillColor("#FCFCFF").rect(0, 0, 297, 210, "F");

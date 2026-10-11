@@ -89,7 +89,7 @@ test('PDF apresenta Palestra e Minicurso no singular sem alterar categorias do s
   assert.deepEqual(certificate, original);
 });
 
-test('PDF alinha DC e UFSCar com a mesma altura e sem distorcer suas proporcoes', async () => {
+test('PDF equilibra DC e UFSCar com tamanhos calibrados sem distorcer suas proporcoes', async () => {
   const { getDocument, OPS, Util } = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const certificate = { ...fixture, qrCode: await QRCode.toDataURL(fixture.validationUrl) };
   const doc = createCertificatePdf(certificate, assets);
@@ -113,10 +113,11 @@ test('PDF alinha DC e UFSCar com a mesma altura e sem distorcer suas proporcoes'
       assert.equal(logos.length, 2, `Logos ausentes na pagina ${number}`);
       const [dc, ufscar] = logos;
       for (const logo of logos) {
-        near(logo.matrix[3], 14 * mm);
         near(logo.matrix[0] / logo.matrix[3], logo.width / logo.height);
       }
-      near(dc.matrix[5], ufscar.matrix[5]);
+      near(dc.matrix[0], 40 * mm);
+      near(ufscar.matrix[3], 14 * mm);
+      near(dc.matrix[5] + dc.matrix[3] / 2, ufscar.matrix[5] + ufscar.matrix[3] / 2);
       near(ufscar.matrix[4] - dc.matrix[4] - dc.matrix[0], 12 * mm);
       near(ufscar.matrix[4] + ufscar.matrix[0], 279 * mm);
     }
