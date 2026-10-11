@@ -20,6 +20,8 @@ O banco da API armazena minutos, fonte da duração e exclusão da certificaçã
 
 ## PDF e validação
 
+Modelo de exemplo ADMIN: por regra confirmada em 11/10/2026, usa o mesmo gerador e aparência do PDF real, com `Nome de Exemplo` e código/QR deliberadamente inválidos, sem avisos extras no documento. O botão administrativo consulta somente dados transitórios e não emite nem persiste um certificado. Ver [contrato e seleção da amostra](my-certificates-web.md#certificado-de-teste-para-admin).
+
 O PDF A4 horizontal preserva as logos originais SECOMP, DC e UFSCar e as fontes Inter/Poppins em `assets/certificate/v1/`. Identificação da edição, instituição e local vêm de `presentation` no snapshot, e o ano vem de `event.year`; não são substituídos pelo ano atual. O modelo `secomp-landscape-v1` é escolhido por `src/utils/certificateDocument.ts` e desenhado por `src/utils/certificateDocumentV1.ts`. A primeira página mostra nome, período, carga horária total, emissão, código, link e QR. O anexo lista nome, categoria, data/início e duração das atividades do snapshot. Listas extensas continuam em páginas adicionais, repetindo logos, identificação, código e QR, sem truncar atividades. Horários de atividade seguem os componentes UTC usados pelo cronograma existente; a data de emissão usa America/Sao_Paulo.
 
 O app aceita outras edições com `presentation` explícita e modelo suportado. Respostas antigas sem esse campo são aceitas somente para XIV/2026; edição/modelo desconhecidos são rejeitados, sem gerar um PDF com a identidade atual por engano. O nome do download acompanha a edição do certificado. Para preservar o histórico, novos visuais recebem outro `templateId`, renderizador e assets, mantendo os anteriores.

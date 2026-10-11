@@ -20,9 +20,11 @@ Incremento funcional atual: app `5b547076` (PR #39) e API `5bc02005` (PR #44), A
 
 ## Mapa do visual V1
 
-A seleção de atividades da amostra é responsabilidade exclusiva da API (`certificateAdminPreviewPolicy.ts`), não deste desenho. Na XIV: somente SDD no bloco simultâneo, sem os outros três minicursos nem o workshop da Karina, total aprovado de 24 atividades/28 horas. O gerador administrativo usa a palavra "Amostra" e não afirma incluir todas as atividades ou as simultâneas. Nunca filtrar o PDF depois de recebê-lo: isso poderia separar o total do anexo. Para outra edição, revisar o bloco administrativo na API antes de publicar; preservar o renderizador real V1 e seus assets.
+A seleção de atividades da amostra é responsabilidade exclusiva da API (`certificateAdminPreviewPolicy.ts`), não deste desenho. Na XIV: somente SDD no bloco simultâneo, sem os outros três minicursos nem o workshop da Karina, total aprovado de 24 atividades/28 horas. Nunca filtrar o PDF depois de recebê-lo: isso poderia separar o total do anexo. Para outra edição, revisar o bloco administrativo na API antes de publicar; preservar o renderizador real V1 e seus assets.
 
-O certificado ADMIN de teste tem fluxo independente: `src/utils/certificateAdminPreviewDocument.ts` desenha capa/anexos explicitamente sem validade, sem afirmar presença; `src/utils/certificateAdminPreview.ts` exige nome, tipo e código fixos de teste. Usa cópias dos assets V1, mas não altera `certificateDocumentV1.ts` nem os certificados históricos. Para mudar somente essa amostra, editar seu gerador separado; isso não modifica o visual dos PDFs reais. Sua tabela usa colunas 24/15/127/33 mm, com datas/horários lado a lado, categorias discretas, total à direita e rodapé reservado de 34 mm. Os avisos de teste e a incompatibilidade do código com a validação real são invariantes, não opções de estilo. Ver [fluxo administrativo de teste](my-certificates-web.md#certificado-de-teste-para-admin).
+Nova regra ADMIN de 11/10/2026: a amostra é visualmente idêntica ao certificado real, com `Nome de Exemplo` e código/QR inválidos, sem faixas, avisos vermelhos, marca-d'água ou textos adicionais. `src/utils/certificateAdminPreviewDocument.ts` apenas valida o contrato e delega a `createCertificatePdf`, incluindo a seleção por `templateId`; não duplica mais o desenho. Usa os mesmos assets, textos, fontes, tabela, rodapé e paginação descritos neste mapa. Alterar o modelo real passa a atualizar também sua amostra, sem mexer nos registros antigos; novos visuais continuam exigindo versionamento. O teste compara os PNGs de todas as páginas, pixel a pixel, com a renderização normal dos mesmos dados.
+
+O fluxo administrativo continua separado da emissão. O cliente pede `GET /certificates/admin/preview?format=example`; o contrato exige `kind: admin-test`, nome fixo e código `0000000000000000000000000000000G`. O `G` final impede validação ou colisão com códigos reais hexadecimais, embora a largura tenha 32 caracteres. QR e link usam esse mesmo código; nada é persistido. `issuedAt` é o instante de preparo da amostra, apresentado como no modelo real, não uma emissão acadêmica. Sem `format=example`, a API conserva o contrato antigo somente para compatibilidade com clientes anteriores durante a publicação. Publicar a API compatível antes do app. Ver [fluxo administrativo de exemplo](my-certificates-web.md#certificado-de-teste-para-admin).
 
 Todas as coordenadas abaixo estão em milímetros numa página A4 horizontal de 297 × 210 mm. Fontes estão em pontos. O código usa `text` para texto simples e `fitted` para diminuir apenas o que ultrapassa a largura disponível.
 
@@ -97,6 +99,10 @@ Para preservar um `dist` ou evidências locais existentes, exportar para outra p
 PRs de app e API são separados. Fazer merge da API antes de publicá-la, conferir CI e publicar a API compatível antes do app. Não habilitar emissão antes de revisar o plano oficial e publicar a validação pública. Registrar teste local, merge e produção como estados diferentes. Rollback de app deve continuar suportando todo `templateId` já emitido.
 
 ## Evidência local de 11/10/2026
+
+### Modelo ADMIN fiel
+
+TypeScript e os 115 testes do app aprovados, sem casos ignorados; exportação em pasta nova e E2E com APIs sintéticas aprovados em 320/1280 px, sem chamadas à API real. O teste da amostra de 24 atividades/1680 minutos compara os pixels de **todas as páginas** com o renderizador normal, confere ausência de avisos extras, nome `Nome de Exemplo`, total e atividades, e decodifica o QR com o mesmo código inválido do link. O download usa `certificado-exemplo-secomp.pdf`, não emite nem muda a seleção ou o histórico. CI, MySQL e produção são etapas distintas, a confirmar nos PRs separados antes de publicar API e app, nessa ordem.
 
 ### Emissão no rodapé
 

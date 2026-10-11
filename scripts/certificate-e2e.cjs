@@ -16,8 +16,8 @@ const nextFixture = { ...fixture, code: nextCode, issuedAt: '2027-10-10T01:00:00
   validationUrl: `https://secomp-app-xiv.vercel.app/certificados?codigo=${nextCode}` };
 const replacementCode = 'E'.repeat(32);
 const replacementFixture = { ...fixture, code: replacementCode, validationUrl: `https://secomp-app-xiv.vercel.app/certificados?codigo=${replacementCode}` };
-const adminFixture = { ...fixture, kind: 'admin-test', code: 'TESTE-ADMIN-SEM-VALIDADE', participantName: 'Certificado Admin [ TESTE ]',
-  validationUrl: 'https://secomp-app-xiv.vercel.app/certificados?codigo=TESTE-ADMIN-SEM-VALIDADE',
+const adminFixture = { ...fixture, kind: 'admin-test', code: '0000000000000000000000000000000G', participantName: 'Nome de Exemplo',
+  validationUrl: 'https://secomp-app-xiv.vercel.app/certificados?codigo=0000000000000000000000000000000G',
   activities: [fixture.activities[0], ...Array.from({ length: 23 }, (_, i) => ({ ...fixture.activities[3],
     name: `Atividade ${i + 2}: ${fixture.activities[3].name}`, minutes: i === 0 ? 150 : i === 1 ? 90 : 60 }))] };
 adminFixture.totalMinutes = adminFixture.activities.reduce((sum, activity) => sum + activity.minutes, 0);
@@ -48,7 +48,10 @@ const server = http.createServer((req, res) => {
         if (url.origin === 'https://secomp-server-xiv-production.up.railway.app') {
           calls.push({ path: url.pathname, method: route.request().method(), auth: route.request().headers().authorization });
           const json = (body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
-          if (url.pathname.endsWith('/certificates/admin/preview')) return testPending ? json({ message: 'Duração oficial pendente.' }, 409) : json(adminFixture);
+          if (url.pathname.endsWith('/certificates/admin/preview')) {
+            assert.equal(url.searchParams.get('format'), 'example');
+            return testPending ? json({ message: 'Duração oficial pendente.' }, 409) : json(adminFixture);
+          }
           if (url.pathname.includes('/certificates/validate/')) return mode === 'next' ? json(nextFixture) : mode === 'success' ? json(fixture) : json({ message: 'Failure' }, mode === 'missing' ? 404 : mode === 'revoked' ? 410 : 503);
           if (url.pathname.endsWith('/certificates/mine')) {
             if (route.request().method() === 'POST') return mode === 'success' ? json(fixture) : json({ message: 'A organização ainda precisa definir a duração oficial.' }, 409);
@@ -167,16 +170,16 @@ const server = http.createServer((req, res) => {
       assert.ok(calls.filter(call => call.path.includes('/certificates/mine')).every(call => call.auth === 'Bearer synthetic-access'));
       await page.reload(); await page.getByRole('button', { name: 'Baixar PDF' }).waitFor();
       assert.equal(await editions.inputValue(), nextCode);
-      assert.equal(await page.getByRole('button', { name: 'Gerar certificado de teste', exact: true }).count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'Baixar modelo de exemplo', exact: true }).count(), 0);
       admin = true; await page.reload();
-      const testButton = page.getByRole('button', { name: 'Gerar certificado de teste', exact: true });
+      const testButton = page.getByRole('button', { name: 'Baixar modelo de exemplo', exact: true });
       await testButton.waitFor();
       const previousSelection = await editions.inputValue();
       const issuesBefore = calls.filter(call => call.path.endsWith('/certificates/mine') && call.method === 'POST').length;
       testPending = true; await testButton.click(); await page.getByText('Duração oficial pendente.', { exact: true }).waitFor();
       testPending = false;
       const testDownload = page.waitForEvent('download'); await testButton.click();
-      const testResult = await testDownload; assert.equal(testResult.suggestedFilename(), 'certificado-admin-teste-secomp.pdf');
+      const testResult = await testDownload; assert.equal(testResult.suggestedFilename(), 'certificado-exemplo-secomp.pdf');
       await testResult.saveAs(path.join(outputDir, `synthetic-admin-test-${width}.pdf`));
       assert.equal(await editions.inputValue(), previousSelection);
       assert.equal(calls.filter(call => call.path.endsWith('/certificates/mine') && call.method === 'POST').length, issuesBefore);
