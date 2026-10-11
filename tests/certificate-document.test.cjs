@@ -71,3 +71,20 @@ test('PDF pagina listas extensas preservando todas as atividades uma vez e o tot
   for (let i = 1; i <= 45; i++) assert.equal(annex.split(`Atividade ${i}:`).length - 1, 1, `Atividade ${i} perdida ou duplicada`);
   assert.ok(texts[0].includes('112h 30min')); assert.ok(texts.at(-1).includes('112h 30min'));
 });
+
+test('PDF apresenta Palestra e Minicurso no singular sem alterar categorias do snapshot', async () => {
+  const certificate = { ...fixture, totalMinutes: 240, activities: [
+    { ...fixture.activities[0], name: 'Segurança da informação e inteligência artificial: o que significa hackear o sistema?', category: 'Palestras', minutes: 60 },
+    { ...fixture.activities[0], name: 'PET - Cibersegurança', category: 'Minicursos', minutes: 180 },
+  ] };
+  certificate.qrCode = await QRCode.toDataURL(certificate.validationUrl);
+  const original = JSON.parse(JSON.stringify(certificate));
+  const texts = await inspect(createCertificatePdf(certificate, assets), certificate);
+  const annex = texts.slice(1).join(' ');
+  assert.match(annex, /\bPalestra\b/);
+  assert.match(annex, /\bMinicurso\b/);
+  assert.doesNotMatch(annex, /\b(Palestras|Minicursos)\b/);
+  assert.ok(annex.includes('hackear'));
+  assert.ok(annex.includes('PET - Cibersegurança'));
+  assert.deepEqual(certificate, original);
+});
