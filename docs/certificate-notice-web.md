@@ -14,6 +14,8 @@ O banco da API armazena minutos, fonte da duração e exclusão da certificaçã
 
 O PDF A4 horizontal preserva as logos originais SECOMP, DC e UFSCar, fontes Inter/Poppins, identificação da XIV edição e paleta do modelo. A primeira página mostra nome, período, carga horária total, emissão, código, link e QR. O anexo lista nome, categoria, data/início e duração das atividades do snapshot. Listas extensas continuam em páginas adicionais, repetindo logos, identificação, código e QR, sem truncar atividades. Horários de atividade seguem os componentes UTC usados pelo cronograma existente; a data de emissão usa America/Sao_Paulo.
 
+No cabeçalho de todas as páginas, DC e UFSCar têm a mesma altura de 14 mm, mantendo a proporção original de cada imagem, alinhamento vertical e 12 mm de espaço entre elas. Esse ajuste é somente de apresentação: não altera código, QR, presenças, horas nem exige reemissão do registro.
+
 O documento não inventa assinaturas ou nomes de signatários: identifica a comissão organizadora e usa a validação pública do registro. O PDF é gerado no navegador com jsPDF e AutoTable. Código, total, atividades e URL vêm da API. O código não muda ao baixar novamente e o total precisa corresponder ao anexo.
 
 No anexo, as categorias `Palestras` e `Minicursos` são apresentadas como `Palestra` e `Minicurso`. A conversão é somente de apresentação: não altera categorias no banco nem no snapshot; os demais rótulos são preservados. Nomes de atividade, inclusive a grafia de `hackear` e o minicurso `PET - Cibersegurança`, vêm do registro emitido pela API. Corrigir o cadastro não modifica certificados anteriores; a reemissão administrativa é necessária quando o título do snapshot precisa mudar.
