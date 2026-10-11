@@ -6,6 +6,8 @@ Guias: [edição administrativa de atividades na web](docs/activity-text-web.md)
 
 Área autenticada de certificados: [Meus certificados por edição](docs/my-certificates-web.md).
 
+Estado funcional em 11/10/2026: Meus certificados e modelos históricos publicados pelo PR #35, commit `8337d569`, após API do PR #40 publicada e validada. CI e deploys confirmados; revisões documentais posteriores não alteram esse código funcional. [Evidências e limites da publicação](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-release-2026-10-11.md).
+
 Ele é utilizado pelos participantes para realizar a inscrição no evento e em suas atividades, acompanhar novidades e acessar informações importantes. Para a organização, o aplicativo oferece ferramentas que facilitam o controle do evento, como o gerenciamento de atividades e a leitura de presença dos participantes.
 
 <br>

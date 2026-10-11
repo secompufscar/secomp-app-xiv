@@ -1,6 +1,12 @@
 # Meus certificados
 
-Implementação local de 11/10/2026. CI remota, merge e publicação desta revisão ainda não comprovados. Não houve emissão real ou alteração de produção nesta rodada.
+Publicado em 11/10/2026: app `8337d569` do [PR #35](https://github.com/secompufscar/secomp-app-xiv/pull/35), após publicação e validação da API `28780cc3` do [PR #40](https://github.com/secompufscar/secomp-server-xiv/pull/40). CI dos PRs/merges e deploys aprovados. [Evidência operacional](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-release-2026-10-11.md). Não houve emissão, reemissão ou escrita administrativa em produção nesta rodada.
+
+## Estado publicado
+
+[Meus certificados](https://secomp-app-xiv.vercel.app/MyCertificates) exige sessão; [validação pública](https://secomp-app-xiv.vercel.app/certificados) não exige login. Endpoints privados conferidos no deployment Railway `68f896cb-16ca-4439-8197-364afaa27a83`: lista/detalhe próprios 200, outra conta 404, próprio revogado 410, sem sessão 401 e `Cache-Control: no-store`. Cinco certificados existentes mantiveram hashes integrais antes/depois. Emissão segue habilitada para XIV/2026, sem alteração de variáveis ou migração adicional.
+
+App publicado exercitado em 320/1280 px com API sintética para fluxo privado e, separadamente, API real para validação pública/download. PDF histórico baixado conferido: duas páginas, 11 atividades/780 minutos, mesmo código/link/QR, sem cortes. Isso não comprova login interativo/refresh real, emissão V2 real ou histórico multi-edição em produção; XV/2027 continua exclusiva dos testes. Revisões apenas documentais posteriores não alteram o código funcional identificado acima.
 
 ## Comportamento
 
@@ -53,4 +59,4 @@ Publicar em PRs separados: conferir CI, integrar a API antes de publicá-la, pub
 
 Suíte completa do app: 105 testes aprovados, nenhum ignorado; TypeScript aprovado. Build da API e exportação web do app aprovados. API: 144 testes aprovados e 14 casos dependentes de MySQL ignorados na suíte unitária; o runner MySQL isolado executou seus 13 casos com sucesso, incluindo consulta por proprietário, última revisão por edição e leitura com emissão desabilitada. O teste de capacidade/inscrições fora desse runner não foi reexecutado. A repetição focada dos sete testes de edições/histórico também passou; a primeira tentativa sem acesso de rede local foi bloqueada pelo sandbox, não por uma falha de autorização da API.
 
-E2E com Edge, API sintética e nenhuma requisição à API real aprovado em 320/1280 px: seleção XIV/XV fictícia, download, revogado, modelo desconhecido, lista indisponível/vazia, geração explícita, reemissão e recarga da rota. Screenshots de ambas as larguras inspecionados, sem overflow ou sobreposição. Exports e evidências locais anteriores preservados em pastas separadas. O MySQL temporário foi desligado e seu datadir preservado; somente o schema aleatório criado pelo runner foi removido. Não houve migração adicional, alteração de produção ou emissão real. PRs, CI remota, merge e deploy ainda pendentes.
+E2E com Edge, API sintética e nenhuma requisição à API real aprovado em 320/1280 px: seleção XIV/XV fictícia, download, revogado, modelo desconhecido, lista indisponível/vazia, geração explícita, reemissão e recarga da rota. Screenshots de ambas as larguras inspecionados, sem overflow ou sobreposição. Exports e evidências locais anteriores preservados em pastas separadas. O MySQL temporário foi desligado e seu datadir preservado; somente o schema aleatório criado pelo runner foi removido. Não houve migração adicional, alteração de produção ou emissão real na etapa local. A integração/publicação posterior foi confirmada separadamente e está descrita em Estado publicado e na evidência operacional.
