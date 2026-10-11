@@ -39,7 +39,7 @@ function screen(overrides = {}, options = {}) {
     '@react-navigation/native': { useFocusEffect(fn) { const index = cursor++, previous = slots[index];
       if (!previous || previous.fn !== fn) { previous?.cleanup?.(); const slot = { fn }; slots[index] = slot; effects.push(() => { slot.cleanup = fn(); }); }
     } },
-    'lucide-react-native': Object.fromEntries(['Award', 'Download', 'ExternalLink', 'RefreshCw'].map(name => [name, name])),
+    'lucide-react-native': Object.fromEntries(['Award', 'ChevronDown', 'Download', 'ExternalLink', 'RefreshCw'].map(name => [name, name])),
     '../../components/app/appLayout': { default: 'AppLayout' }, '../../components/button/backButton': { default: 'BackButton' },
     '../../hooks/AuthContext': { useAuth: () => ({ user: userId ? { id: userId } : null, isParticipantView: participantView, canUseAdminTools: !!options.admin && !participantView }) },
     '../../services/certificates': services,
@@ -72,6 +72,10 @@ test('seletor e atualizar usam vao compacto e dimensoes estaveis sem encolher o 
   const tree = view.render();
   const select = tree.find(node => node.type === 'select');
   assert.equal(select.props.style.height, 48); assert.equal(select.props.style.boxSizing, 'border-box');
+  assert.equal(select.props.style.appearance, 'none'); assert.equal(select.props.style.padding, '12px 44px 12px 12px');
+  const chevron = tree.find(node => node.props?.['data-certificate-chevron'] === true);
+  assert.equal(chevron.props['aria-hidden'], 'true'); assert.equal(chevron.props.style.pointerEvents, 'none');
+  assert.equal(chevron.props.style.right, 12); assert.equal(chevron.props.style.width, 18);
   const row = tree.find(node => node.type === 'View' && node.props.style?.alignItems === 'flex-end');
   assert.equal(row.props.style.gap, 8);
   const wrapper = nodes(row).find(node => node.type === 'View' && node.props.style?.maxWidth === 480);
@@ -81,6 +85,14 @@ test('seletor e atualizar usam vao compacto e dimensoes estaveis sem encolher o 
   assert.equal(tooltip.props.style.width, 48); assert.equal(tooltip.props.style.height, 48);
   const refresh = nodes(tooltip).find(node => node.type === 'Pressable');
   assert.equal(refresh.props.style.width, 48); assert.equal(refresh.props.style.height, 48);
+});
+
+test('seta decorativa acompanha o seletor desabilitado e nao intercepta cliques', async () => {
+  const view = screen({ list: async () => [] }); await settle();
+  const tree = view.render();
+  assert.equal(tree.find(node => node.type === 'select').props.disabled, true);
+  const chevron = tree.find(node => node.props?.['data-certificate-chevron'] === true);
+  assert.equal(chevron.props.style.opacity, 0.5); assert.equal(chevron.props.style.pointerEvents, 'none');
 });
 
 test('ADMIN e USER nao possuem fluxo de amostra; historico vazio nao emite automaticamente', async () => {
