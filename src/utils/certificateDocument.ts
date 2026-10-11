@@ -6,6 +6,7 @@ type Assets = { secomp: Uint8Array; dc: Uint8Array; ufscar: Uint8Array; regular:
 const workload = (minutes: number) => `${Math.floor(minutes / 60)}h${minutes % 60 ? ` ${minutes % 60}min` : ""}`;
 const date = (value: string, timeZone = "UTC") => new Date(value).toLocaleDateString("pt-BR", { timeZone });
 const binary = (bytes: Uint8Array) => Array.from(bytes, b => String.fromCharCode(b)).join("");
+const categoryLabels: Record<string, string> = { Palestras: "Palestra", Minicursos: "Minicurso" };
 
 export function createCertificatePdf(certificate: CertificateData, assets: Assets) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4", compress: true });
@@ -69,7 +70,7 @@ export function createCertificatePdf(certificate: CertificateData, assets: Asset
   autoTable(doc, {
     startY: 62, margin: { left: 80, right: 18, top: 62, bottom: 36 },
     head: [["DATA / INÍCIO", "ATIVIDADE COM PRESENÇA", "DURAÇÃO"]],
-    body: certificate.activities.map(a => [a.startsAt ? `${date(a.startsAt)}\n${a.startsAt.slice(11, 16)}` : "Não informado", `${a.name}\n${a.category}`, workload(a.minutes)]),
+    body: certificate.activities.map(a => [a.startsAt ? `${date(a.startsAt)}\n${a.startsAt.slice(11, 16)}` : "Não informado", `${a.name}\n${categoryLabels[a.category] ?? a.category}`, workload(a.minutes)]),
     foot: [[{ content: "CARGA HORÁRIA TOTAL", colSpan: 2 }, workload(certificate.totalMinutes)]],
     showFoot: "lastPage", theme: "plain", rowPageBreak: "avoid",
     styles: { font: "Inter", fontStyle: "normal", fontSize: 9, cellPadding: 3, overflow: "linebreak", textColor: "#171923", lineColor: "#E0E3ED", lineWidth: { bottom: 0.2 } },
