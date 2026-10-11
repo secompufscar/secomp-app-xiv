@@ -56,12 +56,12 @@ export function createAdminTestCertificatePdf(input: AdminTestCertificate, asset
   text("Documento de teste administrativo", 80, 72, 11);
   fitted(certificate.participantName, 80, 87, 198, 27, true);
   doc.setDrawColor("#1400FF").setLineWidth(0.8).line(80, 94, 105, 94);
-  fitted(`Todas as atividades certificáveis da ${presentation.edition} SECOMP, de ${date(certificate.event.startDate)} a ${date(certificate.event.endDate)}.`, 80, 108, 199, 10);
+  fitted(`Amostra de atividades certificáveis da ${presentation.edition} SECOMP, de ${date(certificate.event.startDate)} a ${date(certificate.event.endDate)}.`, 80, 108, 199, 10);
   text("Este documento não comprova presença nem concede horas complementares.", 80, 116, 9);
   doc.setFillColor("#EEF0FC").roundedRect(80, 125, 199, 25, 2, 2, "F");
   text("CARGA HORÁRIA TOTAL DAS ATIVIDADES", 86, 133, 8);
   fitted(certificateWorkload(certificate.totalMinutes), 86, 145, 187, 23, true, "#1400FF");
-  text("Inclui atividades simultâneas; não representa a carga horária de um participante.", 80, 161, 9);
+  text("Amostra administrativa; não representa a carga horária de um participante.", 80, 161, 9);
   text("QR e código de teste: validação sempre inválida.", 80, 174, 10, true, "#B91C1C");
   doc.addPage();
   doc.setLineHeightFactor(1);

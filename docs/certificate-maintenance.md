@@ -16,6 +16,8 @@ Incremento funcional atual: app `bd3a82a7` (PR #37) e API `dd9085ae` (PR #42), A
 
 ## Mapa do visual V1
 
+A seleção de atividades da amostra é responsabilidade exclusiva da API (`certificateAdminPreviewPolicy.ts`), não deste desenho. Na XIV: somente SDD no bloco simultâneo, sem os outros três minicursos nem o workshop da Karina, total aprovado de 24 atividades/28 horas. O gerador administrativo usa a palavra "Amostra" e não afirma incluir todas as atividades ou as simultâneas. Nunca filtrar o PDF depois de recebê-lo: isso poderia separar o total do anexo. Para outra edição, revisar o bloco administrativo na API antes de publicar; preservar o renderizador real V1 e seus assets.
+
 O certificado ADMIN de teste tem fluxo independente: `src/utils/certificateAdminPreviewDocument.ts` desenha capa/anexos explicitamente sem validade, sem afirmar presença; `src/utils/certificateAdminPreview.ts` exige nome, tipo e código fixos de teste. Usa cópias dos assets V1, mas não altera `certificateDocumentV1.ts` nem os certificados históricos. Para mudar somente essa amostra, editar seu gerador separado; isso não modifica o visual dos PDFs reais. Sua tabela usa colunas 24/15/127/33 mm, com datas/horários lado a lado, categorias discretas, total à direita e rodapé reservado de 34 mm. Os avisos de teste e a incompatibilidade do código com a validação real são invariantes, não opções de estilo. Ver [fluxo administrativo de teste](my-certificates-web.md#certificado-de-teste-para-admin).
 
 Todas as coordenadas abaixo estão em milímetros numa página A4 horizontal de 297 × 210 mm. Fontes estão em pontos. O código usa `text` para texto simples e `fitted` para diminuir apenas o que ultrapassa a largura disponível.
