@@ -1,6 +1,6 @@
 # Manutenção dos certificados
 
-Revisão: 11/10/2026. Este guia descreve o código do repositório; integração e publicação são verificadas separadamente. A amostra ADMIN e o protótipo Python ilustrativo foram retirados. O gerador real permanece em TypeScript. O refinamento aprovado da capa V1 integra a comissão organizadora à declaração de participação, sem identificação solta abaixo das horas.
+Revisão: 11/10/2026. Este guia descreve o código do repositório; integração e publicação são verificadas separadamente. A amostra ADMIN e o protótipo Python ilustrativo foram retirados. O gerador real permanece em TypeScript. O refinamento aprovado da capa V1 integra a comissão organizadora à declaração de participação e redistribui o bloco central, sem identificação solta abaixo das horas.
 
 Consultar também [Meus certificados](my-certificates-web.md), [emissão e validação](certificate-notice-web.md) e [próximas edições da API](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/funcionalidades/certificados-proximas-edicoes.md). O balanço de testes e publicação fica na [revisão técnica](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-review-2026-10-11.md).
 
@@ -22,7 +22,8 @@ Todas as coordenadas abaixo estão em milímetros numa página A4 horizontal de 
 | Nome do evento, local e período | `frame`, texto principal após a declaração da comissão e datas de `certificate.event` |
 | Nome da pessoa | `fitted(certificate.participantName, ...)` na capa e no cabeçalho do anexo |
 | Data e horário de emissão com segundos | `src/utils/certificateIssuedAt.ts`, usado no rodapé V1, em Meus certificados e na validação pública; prefixo `Emitido em`, somente `issuedAt` persistido |
-| Textos fixos e comissão | Chamadas `text`/`fitted` da capa e `frame`; abertura `A Comissão Organizadora da ${presentation.edition} SECOMP certifica que`, em X=80/Y=72, largura 199 e fonte 11; não repetir a comissão abaixo das horas nem inventar signatários |
+| Textos fixos e comissão | Chamadas `text`/`fitted` da capa e `frame`; abertura `A Comissão Organizadora da ${presentation.edition} SECOMP certifica que`, em X=80/Y=77, largura 199 e fonte 11; não repetir a comissão abaixo das horas nem inventar signatários |
+| Distribuição vertical da capa | Declaração Y=77, nome Y=94, sublinhado Y=101, participação Y=117 e período/local Y=125; faixa de horas Y=136 até 161, rótulo Y=144 e total Y=156; manter 20 mm até o divisor do rodapé em Y=181 |
 | Horas por extenso e abreviadas | `fullWorkload` na capa; `workload` na tabela; minutos vêm da API |
 | Logos e equilíbrio óptico | `logo`, `dcWidth = 40`, altura UFSCar de 14, centro Y de 18 e intervalo de 12; manter proporções das imagens |
 | Fontes e pesos | `addFileToVFS`, `addFont`, `text`, `fitted`, `styles`, `headStyles` e `footStyles`; Inter regular e Poppins SemiBold |
