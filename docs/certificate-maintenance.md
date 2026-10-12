@@ -1,6 +1,6 @@
 # Manutenção dos certificados
 
-Revisão: 11/10/2026. Este guia descreve o código do repositório; integração e publicação são verificadas separadamente. A amostra ADMIN e o protótipo Python ilustrativo foram retirados. O gerador real permanece em TypeScript, sem alteração do visual V1 nesta revisão.
+Revisão: 11/10/2026. Este guia descreve o código do repositório; integração e publicação são verificadas separadamente. A amostra ADMIN e o protótipo Python ilustrativo foram retirados. O gerador real permanece em TypeScript. O refinamento aprovado da capa V1 integra a comissão organizadora à declaração de participação, sem identificação solta abaixo das horas.
 
 Consultar também [Meus certificados](my-certificates-web.md), [emissão e validação](certificate-notice-web.md) e [próximas edições da API](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/funcionalidades/certificados-proximas-edicoes.md). O balanço de testes e publicação fica na [revisão técnica](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-review-2026-10-11.md).
 
@@ -19,10 +19,10 @@ Todas as coordenadas abaixo estão em milímetros numa página A4 horizontal de 
 | Alteração | Ponto de manutenção em `src/utils/certificateDocumentV1.ts` |
 | --- | --- |
 | Número da edição, ano, instituição e cidade | Argumento `presentation` e `certificate.event`; valores são persistidos pela API, não editar literais XIV/2026 |
-| Nome do evento, local e período | `frame`, texto principal após `Certificamos que` e datas de `certificate.event` |
+| Nome do evento, local e período | `frame`, texto principal após a declaração da comissão e datas de `certificate.event` |
 | Nome da pessoa | `fitted(certificate.participantName, ...)` na capa e no cabeçalho do anexo |
 | Data e horário de emissão com segundos | `src/utils/certificateIssuedAt.ts`, usado no rodapé V1, em Meus certificados e na validação pública; prefixo `Emitido em`, somente `issuedAt` persistido |
-| Textos fixos e comissão | Chamadas `text`/`fitted` da capa e `frame`; não inventar signatários |
+| Textos fixos e comissão | Chamadas `text`/`fitted` da capa e `frame`; abertura `A Comissão Organizadora da ${presentation.edition} SECOMP certifica que`, em X=80/Y=72, largura 199 e fonte 11; não repetir a comissão abaixo das horas nem inventar signatários |
 | Horas por extenso e abreviadas | `fullWorkload` na capa; `workload` na tabela; minutos vêm da API |
 | Logos e equilíbrio óptico | `logo`, `dcWidth = 40`, altura UFSCar de 14, centro Y de 18 e intervalo de 12; manter proporções das imagens |
 | Fontes e pesos | `addFileToVFS`, `addFont`, `text`, `fitted`, `styles`, `headStyles` e `footStyles`; Inter regular e Poppins SemiBold |
@@ -61,7 +61,7 @@ O V1 estabelece a composição atual, incluindo as revisões visuais aprovadas p
 
 `snapshot.version` é formato de dados, não versão do visual. Não regravar snapshots antigos para mudar a marca. Legado sem `presentation` é aceito exclusivamente para XIV/2026, com identidade congelada em `certificatePresentation.ts`; manter esse fallback quando outras edições forem adicionadas.
 
-O snapshot e o ID preservam conteúdo e seleção do modelo, não bytes idênticos de um PDF regenerado: jsPDF pode gerar metadados distintos e dependências precisam continuar sendo verificadas. Quando a preservação binária for necessária, guardar também o arquivo originalmente emitido, sem substituí-lo.
+O snapshot e o ID preservam conteúdo e seleção do modelo, não bytes idênticos de um PDF regenerado: jsPDF pode gerar metadados distintos e dependências precisam continuar sendo verificadas. O refinamento da declaração V1 aprovado em 11/10/2026 também aparece ao baixar novamente certificados desse modelo, sem alterar snapshots, emissão, códigos ou QRs; arquivos já baixados não são modificados. Isso não autoriza substituir V1 por um visual de outra edição. Quando a preservação binária for necessária, guardar também o arquivo originalmente emitido, sem substituí-lo.
 
 ## Próxima edição
 
