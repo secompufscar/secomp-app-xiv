@@ -37,6 +37,7 @@ function screen({ role = 'ADMIN', platform = 'web', enrollment = false, capacity
     '@expo/vector-icons/FontAwesome6': noop, '../../components/button/backButton': noop,
     '../../components/button/button': props => jsx('Text', { children: props.title }),
     '../../components/info/infoRow': props => jsx('View', { children: [jsx('Text', { children: props.mainText }), jsx('Text', { children: props.subText })] }),
+    '../../utils/activityCertification': require('./helpers/load-typescript.cjs').loadTypescript(path.resolve(__dirname, '../src/utils/activityCertification.ts')),
     '../../components/overlay/errorOverlay': noop, '../../components/activity/activityTextEditor': noop,
   };
   dependencies['react-native'].Platform = { OS: platform };

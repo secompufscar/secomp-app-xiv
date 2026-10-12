@@ -3,9 +3,9 @@ import { View, Text, Pressable, StatusBar, Platform, ActivityIndicator, FlatList
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { ParamListBase, useFocusEffect, useNavigation } from "@react-navigation/native";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useRef } from "react";
 import { getActivities, deleteActivity } from "../../services/activities";
-import { getImagesByActivityId, deleteActivityImageById } from "../../services/activityImage";
+import { activityCertificationLabel } from "../../utils/activityCertification";
 import { colors } from "../../styles/colors";
 import ConfirmationOverlay from "../../components/overlay/confirmationOverlay";
 import ErrorOverlay from "../../components/overlay/errorOverlay";
@@ -22,7 +22,8 @@ export default function ActivityAdmin() {
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [toDeleteId, setToDeleteId] = useState<string | null>(null);
-  const [imagesToDelete, setImagesToDelete] = useState<ActivityImage[]>([]);
+  const deleting = useRef(false);
+  const [deleteError, setDeleteError] = useState("Não foi possível excluir esta atividade");
 
   useFocusEffect(
     useCallback(() => {
@@ -53,35 +54,26 @@ export default function ActivityAdmin() {
   const confirmDelete = async (id: string) => {
     setToDeleteId(id);
 
-    try {
-      const images = await getImagesByActivityId(id);
-      setImagesToDelete(images);
-    } catch {
-      setImagesToDelete([]);
-    }
-
     setModalVisible(true);
   };
 
   const handleDelete = async () => {
-    if (!toDeleteId) return;
+    if (!toDeleteId || deleting.current) return;
+    deleting.current = true;
 
     setModalVisible(false);
     setErrorModalVisible(false);
 
     try {
-      if (imagesToDelete.length > 0) {
-        await Promise.all(imagesToDelete.map(img => deleteActivityImageById(img.id)));
-      }
-
       await deleteActivity(toDeleteId);
       setActivities(prevList => prevList.filter(item => item.id !== toDeleteId));
-    } catch {
+    } catch (error: any) {
+      setDeleteError(error.response?.data?.message || "Não foi possível excluir esta atividade");
       setErrorModalVisible(true);
     } finally {
+      deleting.current = false;
       setModalVisible(false);
       setToDeleteId(null);
-      setImagesToDelete([]);
     }
   };
 
@@ -96,9 +88,10 @@ export default function ActivityAdmin() {
           <View className="flex-1 flex-col gap-1">
             <Text className="text-white font-poppinsMedium line-clamp-1">{item.nome}</Text>
             <Text className="text-sm text-gray-600 font-interMedium line-clamp-1">{item.palestranteNome}</Text>
+            <Text className="text-sm text-gray-400 font-inter">{activityCertificationLabel(item)}</Text>
           </View>
 
-          <Pressable onPress={(e) => {
+          <Pressable accessibilityRole="button" accessibilityLabel={`Excluir ${item.nome}`} onPress={(e) => {
             e.stopPropagation();
             if (item.id) {
               confirmDelete(item.id);
@@ -183,7 +176,7 @@ export default function ActivityAdmin() {
       <ConfirmationOverlay
         visible={modalVisible}
         title="Confirmar exclusão"
-        message="Tem certeza que deseja deletar esta atividade?"
+        message="Excluir esta atividade? Atividades com presenças ou certificados históricos não podem ser excluídas."
         onCancel={() => {setModalVisible(false)}}
         onConfirm={handleDelete}
         confirmText="Excluir"
@@ -192,7 +185,7 @@ export default function ActivityAdmin() {
       <ErrorOverlay
         visible={errorModalVisible}
         title="Erro ao excluir"
-        message="Não foi possível excluir esta atividade"
+        message={deleteError}
         onConfirm={() => {setErrorModalVisible(false)}}
         confirmText="OK"
       />

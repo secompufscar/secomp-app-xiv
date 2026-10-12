@@ -17,6 +17,7 @@ import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import BackButton from "../../components/button/backButton";
 import Button from "../../components/button/button";
 import InfoRow from "../../components/info/infoRow";
+import { activityCertificationLabel } from "../../utils/activityCertification";
 import ErrorOverlay from "../../components/overlay/errorOverlay";
 import ActivityTextEditor from "../../components/activity/activityTextEditor";
 
@@ -242,6 +243,7 @@ export default function ActivityDetails({ activity: resolvedActivity }: { activi
                 subText={getTime()}
               />
 
+              <Text className="text-gray-400 font-inter text-sm mb-4">{activityCertificationLabel({ ...activity, categoria: category })}</Text>
               {showCapacity && <View className="flex flex-row w-full gap-4">
                 <InfoRow
                   icon={faUser}
@@ -370,7 +372,7 @@ export default function ActivityDetails({ activity: resolvedActivity }: { activi
 
       {canEditText && isEditingText && (
         <ActivityTextEditor
-          activity={activity}
+          activity={{ ...activity, categoria: category }}
           onPhotoSaved={(photo) => setPalestranteImageUrl(photo.imageUrl)}
           onCancel={() => setIsEditingText(false)}
           onSaved={(updated) => {

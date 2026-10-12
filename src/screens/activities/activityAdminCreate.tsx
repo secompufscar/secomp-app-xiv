@@ -1,5 +1,5 @@
 import ParticipantViewToggle from "../../components/app/participantViewToggle";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { View, Text, Pressable, StatusBar, Platform, ActivityIndicator, ScrollView, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, ParamListBase, useFocusEffect } from "@react-navigation/native";
@@ -18,6 +18,8 @@ import WarningOverlay from "../../components/overlay/warningOverlay";
 import BackButton from "../../components/button/backButton";
 import Button from "../../components/button/button";
 import DatePicker from "react-datepicker";
+import ActivityCertificateFields from "../../components/activity/activityCertificateFields";
+import { certificationForm, certificationPayload } from "../../utils/activityCertification";
 
 type ActivityAdminCreateNavigationProp = NativeStackNavigationProp<ParamListBase>;
 
@@ -34,6 +36,9 @@ export default function ActivityAdminCreate() {
   const [points, setPoints] = useState<string>("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [certification, setCertification] = useState(() => certificationForm());
+  const saving = useRef(false);
+  const createdId = useRef<string | null>(null);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -135,6 +140,11 @@ export default function ActivityAdminCreate() {
   };
 
   const handleCreateActivity = async () => {
+    if (saving.current) return;
+    if (createdId.current) {
+      navigation.navigate("ActivityAdminUpdate", { id: createdId.current });
+      return;
+    }
     if (
       !name.trim() ||
       !speakerName.trim() ||
@@ -164,6 +174,15 @@ export default function ActivityAdminCreate() {
       return;
     }
 
+    let certificateData;
+    try {
+      certificateData = certificationPayload(certification, { nome: name, categoria: categories.find(category => category.id === selectedCategoryId) });
+    } catch (error: any) {
+      setWarningMessage(error.message);
+      setWarningModalVisible(true);
+      return;
+    }
+    saving.current = true;
     setIsLoading(true);
 
     try {
@@ -186,9 +205,11 @@ export default function ActivityAdminCreate() {
         points: parsedPoints,
         categoriaId: selectedCategoryId,
         local: location,
+        ...certificateData,
       };
 
       const createdActivity = await createActivity(activityData);
+      createdId.current = createdActivity.id;
 
       if (activityImage) {
         const formDataActivity = new FormData();
@@ -207,9 +228,10 @@ export default function ActivityAdminCreate() {
       navigation.goBack();
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || "Falha ao criar a atividade.";
-      setErrorMessage(errorMessage);
+      setErrorMessage(createdId.current ? `A atividade foi criada, mas o envio das imagens falhou. Abra a edição para concluir. ${errorMessage}` : errorMessage);
       setErrorModalVisible(true);
     } finally {
+      saving.current = false;
       setIsLoading(false);
     }
   };
@@ -382,6 +404,8 @@ export default function ActivityAdminCreate() {
               </View>
 
               {/* Local */}
+              <ActivityCertificateFields value={certification} onChange={setCertification} name={name}
+                category={categories.find(category => category.id === selectedCategoryId)} disabled={isLoading} />
               <View className="w-full">
                 <Text className="text-gray-400 text-sm font-inter mb-2">Local</Text>
                 <Input>
@@ -458,7 +482,7 @@ export default function ActivityAdminCreate() {
                 )}
               </View>
 
-              <Button title="Criar" className="mt-auto" loading={isLoading} onPress={handleCreateActivity} />
+              <Button title={createdId.current ? "Abrir edição da atividade criada" : "Criar"} className="mt-auto" loading={isLoading} disabled={isLoading || categoriesLoading || !!categoriesError} onPress={handleCreateActivity} />
             </View>
           </ScrollView>
         </View>

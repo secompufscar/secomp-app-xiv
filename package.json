@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.cjs",
     "test:certificates:e2e": "node scripts/certificate-e2e.cjs",
+    "test:activities:e2e": "node scripts/activity-certification-e2e.cjs",
     "verify": "npm run typecheck && npm test && npm run build:web"
   },
   "dependencies": {

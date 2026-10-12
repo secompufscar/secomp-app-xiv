@@ -1,6 +1,7 @@
 import api from "./api";
 
 export type UpdateActivityData = Partial<Activity>;
+export type CreateActivityData = Omit<Activity, 'id'> & { durationMinutes: number; durationSource: string; certificateExcluded: boolean };
 
 // Busca todas as atividades
 export const getActivities = async (): Promise<Activity[]> => {
@@ -15,7 +16,7 @@ export const getActivityId = async (id: string): Promise<Activity> => {
 };
 
 // Cria uma nova atividade
-export const createActivity = async (activityData: Omit<Activity, 'id'>): Promise<Activity> => {
+export const createActivity = async (activityData: CreateActivityData): Promise<Activity> => {
   const response = await api.post("/activities/", activityData);
   return response.data;
 };
