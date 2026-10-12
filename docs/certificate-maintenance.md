@@ -1,6 +1,6 @@
 # Manutenção dos certificados
 
-Revisão: 11/10/2026. Este guia descreve o código do repositório; integração e publicação são verificadas separadamente. O protótipo Python ilustrativo foi retirado. A opção ADMIN de baixar exemplo usa o mesmo gerador TypeScript, renderizador e assets dos participantes, sem modelo visual separado. O refinamento aprovado da capa V1 integra a comissão organizadora à declaração de participação e redistribui o bloco central, sem identificação solta abaixo das horas.
+Revisão: 12/10/2026. Este guia descreve o código do repositório; integração e publicação são verificadas separadamente. O protótipo Python ilustrativo foi retirado. A opção ADMIN de baixar exemplo usa o mesmo gerador TypeScript, renderizador e assets dos participantes, sem modelo visual separado. O refinamento aprovado da capa V1 integra a comissão organizadora à declaração de participação e redistribui o bloco central, sem identificação solta abaixo das horas.
 
 Consultar também [Meus certificados](my-certificates-web.md), [emissão e validação](certificate-notice-web.md) e [próximas edições da API](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/funcionalidades/certificados-proximas-edicoes.md). O balanço de testes e publicação fica na [revisão técnica](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-review-2026-10-11.md).
 
@@ -32,7 +32,7 @@ Todas as coordenadas abaixo estão em milímetros numa página A4 horizontal de 
 | Margens e largura útil | Conteúdo começa em X=80, termina em X=279; texto principal dispõe de 199 mm |
 | Tabela e alinhamentos | `autoTable`: `startY = 60`, margens top=60/bottom=34/left=80/right=18, colunas 24/15/136/24 |
 | Espaçamento entre data e horário | Colunas 0/1 lado a lado; `columnStyles` e `didParseCell` ajustam largura, centralização e padding do cabeçalho |
-| Categorias e espaço entre linhas | `categoryLabels`, `didParseCell`, `didDrawCell`, fontSize 9, categoria 7,5 e padding inferior 3,6 no título |
+| Títulos, categorias e espaço entre linhas | Cópia local `activities`, `categoryLabels`, `didParseCell`, `didDrawCell`, fontSize 9, categoria 7,5 e padding inferior 3,6 no título |
 | Duração e total do anexo | Coluna 3 à direita, margem interna 2,5; `footStyles` Poppins 9; `showFoot = lastPage` |
 | Paginação | `rowPageBreak = avoid`, `willDrawPage` e loop final por página; não cortar atividades para forçar duas páginas |
 | Rodapé, link e QR | Loop final: linha Y=181; emissão/código/endereço em 187/194/201 (fontes 8/9/7 pontos, largura 165), paginação X=11/Y=204/largura=44 em 7 pontos na faixa lateral; QR X=251/Y=183/lado=24 |
@@ -40,6 +40,10 @@ Todas as coordenadas abaixo estão em milímetros numa página A4 horizontal de 
 Os assets V1 ficam em `assets/certificate/v1/`: `secomp.png`, `dc.png`, `ufscar.png`, `Inter-Regular.ttf`, `Poppins-SemiBold.ttf` e a licença `OFL.txt`. São cópias versionadas: mudanças no ícone do app ou nos pacotes de fontes não devem substituir esses arquivos. O download e os testes carregam a mesma pasta; `tests/certificate-assets.test.cjs` confere seus hashes SHA-256 para detectar substituições acidentais.
 
 Horários das atividades usam componentes UTC, como o cronograma existente; emissão usa `America/Sao_Paulo`. Não mudar fuso para corrigir visual. Nomes de atividade são do snapshot; corrigir cadastro não muda documentos já emitidos. Reemissão é uma operação administrativa auditada, não um efeito de baixar PDF.
+
+O refinamento do anexo aprovado em 12/10/2026 usa `ATIVIDADE` como cabeçalho. Somente na apresentação do PDF, uma categoria `Mesa-redonda` ou um título iniciado por `Mesa Redonda`/`Mesa-redonda` identifica esse tipo e recebe o rótulo `Mesa-redonda`, inclusive quando o snapshot usa `Outros`. Remove-se apenas o prefixo inicial seguido de dois-pontos e de assunto não vazio; o restante do título é preservado. Menções no meio do título, nomes sem dois-pontos e títulos sem assunto não são recortados. As demais categorias continuam como antes. A cópia local não altera snapshots, cadastros, horas, emissão, revisões, códigos ou QRs; vale igualmente para PDF real e exemplo ADMIN. Data ausente usa `Não informada`, concordando com o cabeçalho `DATA`. `tests/certificate-document.test.cjs` cobre esses casos e a preservação integral da entrada. PDFs já baixados não mudam.
+
+A API também fornece `Mesa-redonda` para os três IDs aprovados da XIV, independentemente do grupo `Outros` usado no cronograma. A mesa de curricularização pode assim usar o título completo `Da Sala de Aula à Comunidade: Desafios e Práticas da Curricularização da Extensão na Docência Universitária` sem depender de prefixo. O PDF preserva esse título integral; documentos antigos não recebem dados atuais do cadastro sem reemissão.
 
 ### Horário de emissão com segundos
 

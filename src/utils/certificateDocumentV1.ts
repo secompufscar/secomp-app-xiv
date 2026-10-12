@@ -75,10 +75,19 @@ export function createCertificatePdfV1(certificate: CertificateData, assets: Cer
 
   doc.addPage();
   doc.setLineHeightFactor(1);
+  const activities = certificate.activities.map(activity => {
+    const roundTable = /^mesa(?:\s+|-)\s*redonda(?:\s|:|$)/i.test(activity.name.trimStart())
+      || /^mesa(?:\s+|-)\s*redonda$/i.test(activity.category.trim());
+    return {
+      ...activity,
+      name: roundTable ? activity.name.replace(/^\s*mesa(?:\s+|-)\s*redonda\s*:\s*(?=\S)/i, "") : activity.name,
+      category: roundTable ? "Mesa-redonda" : categoryLabels[activity.category] ?? activity.category,
+    };
+  });
   autoTable(doc, {
     startY: 60, margin: { left: 80, right: 18, top: 60, bottom: 34 },
-    head: [["DATA", "HORÁRIO", "ATIVIDADE COM PRESENÇA", "DURAÇÃO"]],
-    body: certificate.activities.map(a => [a.startsAt ? date(a.startsAt) : "Não informado", a.startsAt ? a.startsAt.slice(11, 16) : "-", a.name, workload(a.minutes)]),
+    head: [["DATA", "HORÁRIO", "ATIVIDADE", "DURAÇÃO"]],
+    body: activities.map(a => [a.startsAt ? date(a.startsAt) : "Não informada", a.startsAt ? a.startsAt.slice(11, 16) : "-", a.name, workload(a.minutes)]),
     foot: [[{ content: "CARGA HORÁRIA TOTAL", colSpan: 3 }, workload(certificate.totalMinutes)]],
     showFoot: "lastPage", theme: "plain", rowPageBreak: "avoid",
     styles: { font: "Inter", fontStyle: "normal", fontSize: 9, cellPadding: { top: 0.9, bottom: 0.9, left: 2.5, right: 2.5 }, overflow: "linebreak", textColor: "#171923", lineColor: "#E0E3ED", lineWidth: { bottom: 0.2 } },
@@ -101,8 +110,7 @@ export function createCertificatePdfV1(certificate: CertificateData, assets: Cer
     },
     didDrawCell: data => {
       if (data.section === "body" && data.column.index === 2) {
-        const category = certificate.activities[data.row.index].category;
-        fitted(categoryLabels[category] ?? category, data.cell.x + 2.5, data.cell.y + data.cell.height - 1, data.cell.width - 5, 7.5, false, "#555C6E");
+        fitted(activities[data.row.index].category, data.cell.x + 2.5, data.cell.y + data.cell.height - 1, data.cell.width - 5, 7.5, false, "#555C6E");
       }
     },
     willDrawPage: () => frame(true),
