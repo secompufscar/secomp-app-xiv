@@ -229,6 +229,41 @@ test('PDF apresenta Palestra e Minicurso no singular sem alterar categorias do s
   assert.deepEqual(certificate, original);
 });
 
+test('PDF identifica mesas-redondas e remove apenas o prefixo com dois-pontos sem alterar o snapshot', async () => {
+  const activities = [
+    { ...fixture.activities[0], name: 'Mesa Redonda: Empreendedorismo & Tecnologia - Transformando ideias em negócios', category: 'Outros', minutes: 60 },
+    { ...fixture.activities[0], name: '  Mesa-redonda: Docência em Computação', category: 'Outros', minutes: 60 },
+    { ...fixture.activities[0], name: 'mesa redonda MONKS', category: 'Outros', minutes: 90 },
+    { ...fixture.activities[0], name: 'Mesa Redonda:', category: 'Outros', minutes: 60 },
+    { ...fixture.activities[0], name: 'Debate sobre mesa redonda: métodos de ensino', category: 'Outros', minutes: 60 },
+    { ...fixture.activities[0], name: 'Segurança da informação e inteligência artificial: o que significa hackear o sistema?', category: 'Palestras', minutes: 60 },
+    { ...fixture.activities[0], name: 'PET - Cibersegurança', category: 'Minicursos', minutes: 180 },
+    { ...fixture.activities[0], name: 'Da Sala de Aula à Comunidade: Desafios e Práticas da Curricularização da Extensão na Docência Universitária', category: 'Mesa-redonda', minutes: 60 },
+  ];
+  const code = '0'.repeat(31) + 'G';
+  const validationUrl = `https://secomp-app-xiv.vercel.app/certificados?codigo=${code}`;
+  const certificate = { ...fixture, code, validationUrl, participantName: 'Nome de Exemplo', activities,
+    totalMinutes: activities.reduce((total, activity) => total + activity.minutes, 0), qrCode: await QRCode.toDataURL(validationUrl) };
+  const original = JSON.parse(JSON.stringify(certificate));
+  const texts = await inspect(createCertificatePdf(certificate, assets), certificate, true);
+  const annex = texts.slice(1).join(' ').replace(/\s+/g, ' ');
+  assert.ok(annex.includes('ATIVIDADE'));
+  assert.ok(!annex.includes('ATIVIDADE COM PRESENÇA'));
+  assert.equal(annex.split('Mesa-redonda').length - 1, 5);
+  assert.ok(annex.includes('Empreendedorismo & Tecnologia - Transformando ideias em negócios'));
+  assert.ok(annex.includes('Docência em Computação'));
+  assert.doesNotMatch(annex, /Mesa Redonda:\s+Empreendedorismo|Mesa-redonda:\s+Docência/);
+  assert.ok(annex.includes('mesa redonda MONKS'), 'Sem dois-pontos, o titulo oficial permanece');
+  assert.ok(annex.includes('Mesa Redonda:'), 'Um titulo sem assunto nao deve ficar vazio');
+  assert.ok(annex.includes('Debate sobre mesa redonda: métodos de ensino'), 'Mencao no meio do titulo nao muda a categoria');
+  assert.equal(annex.split('Outros').length - 1, 1);
+  assert.ok(annex.includes('Palestra'));
+  assert.ok(annex.includes('Minicurso'));
+  assert.ok(annex.includes('Da Sala de Aula à Comunidade: Desafios e Práticas da Curricularização da Extensão na Docência Universitária'));
+  assert.ok(annex.includes('10h 30min'));
+  assert.deepEqual(certificate, original);
+});
+
 test('PDF acomoda 11 atividades sinteticas em um anexo legivel separado do rodape', async () => {
   const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const activities = Array.from({ length: 11 }, (_, i) => ({
@@ -307,10 +342,11 @@ test('PDF acomoda 11 atividades sinteticas em um anexo legivel separado do rodap
   } finally { await pdf.destroy(); }
 });
 
-test('PDF preserva data ausente sem inventar um horario na nova coluna', async () => {
+test('PDF usa concordancia feminina para data ausente sem inventar um horario', async () => {
   const certificate = { ...fixture, activities: [{ ...fixture.activities[0], startsAt: null }], qrCode: await QRCode.toDataURL(fixture.validationUrl) };
   const texts = await inspect(createCertificatePdf(certificate, assets), certificate);
-  assert.match(texts[1], /Não\s+informado/);
+  assert.match(texts[1], /Não\s+informada/);
+  assert.doesNotMatch(texts[1], /Não\s+informado\b/);
   assert.ok(!texts[1].includes('13:00'));
   const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const pdf = await getDocument({ data: new Uint8Array(createCertificatePdf(certificate, assets).output('arraybuffer')), useSystemFonts: false }).promise;
