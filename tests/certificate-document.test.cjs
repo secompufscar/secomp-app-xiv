@@ -57,6 +57,69 @@ test('PDF preserva conteúdo, total, link customizado e QR legível em ambas as 
   assert.ok(texts[1].includes(custom.activities[0].name));
 });
 
+test('PDF integra a comissao na declaracao sem assinatura solta ou alteracao do snapshot', async () => {
+  const { certificatePresentation } = loadTypescript(path.join(__dirname, '../src/utils/certificatePresentation.ts'));
+  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  for (const edition of ['XIV', 'XV']) {
+    const certificate = { ...fixture, qrCode: await QRCode.toDataURL(fixture.validationUrl),
+      event: { ...fixture.event, year: edition === 'XIV' ? 2026 : 2027 },
+      presentation: { ...certificatePresentation(fixture), edition } };
+    const before = JSON.parse(JSON.stringify(certificate));
+    const doc = createCertificatePdf(certificate, assets);
+    const texts = await inspect(doc, certificate);
+    const declaration = `A Comissão Organizadora da ${edition} SECOMP certifica que`;
+    assert.equal(texts[0].split(declaration).length - 1, 1);
+    assert.ok(!texts.join(' ').includes('Certificamos que'));
+    assert.ok(!texts.join(' ').includes(`Comissão organizadora da ${edition} SECOMP`));
+    assert.deepEqual(certificate, before);
+    const pdf = await getDocument({ data: new Uint8Array(doc.output('arraybuffer')), useSystemFonts: false }).promise;
+    try {
+      const items = (await (await pdf.getPage(1)).getTextContent()).items;
+      const opening = items.find(item => item.str === declaration);
+      const name = items.find(item => item.str === certificate.participantName);
+      const mm = 72 / 25.4;
+      assert.ok(opening && name);
+      assert.ok(Math.abs(opening.transform[4] - 80 * mm) < 0.01);
+      assert.ok(Math.abs(opening.transform[0] - 11) < 0.01, 'Declaracao deve continuar legivel');
+      assert.ok(opening.transform[4] + opening.width <= 279 * mm, 'Declaracao sai da margem');
+      assert.ok(opening.transform[5] - opening.height > name.transform[5] + name.height, 'Declaracao sobrepoe nome');
+      assert.ok(!items.some(item => item.str.includes('Comissão') && item.transform[5] < 60 * mm), 'Comissao nao deve ficar solta abaixo das horas');
+    } finally { await pdf.destroy(); }
+  }
+});
+
+test('PDF distribui o bloco central da capa sem deslocar o rodape ou sobrepor textos', async () => {
+  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  for (const participantName of [fixture.participantName, 'Maria Fernanda de Albuquerque Rodrigues de Oliveira e Souza']) {
+    const certificate = { ...fixture, participantName, totalMinutes: 780,
+      activities: [{ ...fixture.activities[0], minutes: 780 }], qrCode: await QRCode.toDataURL(fixture.validationUrl) };
+    const pdf = await getDocument({ data: new Uint8Array(createCertificatePdf(certificate, assets).output('arraybuffer')), useSystemFonts: false }).promise;
+    try {
+      const items = (await (await pdf.getPage(1)).getTextContent()).items;
+      const mm = 72 / 25.4;
+      const lines = [
+        [items.find(item => item.str === 'A Comissão Organizadora da XIV SECOMP certifica que'), 77],
+        [items.find(item => item.str === participantName), 94],
+        [items.find(item => item.str.startsWith('participou da ')), 117],
+        [items.find(item => item.str.startsWith('realizada de ')), 125],
+        [items.find(item => item.str === 'CARGA HORÁRIA TOTAL'), 144],
+        [items.find(item => item.str === '13 horas'), 156],
+        [items.find(item => item.str.startsWith('Emitido em ')), 187],
+      ];
+      for (let index = 0; index < lines.length; index++) {
+        const [item, y] = lines[index];
+        assert.ok(item);
+        assert.ok(Math.abs(item.transform[5] - (210 - y) * mm) < 0.1, `Posicao vertical incorreta: ${item.str}`);
+        assert.ok(item.transform[4] + item.width <= 279 * mm, 'Texto ultrapassa a margem direita');
+        if (index) {
+          const previous = lines[index - 1][0];
+          assert.ok(previous.transform[5] - previous.height > item.transform[5] + item.height, 'Textos da capa se sobrepoem');
+        }
+      }
+    } finally { await pdf.destroy(); }
+  }
+});
+
 test('PDF identifica a emissao com segundos no rodape de cada pagina sem repetir a cidade ou alterar o snapshot', async () => {
   const certificate = { ...fixture, issuedAt: '2026-10-11T01:02:03.456Z', qrCode: await QRCode.toDataURL(fixture.validationUrl) };
   const before = JSON.parse(JSON.stringify(certificate));

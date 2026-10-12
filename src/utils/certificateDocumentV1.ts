@@ -64,15 +64,14 @@ export function createCertificatePdfV1(certificate: CertificateData, assets: Cer
   frame();
   text("Certificado", 79, 48, 38, true);
   text("DE PARTICIPAÇÃO", 80, 58, 10);
-  text("Certificamos que", 80, 72, 11);
-  fitted(certificate.participantName, 80, 87, 198, 27, true);
-  doc.setDrawColor("#1400FF").setLineWidth(0.8).line(80, 94, 105, 94);
-  fitted(`participou da ${presentation.edition} ${presentation.eventName} da ${presentation.issuer},`, 80, 108, 199, 10);
-  fitted(`realizada de ${date(certificate.event.startDate)} a ${date(certificate.event.endDate)}, em ${presentation.location}.`, 80, 116, 199, 10);
-  doc.setFillColor("#EEF0FC").roundedRect(80, 125, 199, 25, 2, 2, "F");
-  text("CARGA HORÁRIA TOTAL", 86, 133, 8);
-  fitted(fullWorkload(certificate.totalMinutes), 86, 145, 187, 23, true, "#1400FF");
-  fitted(`Comissão organizadora da ${presentation.edition} SECOMP`, 80, 166, 199, 10, true);
+  fitted(`A Comissão Organizadora da ${presentation.edition} SECOMP certifica que`, 80, 77, 199, 11);
+  fitted(certificate.participantName, 80, 94, 198, 27, true);
+  doc.setDrawColor("#1400FF").setLineWidth(0.8).line(80, 101, 105, 101);
+  fitted(`participou da ${presentation.edition} ${presentation.eventName} da ${presentation.issuer},`, 80, 117, 199, 10);
+  fitted(`realizada de ${date(certificate.event.startDate)} a ${date(certificate.event.endDate)}, em ${presentation.location}.`, 80, 125, 199, 10);
+  doc.setFillColor("#EEF0FC").roundedRect(80, 136, 199, 25, 2, 2, "F");
+  text("CARGA HORÁRIA TOTAL", 86, 144, 8);
+  fitted(fullWorkload(certificate.totalMinutes), 86, 156, 187, 23, true, "#1400FF");
 
   doc.addPage();
   doc.setLineHeightFactor(1);
