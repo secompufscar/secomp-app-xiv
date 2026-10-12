@@ -57,6 +57,28 @@ test('PDF preserva conteúdo, total, link customizado e QR legível em ambas as 
   assert.ok(texts[1].includes(custom.activities[0].name));
 });
 
+test('modelo ADMIN usa a mesma composicao do PDF real sem avisos ou renderizador alternativo', async () => {
+  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const real = { ...fixture, participantName: 'Nome de Exemplo', qrCode: await QRCode.toDataURL(fixture.validationUrl) };
+  const exampleCode = '0'.repeat(31) + 'G';
+  const example = { ...real, code: exampleCode, validationUrl: `https://secomp-app-xiv.vercel.app/certificados?codigo=${exampleCode}` };
+  example.qrCode = await QRCode.toDataURL(example.validationUrl);
+  const normalPdf = createCertificatePdf(real, assets), examplePdf = createCertificatePdf(example, assets);
+  assert.equal(normalPdf.getNumberOfPages(), examplePdf.getNumberOfPages());
+  const texts = await inspect(examplePdf, example, true);
+  assert.ok(texts[0].includes('Nome de Exemplo'));
+  assert.doesNotMatch(texts.join(' '), /TESTE|SEM VALIDADE|INVÁLIDO|não é válido/i);
+  const documents = await Promise.all([normalPdf, examplePdf].map(doc => getDocument({ data: new Uint8Array(doc.output('arraybuffer')), useSystemFonts: false }).promise));
+  try {
+    for (let page = 1; page <= documents[0].numPages; page++) {
+      const content = await Promise.all(documents.map(async pdf => (await (await pdf.getPage(page)).getTextContent()).items.map(item => ({
+        text: item.str.replace(real.code, '<code>').replace(exampleCode, '<code>'), transform: item.transform, font: item.fontName.replace(/^g_d\d+_/, ''),
+      }))));
+      assert.deepEqual(content[0], content[1]);
+    }
+  } finally { await Promise.all(documents.map(pdf => pdf.destroy())); }
+});
+
 test('PDF integra a comissao na declaracao sem assinatura solta ou alteracao do snapshot', async () => {
   const { certificatePresentation } = loadTypescript(path.join(__dirname, '../src/utils/certificatePresentation.ts'));
   const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');

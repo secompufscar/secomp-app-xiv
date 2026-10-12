@@ -52,7 +52,11 @@ export async function getMyCertificate(code: string, signal?: AbortSignal): Prom
 }
 
 export function checkedCertificate(data: CertificateData): CertificateData {
-  if (!data || typeof data.code !== "string" || !certificateCodePattern.test(data.code)
+  return checkedDocument(data, certificateCodePattern);
+}
+
+function checkedDocument(data: CertificateData, codePattern: RegExp): CertificateData {
+  if (!data || typeof data.code !== "string" || !codePattern.test(data.code)
     || typeof data.participantName !== "string" || !data.participantName.trim()
     || typeof data.issuedAt !== "string" || !Number.isFinite(Date.parse(data.issuedAt))
     || !data.event || !Array.isArray(data.activities) || !data.activities.length
@@ -71,6 +75,12 @@ export function checkedCertificate(data: CertificateData): CertificateData {
   if (url.protocol !== "https:" || url.username || url.password || url.hash
     || url.searchParams.getAll("codigo").length !== 1 || url.searchParams.get("codigo") !== data.code) throw new Error("Endereço de validação inválido.");
   return { ...data, presentation: certificatePresentation(data) };
+}
+
+export async function getCertificateExample(signal?: AbortSignal): Promise<CertificateData> {
+  const { data } = await api.get("/certificates/admin/example", { signal, timeout: 15000 });
+  if (data?.participantName !== "Nome de Exemplo") throw new Error("Dados do modelo de exemplo inválidos.");
+  return checkedDocument(data, /^0{31}G$/);
 }
 
 export async function issueMyCertificate(signal?: AbortSignal) {

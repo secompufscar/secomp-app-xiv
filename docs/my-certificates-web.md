@@ -1,6 +1,6 @@
 # Meus certificados
 
-Guia do código atual, revisado em 11/10/2026. A opção de baixar amostra ADMIN foi removida; administradores consultam ou emitem somente seus certificados reais, sob as mesmas regras de credenciamento e duração. Não há exceção administrativa de elegibilidade.
+Guia do código atual, revisado em 11/10/2026. ADMIN pode baixar um modelo de exemplo usando o mesmo gerador dos participantes. Seus certificados reais continuam sujeitos às mesmas regras de credenciamento e duração; não há exceção administrativa de elegibilidade.
 
 [Área autenticada](https://secomp-app-xiv.vercel.app/MyCertificates) e [validação pública](https://secomp-app-xiv.vercel.app/certificados). A disponibilidade do domínio não comprova publicação desta revisão; conferir CI e deployment conforme a [revisão técnica](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-review-2026-10-11.md).
 
@@ -49,6 +49,16 @@ Lista vazia confirmada e falha de rede têm estados diferentes. Consultas antiga
 
 Para alterar o visual do documento ou preparar outro modelo/edição, seguir [manutenção dos certificados](certificate-maintenance.md). Não modificar renderizadores/assets históricos nem regravar snapshots para atualizar a marca.
 
+## Modelo de exemplo para ADMIN
+
+O botão **Baixar modelo de exemplo** aparece somente na web, para ADMIN fora da visão simulada de participante. Funciona mesmo com histórico vazio ou sem credenciamento. Consulta `GET /certificates/admin/example`, que exige ADMIN no servidor, e encaminha o documento a `downloadCertificate`, `certificateDocument.ts` e ao renderizador/assets do modelo informado: não há gerador, estilo ou aviso exclusivo de amostra.
+
+Nome fixo **Nome de Exemplo**, código `0000000000000000000000000000000G` e QR apontando para esse mesmo código inválido. O `G` não pertence ao formato hexadecimal de certificados reais; cliente público e API rejeitam o código. Nenhum registro entra no histórico, na tabela de certificados ou nas presenças. `Emitido em` indica o instante de preparação do exemplo, não uma emissão persistida.
+
+A API lê a edição configurada, seus títulos e durações oficiais. Aplica as mesmas exclusões e validações de minutos/fonte dos certificados reais. Na XIV seleciona um único minicurso (SDD preferencial, outro cadastrado como alternativa) e exclui os demais minicursos e o workshop simultâneo; o plano atual soma 28 horas. Não copia as presenças do ADMIN, não infere horas e não depende de `CERTIFICATES_ENABLED`. Outra edição exige seleção aprovada para exemplo; sem isso ou com duração pendente retorna 409.
+
+O exemplo tem operação e erro próprios. Clique duplicado é bloqueado; sair, trocar de conta ou entrar na visão de participante cancela consulta/assets e descarta respostas antigas. Seleção e histórico reais não são substituídos pelo exemplo. Testes cobrem essas condições e o E2E baixa o modelo em 320/1280 px sem POST de emissão.
+
 ## Verificação e publicação
 
 `npm run typecheck`, `npm test`, exportação web e `npm run test:certificates:e2e`. `tests/my-certificates.test.cjs` cobre seleção sem emissão, cancelamento, troca de conta, revisão substituta, erro/vazio, geração explícita, validade antes do download e restrições mobile/preview. `tests/certificates.test.cjs` cobre o contrato; `tests/web-routing.test.cjs` cobre restauração. O E2E intercepta todas as requisições externas e usa somente edições e pessoas sintéticas em 320/1280 px.
@@ -57,4 +67,4 @@ Na API, executar testes unitários, build e o runner MySQL isolado. Verificar au
 
 Publicar em PRs separados: conferir CI, integrar a API antes de publicá-la, publicar endpoints compatíveis e só então integrar/publicar o app. Uma exportação local não comprova produção. Não habilitar outra edição ou emissão geral como efeito de publicar esta tela.
 
-A remoção do endpoint antigo pode deixar o botão de clientes desatualizados sem funcionamento até a atualização do app. Não há fallback para emissão real. Os testes de UI provam ausência do botão para ADMIN/USER e os testes da API exigem 404 para a rota retirada.
+O endpoint antigo `/admin/preview`, inclusive `format=example`, permanece 404. A opção restaurada usa somente `/admin/example` e o pipeline real de PDF, sem reintroduzir modo de teste com avisos ou o protótipo Python. Não há fallback para emissão real se o exemplo falhar.

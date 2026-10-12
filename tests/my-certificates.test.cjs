@@ -14,7 +14,7 @@ const detail = item => ({ code: item.code, participantName: `Pessoa ${item.editi
 const nodes = tree => !tree || typeof tree !== 'object' ? [] : Array.isArray(tree) ? tree.flatMap(nodes) : [tree, ...nodes(tree.props?.children)];
 
 function screen(overrides = {}, options = {}) {
-  const slots = [], effects = [], calls = { list: [], get: [], issue: [], downloads: [] };
+  const slots = [], effects = [], calls = { list: [], get: [], issue: [], example: [], downloads: [] };
   let cursor = 0, userId = options.anonymous ? null : 'self', participantView = options.preview || false;
   const memo = (factory, deps) => {
     const index = cursor++, previous = slots[index];
@@ -25,6 +25,7 @@ function screen(overrides = {}, options = {}) {
     listMyCertificates: async signal => { calls.list.push(signal); return overrides.list ? overrides.list(signal) : [future, legacy, summary('C', 2025, 'XIII', 'revoked'), { ...summary('D', 2024, 'XII'), templateId: 'unknown' }]; },
     getMyCertificate: async (code, signal) => { calls.get.push({ code, signal }); return overrides.get ? overrides.get(code, signal) : detail(code === future.code ? future : legacy); },
     issueMyCertificate: async signal => { calls.issue.push(signal); return overrides.issue ? overrides.issue(signal) : detail(legacy); },
+    getCertificateExample: async signal => { calls.example.push(signal); return overrides.example ? overrides.example(signal) : { ...detail(legacy), code: '0'.repeat(31) + 'G', participantName: 'Nome de Exemplo' }; },
     certificateError: error => error.response?.status === 410 ? 'Certificado revogado. Entre em contato com a organização.' : error.message,
     certificateWorkload: minutes => `${minutes} minutos`, certificateActivityDate: () => 'Horario nao informado', certificateIssuedAt,
   };
@@ -95,15 +96,51 @@ test('seta decorativa acompanha o seletor desabilitado e nao intercepta cliques'
   assert.equal(chevron.props.style.opacity, 0.5); assert.equal(chevron.props.style.pointerEvents, 'none');
 });
 
-test('ADMIN e USER nao possuem fluxo de amostra; historico vazio nao emite automaticamente', async () => {
+test('modelo exclusivo de ADMIN nao aparece para USER ou previa, e historico vazio nao emite', async () => {
   for (const options of [{}, { admin: true }, { admin: true, preview: true }]) {
     const view = screen({}, options); await settle();
-    assert.equal(view.render().some(node => node.props?.accessibilityLabel === 'Baixar modelo de exemplo'), false);
+    assert.equal(view.render().some(node => node.props?.accessibilityLabel === 'Baixar modelo de exemplo'), !!options.admin && !options.preview);
     assert.equal(view.calls.issue.length, 0);
     const empty = screen({ list: async () => [] }, options); await settle();
-    assert.equal(empty.render().some(node => node.props?.accessibilityLabel === 'Baixar modelo de exemplo'), false);
+    assert.equal(empty.render().some(node => node.props?.accessibilityLabel === 'Baixar modelo de exemplo'), !!options.admin && !options.preview);
     assert.equal(empty.calls.issue.length, 0); assert.equal(empty.calls.downloads.length, 0);
   }
+});
+
+test('ADMIN baixa exemplo pelo mesmo download sem emitir, alterar historico ou consultar certificado real', async () => {
+  const view = screen({}, { admin: true }); await settle(); await settle();
+  const before = [view.calls.list.length, view.calls.get.length];
+  await view.press('Baixar modelo de exemplo');
+  assert.equal(view.calls.example.length, 1); assert.equal(view.calls.downloads.length, 1);
+  assert.equal(view.calls.downloads[0].data.participantName, 'Nome de Exemplo');
+  assert.equal(view.calls.downloads[0].signal, view.calls.example[0]);
+  assert.equal(view.calls.issue.length, 0);
+  assert.deepEqual([view.calls.list.length, view.calls.get.length], before);
+  assert.ok(text(view).includes('Pessoa XV')); assert.ok(!text(view).includes('Nome de Exemplo'));
+});
+
+test('exemplo bloqueia clique duplicado, cancela em troca de conta/previa e ignora resposta tardia', async () => {
+  const pending = [];
+  const view = screen({ example: signal => new Promise(resolve => pending.push({ resolve, signal })) }, { admin: true }); await settle();
+  const first = view.press('Baixar modelo de exemplo');
+  await view.press('Baixar modelo de exemplo'); assert.equal(pending.length, 1);
+  view.user('other'); assert.equal(pending[0].signal.aborted, true);
+  const second = view.press('Baixar modelo de exemplo'); assert.equal(pending.length, 2);
+  pending[0].resolve(detail(legacy)); await first;
+  assert.equal(view.render().find(node => node.props?.accessibilityLabel === 'Baixar modelo de exemplo').props.disabled, true);
+  view.preview(true); assert.equal(pending[1].signal.aborted, true);
+  pending[1].resolve(detail(legacy)); await second;
+  assert.equal(view.calls.downloads.length, 0); assert.equal(view.calls.issue.length, 0);
+  assert.ok(!view.render().some(node => node.props?.accessibilityLabel === 'Baixar modelo de exemplo'));
+});
+
+test('erro do exemplo permite retry e sair cancela o carregamento dos assets', async () => {
+  let fail = true, finish;
+  const view = screen({ example: async () => { if (fail) throw new Error('Modelo indisponivel'); return detail(legacy); }, download: () => new Promise(resolve => { finish = resolve; }) }, { admin: true }); await settle();
+  await view.press('Baixar modelo de exemplo'); assert.ok(text(view).includes('Modelo indisponivel'));
+  fail = false; const retry = view.press('Baixar modelo de exemplo'); await settle();
+  const signal = view.calls.downloads[0].signal; view.close(); assert.equal(signal.aborted, true);
+  finish(); await retry; assert.equal(view.calls.issue.length, 0);
 });
 
 test('download rejeita mudanca de edicao/modelo na reconfirmacao', async () => {

@@ -16,6 +16,10 @@ const nextFixture = { ...fixture, code: nextCode, issuedAt: '2027-10-10T01:00:00
   validationUrl: `https://secomp-app-xiv.vercel.app/certificados?codigo=${nextCode}` };
 const replacementCode = 'E'.repeat(32);
 const replacementFixture = { ...fixture, code: replacementCode, validationUrl: `https://secomp-app-xiv.vercel.app/certificados?codigo=${replacementCode}` };
+const exampleCode = '0'.repeat(31) + 'G';
+const exampleFixture = { ...fixture, code: exampleCode, participantName: 'Nome de Exemplo',
+  activities: fixture.activities.filter(activity => activity.category !== 'Workshop'), totalMinutes: 300,
+  validationUrl: `https://secomp-app-xiv.vercel.app/certificados?codigo=${exampleCode}` };
 const summary = (item, overrides = {}) => ({ code: item.code, year: item.event.year, edition: item.presentation?.edition || 'XIV',
   templateId: 'secomp-landscape-v1', issuedAt: item.issuedAt, totalMinutes: item.totalMinutes, status: 'active', revision: 1, ...overrides });
 const server = http.createServer((req, res) => {
@@ -27,6 +31,7 @@ const server = http.createServer((req, res) => {
   fixture.qrCode = await QRCode.toDataURL(fixture.validationUrl, { width: 300, margin: 4 });
   nextFixture.qrCode = await QRCode.toDataURL(nextFixture.validationUrl, { width: 300, margin: 4 });
   replacementFixture.qrCode = await QRCode.toDataURL(replacementFixture.validationUrl, { width: 300, margin: 4 });
+  exampleFixture.qrCode = await QRCode.toDataURL(exampleFixture.validationUrl, { width: 300, margin: 4 });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
   const browser = await chromium.launch({ ...(process.env.CERTIFICATE_BROWSER_CHANNEL ? { channel: process.env.CERTIFICATE_BROWSER_CHANNEL } : {}), headless: true });
@@ -45,6 +50,7 @@ const server = http.createServer((req, res) => {
           if (url.pathname.endsWith('/certificates/admin/preview')) {
             throw new Error('O fluxo ADMIN removido nao deve ser consultado.');
           }
+          if (url.pathname.endsWith('/certificates/admin/example')) return admin ? json(exampleFixture) : json({ message: 'Forbidden' }, 403);
           if (url.pathname.includes('/certificates/validate/')) return mode === 'next' ? json(nextFixture) : mode === 'success' ? json(fixture) : json({ message: 'Failure' }, mode === 'missing' ? 404 : mode === 'revoked' ? 410 : 503);
           if (url.pathname.endsWith('/certificates/mine')) {
             if (route.request().method() === 'POST') return mode === 'success' ? json(fixture) : json({ message: 'A organização ainda precisa definir a duração oficial.' }, 409);
@@ -174,7 +180,17 @@ const server = http.createServer((req, res) => {
       assert.equal(await page.getByRole('button', { name: 'Baixar modelo de exemplo', exact: true }).count(), 0);
       admin = true; await page.reload();
       await page.getByRole('button', { name: 'Baixar PDF', exact: true }).waitFor();
-      assert.equal(await page.getByRole('button', { name: 'Baixar modelo de exemplo', exact: true }).count(), 0);
+      const exampleButton = page.getByRole('button', { name: 'Baixar modelo de exemplo', exact: true });
+      await exampleButton.waitFor();
+      const writesBeforeExample = calls.filter(call => call.method !== 'GET').length;
+      const selectionBeforeExample = await editions.inputValue();
+      const exampleDownload = page.waitForEvent('download'); await exampleButton.click();
+      const exampleResult = await exampleDownload;
+      assert.equal(exampleResult.suggestedFilename(), `certificado-xiv-secomp-${exampleCode}.pdf`);
+      if (width === 1280) await exampleResult.saveAs(path.join(outputDir, 'admin-example.pdf'));
+      assert.equal(calls.filter(call => call.method !== 'GET').length, writesBeforeExample);
+      assert.equal(await editions.inputValue(), selectionBeforeExample);
+      assert.ok(calls.filter(call => call.path.endsWith('/certificates/admin/example')).every(call => call.method === 'GET' && call.auth === 'Bearer synthetic-access'));
       assert.equal(calls.filter(call => call.path.endsWith('/certificates/admin/preview')).length, 0);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
       await page.screenshot({ path: path.join(outputDir, `admin-my-certificates-${width}.png`), fullPage: true });
