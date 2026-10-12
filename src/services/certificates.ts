@@ -73,8 +73,8 @@ export function checkedCertificate(data: CertificateData): CertificateData {
   return { ...data, presentation: certificatePresentation(data) };
 }
 
-export async function issueMyCertificate() {
-  return checkedCertificate((await api.post("/certificates/mine", {}, { timeout: 20000 })).data);
+export async function issueMyCertificate(signal?: AbortSignal) {
+  return checkedCertificate((await api.post("/certificates/mine", {}, { signal, timeout: 20000 })).data);
 }
 
 export async function validateCertificate(code: string, signal?: AbortSignal) {

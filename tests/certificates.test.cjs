@@ -30,6 +30,15 @@ test('total deve coincidir com anexo e link deve apontar para o mesmo código', 
   assert.match(service.certificateActivityDate('2026-10-06T13:00:00Z'), /06\/10\/2026.*13:00/);
 });
 
+test('emissao propaga cancelamento ao transporte autenticado sem enviar identidade', async () => {
+  const calls = [], controller = new AbortController();
+  const service = load({ './api': { post: async (...args) => { calls.push(args); return { data: fixture() }; } }, axios: {} });
+  await service.issueMyCertificate(controller.signal);
+  assert.equal(calls[0][2].signal, controller.signal);
+  assert.equal(JSON.stringify(calls[0][1]), '{}');
+  assert.equal(calls[0][2].timeout, 20000);
+});
+
 test('validacao publica rejeita resposta de outro codigo sem enviar credenciais', async () => {
   const other = 'B'.repeat(32);
   const service = load({ './api': { defaults: { baseURL: 'https://api.example' } }, axios: {

@@ -253,6 +253,33 @@ test('401 atrasado do refresh anterior não apaga um login novo', async () => {
   assert.equal(store.state.removed, 0); assert.equal(store.state.expired, 0);
 });
 
+test('emissao cancelada durante refresh nao repete POST usando a conta seguinte', async () => {
+  const store = storage(), controller = new AbortController();
+  let release;
+  const { api, calls } = client(store, config => new Promise(resolve => {
+    release = () => resolve(response(config, 200, { token: 'new-access', refreshToken: 'new-refresh' }));
+  }), { requestHandler: config => {
+    if (config.headers.Authorization === 'Bearer old-access') rejectStatus(config, 401);
+    return response(config, 200, {});
+  } });
+  const certificates = load('src/services/certificates.ts', {
+    './api': api, axios,
+    '../utils/certificatePresentation': load('src/utils/certificatePresentation.ts', {}),
+    '../utils/certificateIssuedAt': load('src/utils/certificateIssuedAt.ts', {}),
+  }, { URL });
+  const pending = certificates.issueMyCertificate(controller.signal);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(typeof release, 'function');
+  controller.abort();
+  await store.methods.setSessionTokens('replacement-access', 'replacement-refresh');
+  release();
+  await assert.rejects(pending, axios.isCancel);
+  const writes = calls.filter(call => call.url === '/certificates/mine');
+  assert.equal(writes.length, 1); assert.equal(writes[0].auth, 'Bearer old-access');
+  assert.equal(store.state.access, 'replacement-access'); assert.equal(store.state.refresh, 'replacement-refresh');
+  assert.equal(store.state.removed, 0); assert.equal(store.state.expired, 0);
+});
+
 function provider(store, getProfile, platform = 'web', globals = {}) {
   const slots = [], effects = [];
   let index = 0;

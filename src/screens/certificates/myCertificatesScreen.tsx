@@ -32,7 +32,7 @@ export default function MyCertificatesScreen(): ReactElement | null {
   const focused = useRef(false), focusGeneration = useRef(0), listGeneration = useRef(0), detailGeneration = useRef(0);
   const selectedRef = useRef<CertificateSummary | null>(null);
   const listRequest = useRef<AbortController | null>(null), detailRequest = useRef<AbortController | null>(null), downloadRequest = useRef<AbortController | null>(null);
-  const issuePending = useRef(false);
+  const issueRequest = useRef<AbortController | null>(null);
 
   function revoked(item: CertificateSummary) {
     const value = { ...item, status: "revoked" as const };
@@ -87,6 +87,7 @@ export default function MyCertificatesScreen(): ReactElement | null {
     return () => {
       focused.current = false; focusGeneration.current++; listGeneration.current++; detailGeneration.current++;
       listRequest.current?.abort(); detailRequest.current?.abort(); downloadRequest.current?.abort();
+      issueRequest.current?.abort(); issueRequest.current = null;
       downloadRequest.current = null;
       selectedRef.current = null; setItems(null); setSelected(null); setCertificate(null);
       setLoading(true); setDetailLoading(false); setEmitting(false); setDownloading(false);
@@ -94,19 +95,22 @@ export default function MyCertificatesScreen(): ReactElement | null {
   }, [loadList, user?.id]));
 
   async function generate() {
-    if (!allowed || isParticipantView || !focused.current || issuePending.current) return;
+    if (!allowed || isParticipantView || !focused.current || issueRequest.current) return;
     const focus = focusGeneration.current, selection = detailGeneration.current;
-    issuePending.current = true; setEmitting(true); setIssueError("");
+    const controller = new AbortController(); issueRequest.current = controller;
+    setEmitting(true); setIssueError("");
     try {
-      const result = await issueMyCertificate();
+      const result = await issueMyCertificate(controller.signal);
       if (focused.current && focus === focusGeneration.current) {
         await loadList(selection === detailGeneration.current ? result.code : selectedRef.current?.code);
       }
     } catch (error) {
       if (focused.current && focus === focusGeneration.current) setIssueError(certificateError(error));
     } finally {
-      issuePending.current = false;
-      if (focused.current && focus === focusGeneration.current) setEmitting(false);
+      if (issueRequest.current === controller) {
+        issueRequest.current = null;
+        if (focused.current && focus === focusGeneration.current) setEmitting(false);
+      }
     }
   }
 

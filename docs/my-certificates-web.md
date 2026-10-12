@@ -10,6 +10,8 @@ Início abre a área autenticada `/MyCertificates`, disponível somente na web. 
 
 O comando separado **Gerar certificado da edição habilitada** usa a edição configurada na API. O ano selecionado no navegador não participa da emissão. Não existe primeira emissão retroativa pelo seletor. A geração continua exigindo credenciamento, presença certificável, durações oficiais e habilitação do servidor.
 
+A requisição de emissão usa `AbortSignal`: sair da tela, encerrar a sessão ou trocar de conta cancela o transporte e impede que uma tentativa tardia continue pelo cliente. Cada operação tem seu próprio controlador; o término de uma emissão cancelada não desbloqueia uma emissão nova nem substitui sua resposta. Trocar apenas a edição selecionada não cancela a emissão explícita da edição configurada. Cancelar no navegador não desfaz uma transação que o servidor já confirmou: ao voltar, atualizar o histórico antes de tentar novamente; a API mantém a emissão idempotente.
+
 Certificados históricos podem ser consultados mesmo com emissão desabilitada ou outro ano configurado. O PDF usa o snapshot e o `templateId` originais, não o cadastro atual da edição. Snapshot legado XIV/2026 continua compatível. Um modelo desconhecido ou registro indisponível não impede selecionar outras edições; não recebe um visual substituto silenciosamente.
 
 Atualizar mantém o código selecionado quando disponível; se houve reemissão, mantém a mesma edição e seleciona sua nova revisão. Após recarregar a página, a rota é restaurada e a edição mais recente é selecionada. A reemissão continua exclusivamente administrativa, auditada e com novo código/QR.
