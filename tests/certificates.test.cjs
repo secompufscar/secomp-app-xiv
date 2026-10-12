@@ -12,6 +12,22 @@ const fixture = () => ({ code, participantName: 'Ana Silva', issuedAt: '2026-10-
   event: { year: 2026, startDate: '2026-10-05', endDate: '2026-10-08' },
   activities: [{ name: 'Palestra', category: 'Palestras', startsAt: null, minutes: 60 }, { name: 'Workshop', category: 'Workshop', startsAt: null, minutes: 150 }],
   validationUrl: `https://secomp-app-xiv.vercel.app/certificados?codigo=${code}`, qrCode: 'data:image/png;base64,AAAA' });
+
+test('modelo consulta endpoint autenticado sem emitir e aceita apenas nome/codigo reservados', async () => {
+  const calls = [], controller = new AbortController(), exampleCode = '0'.repeat(31) + 'G';
+  const example = { ...fixture(), code: exampleCode, participantName: 'Nome de Exemplo', validationUrl: `https://app.example/certificados?codigo=${exampleCode}` };
+  let data = example;
+  const service = load({ './api': { get: async (...args) => { calls.push(args); return { data }; }, post: () => assert.fail('Exemplo nao emite') }, axios: {} });
+  assert.equal((await service.getCertificateExample(controller.signal)).code, exampleCode);
+  assert.equal(calls[0][0], '/certificates/admin/example'); assert.equal(calls[0][1].signal, controller.signal);
+  assert.equal(calls[0][1].timeout, 15000);
+  assert.throws(() => service.checkedCertificate(example));
+  await assert.rejects(service.getMyCertificate(exampleCode));
+  await assert.rejects(service.validateCertificate(exampleCode));
+  for (const patch of [{ code }, { participantName: 'Pessoa real' }, { totalMinutes: 1 }, { validationUrl: `https://app.example/certificados?codigo=${code}` }, { presentation: { templateId: 'unknown' } }]) {
+    data = { ...example, ...patch }; await assert.rejects(service.getCertificateExample());
+  }
+});
 test('emissão não envia identidade escolhida pelo cliente; validação pública não usa cliente autenticado', async () => {
   const calls = [];
   const service = load({ './api': { defaults: { baseURL: 'https://api.example' }, post: async (...args) => { calls.push(args); return { data: fixture() }; } }, axios: { get: async (...args) => { calls.push(args); return { data: fixture() }; } } });

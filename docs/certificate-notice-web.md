@@ -1,6 +1,6 @@
 # Certificados individuais na web
 
-Revisão: 11/10/2026. Guia do código mantido; testes, integração e produção são estados distintos. A amostra ADMIN e o protótipo Python foram retirados. O [balanço técnico](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-review-2026-10-11.md) registra a revisão e publicação; as [auditorias reais anteriores](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-release-2026-10-11.md) permanecem como evidência histórica.
+Revisão: 11/10/2026. Guia do código mantido; testes, integração e produção são estados distintos. O protótipo Python e o endpoint antigo de teste foram retirados. A opção ADMIN de baixar exemplo foi restaurada por esclarecimento da organização, reutilizando o pipeline real de PDF; ver [regras do modelo](my-certificates-web.md#modelo-de-exemplo-para-admin). O [balanço técnico](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-review-2026-10-11.md) e as [auditorias anteriores](https://github.com/secompufscar/secomp-server-xiv/blob/main/docs/historico/auditorias/certificate-release-2026-10-11.md) permanecem como evidência histórica da remoção anterior.
 
 ## Fluxo e elegibilidade
 
