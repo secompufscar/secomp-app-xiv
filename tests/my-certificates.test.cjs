@@ -24,7 +24,7 @@ function screen(overrides = {}, options = {}) {
   const services = {
     listMyCertificates: async signal => { calls.list.push(signal); return overrides.list ? overrides.list(signal) : [future, legacy, summary('C', 2025, 'XIII', 'revoked'), { ...summary('D', 2024, 'XII'), templateId: 'unknown' }]; },
     getMyCertificate: async (code, signal) => { calls.get.push({ code, signal }); return overrides.get ? overrides.get(code, signal) : detail(code === future.code ? future : legacy); },
-    issueMyCertificate: async () => { calls.issue.push(true); return overrides.issue ? overrides.issue() : detail(legacy); },
+    issueMyCertificate: async signal => { calls.issue.push(signal); return overrides.issue ? overrides.issue(signal) : detail(legacy); },
     certificateError: error => error.response?.status === 410 ? 'Certificado revogado. Entre em contato com a organização.' : error.message,
     certificateWorkload: minutes => `${minutes} minutos`, certificateActivityDate: () => 'Horario nao informado', certificateIssuedAt,
   };
@@ -189,6 +189,58 @@ test('emissao explicita bloqueia clique duplicado e seleciona o certificado reto
   await view.press('Gerar certificado da edição habilitada'); assert.equal(view.calls.issue.length, 1);
   finish(detail(legacy)); await first; await settle(); assert.match(text(view), /Pessoa XIV/);
   assert.equal(view.calls.list.length, 2);
+});
+
+test('sair, logout e troca de conta cancelam a emissao e descartam o resultado antigo', async () => {
+  for (const change of [view => view.close(), view => view.user(null), view => view.user('another')]) {
+    let finish;
+    const view = screen({ issue: () => new Promise(resolve => { finish = resolve; }) }); await settle();
+    const pending = view.press('Gerar certificado da edição habilitada');
+    const signal = view.calls.issue[0];
+    assert.ok(signal instanceof AbortSignal);
+    change(view); await settle();
+    assert.equal(signal.aborted, true);
+    const listCount = view.calls.list.length;
+    finish(detail(legacy)); await pending;
+    assert.equal(view.calls.list.length, listCount);
+  }
+});
+
+test('emissao cancelada nao bloqueia a conta seguinte nem libera uma operacao nova', async () => {
+  const pending = [];
+  const view = screen({ issue: () => new Promise(resolve => pending.push(resolve)) }); await settle();
+  const first = view.press('Gerar certificado da edição habilitada');
+  view.user('another'); await settle();
+  const second = view.press('Gerar certificado da edição habilitada');
+  assert.equal(pending.length, 2);
+  pending[0](detail(legacy)); await first;
+  assert.match(text(view), /Gerando/);
+  await view.press('Gerar certificado da edição habilitada'); assert.equal(pending.length, 2);
+  pending[1](detail(legacy)); await second;
+  assert.doesNotMatch(text(view), /Gerando/);
+});
+
+test('trocar a edicao nao cancela emissao explicita nem muda a selecao escolhida', async () => {
+  let finish;
+  const view = screen({ issue: () => new Promise(resolve => { finish = resolve; }) }); await settle();
+  view.choose(legacy.code); await settle();
+  const pending = view.press('Gerar certificado da edição habilitada');
+  view.choose(future.code); await settle();
+  assert.equal(view.calls.issue[0]?.aborted, false);
+  finish(detail(legacy)); await pending; await settle();
+  assert.equal(view.render().find(node => node.type === 'select').props.value, future.code);
+});
+
+test('falha na emissao libera retry explicito sem emitir ao atualizar o historico', async () => {
+  let failed = true;
+  const view = screen({ issue: async () => { if (failed) throw Error('Rede indisponivel'); return detail(legacy); } }); await settle();
+  await view.press('Gerar certificado da edição habilitada');
+  assert.match(text(view), /Rede indisponivel/); assert.doesNotMatch(text(view), /Gerando/);
+  await view.press('Atualizar certificados'); await settle();
+  assert.equal(view.calls.issue.length, 1);
+  failed = false; await view.press('Gerar certificado da edição habilitada'); await settle();
+  assert.equal(view.calls.issue.length, 2); assert.doesNotMatch(text(view), /Rede indisponivel/);
+  assert.equal(view.render().find(node => node.type === 'select').props.value, legacy.code);
 });
 
 test('download reconfirma validade, nao baixa selecao antiga e trata revogacao sem gerar novamente', async () => {
