@@ -1,5 +1,5 @@
 import ParticipantViewToggle from "../../components/app/participantViewToggle";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { View, Text, Pressable, StatusBar, Platform, ActivityIndicator, ScrollView, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, ParamListBase, useFocusEffect, useRoute, RouteProp } from "@react-navigation/native";
@@ -20,6 +20,8 @@ import BackButton from "../../components/button/backButton";
 import Button from "../../components/button/button";
 import DatePicker from "react-datepicker";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import ActivityCertificateFields from "../../components/activity/activityCertificateFields";
+import { certificationForm, certificationPayload, certificationChanged, isAlwaysNonCertifiable } from "../../utils/activityCertification";
 
 type ActivityAdminCreateNavigationProp = NativeStackNavigationProp<ParamListBase>;
 
@@ -44,6 +46,9 @@ export default function ActivityAdminUpdate() {
   const [points, setPoints] = useState<string>("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [certification, setCertification] = useState(() => certificationForm());
+  const [originalActivity, setOriginalActivity] = useState<Activity | null>(null);
+  const saving = useRef(false);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -133,6 +138,8 @@ export default function ActivityAdminUpdate() {
         setPoints(String(activity.points));
         setLocation(activity.local);
         setSelectedCategoryId(activity.categoriaId);
+        setOriginalActivity(activity);
+        setCertification(certificationForm(activity));
 
         // Imagens
         images.forEach((img) => {
@@ -244,6 +251,7 @@ export default function ActivityAdminUpdate() {
   };
 
   const handleUpdateActivity = async () => {
+    if (saving.current || !originalActivity) return;
     if (!activityId)
       return;
 
@@ -276,6 +284,18 @@ export default function ActivityAdminUpdate() {
       return;
     }
 
+    let certificateData = {};
+    const current = { nome: name, categoria: categories.find(category => category.id === selectedCategoryId) ?? originalActivity.categoria };
+    try {
+      if (certificationChanged(certification, originalActivity) || isAlwaysNonCertifiable(current) !== isAlwaysNonCertifiable(originalActivity)) {
+        certificateData = certificationPayload(certification, current);
+      }
+    } catch (error: any) {
+      setWarningMessage(error.message);
+      setWarningModalVisible(true);
+      return;
+    }
+    saving.current = true;
     setIsLoading(true);
 
     try {
@@ -298,6 +318,7 @@ export default function ActivityAdminUpdate() {
         points: parsedPoints,
         categoriaId: selectedCategoryId,
         local: location,
+        ...certificateData,
       };
 
       await updateActivity(activityId, activityData);
@@ -341,6 +362,7 @@ export default function ActivityAdminUpdate() {
       setErrorMessage(errorMessage);
       setErrorModalVisible(true);
     } finally {
+      saving.current = false;
       setIsLoading(false);
     }
   };
@@ -529,6 +551,8 @@ export default function ActivityAdminUpdate() {
               </View>
 
               {/* Local */}
+              <ActivityCertificateFields value={certification} onChange={setCertification} name={name}
+                category={categories.find(category => category.id === selectedCategoryId) ?? originalActivity?.categoria} disabled={isLoading} editing />
               <View className="w-full">
                 <Text className="text-gray-400 text-sm font-inter mb-2">Local</Text>
                 <Input>
@@ -595,7 +619,7 @@ export default function ActivityAdminUpdate() {
                 )}
               </View>
 
-              <Button title="Atualizar" className="mt-auto" loading={isLoading} onPress={handleUpdateActivity} />
+              <Button title="Atualizar" className="mt-auto" loading={isLoading} disabled={isLoading || !originalActivity || categoriesLoading || !!categoriesError} onPress={handleUpdateActivity} />
             </View>
           </ScrollView>
         </View>

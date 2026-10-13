@@ -9,6 +9,8 @@ import { createActivityImage, getImagesByActivityId, updateActivityImageById } f
 import Button from "../button/button";
 import { Input } from "../input/input";
 import SpeakerPhotoCropper from "./speakerPhotoCropper";
+import ActivityCertificateFields from "./activityCertificateFields";
+import { certificationForm, certificationPayload, certificationChanged, isAlwaysNonCertifiable } from "../../utils/activityCertification";
 
 interface Props {
   activity: Activity;
@@ -27,6 +29,7 @@ function activityTime(data: string) {
 export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhotoSaved }: Props) {
   const { canUseAdminTools } = useAuth();
   const [name, setName] = useState(activity.nome);
+  const [certification, setCertification] = useState(() => certificationForm(activity));
   const [speakerName, setSpeakerName] = useState(activity.palestranteNome);
   const [speakerTitle, setSpeakerTitle] = useState<"APRESENTADOR" | "APRESENTADORA">(activity.palestranteTitulo ?? "APRESENTADOR");
   const [savedPhoto, setSavedPhoto] = useState<ActivityImage | null>(null);
@@ -174,6 +177,16 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
       dateUpdate.data = date.toISOString();
     }
 
+    let certificateData = {};
+    try {
+      const current = { nome: name, categoria: activity.categoria };
+      if (certificationChanged(certification, activity) || isAlwaysNonCertifiable(current) !== isAlwaysNonCertifiable(activity)) {
+        certificateData = certificationPayload(certification, current);
+      }
+    } catch (error: any) {
+      setError(error.message);
+      return;
+    }
     saving.current = true;
     setIsSaving(true);
     setError("");
@@ -202,6 +215,7 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
         localLink,
         ...dateUpdate,
         ...capacityUpdate,
+        ...certificateData,
       });
       if (updated.palestranteTitulo !== speakerTitle) {
         throw new Error("A API ainda não está pronta para salvar essa seleção. Tente novamente após a atualização.");
@@ -339,6 +353,8 @@ export default function ActivityTextEditor({ activity, onCancel, onSaved, onPhot
               />
             </Input>
             <Text className="text-gray-400 text-xs font-inter mt-2">Horário do evento. A data da atividade será mantida.</Text>
+            <ActivityCertificateFields value={certification} onChange={setCertification} name={name}
+              category={activity.categoria} disabled={isSaving} editing />
             <Text className="text-gray-400 text-sm font-inter mt-3 mb-2">Local da atividade</Text>
             <Input>
               <Input.Field accessibilityLabel="Local da atividade" value={location} onChangeText={setLocation} editable={!isSaving} maxLength={255} />

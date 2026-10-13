@@ -12,4 +12,7 @@ interface Activity {
   local: string;
   localLink?: string | null;
   points: number;
+  durationMinutes?: number | null;
+  durationSource?: string | null;
+  certificateExcluded?: boolean;
 };
